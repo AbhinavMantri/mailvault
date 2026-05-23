@@ -2,6 +2,8 @@
 
 MailVault separates the email system into independent storage and processing responsibilities.
 
+Editable Draw.io source: [architecture.drawio](architecture.drawio)
+
 ## Core Principle
 
 Postgres is the source of truth for structured mailbox state. MinIO stores large immutable content. Kafka decouples non-critical work. OpenSearch serves fast full-text queries as a derived index.
@@ -34,4 +36,3 @@ Email metadata is strongly persisted before the import request succeeds. Search 
 - If Kafka publish fails after metadata persistence, an outbox table can be used to recover event delivery.
 - If MinIO storage fails, ingestion should fail before metadata is committed.
 - If quota calculation lags, the system should use a conservative stored usage value before accepting large imports.
-

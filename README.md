@@ -19,6 +19,8 @@ The goal of MailVault is to demonstrate a production-minded design for this prob
 
 ## Target Architecture
 
+Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
+
 ```text
 Email Import API
       |
@@ -74,4 +76,3 @@ Ingestion Service
 ## Status
 
 Planning and scaffolding phase.
-
