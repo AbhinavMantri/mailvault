@@ -42,6 +42,7 @@ Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 | `ingestion-service` | Accept email imports, persist metadata, store raw content, publish events |
 | `mailbox-service` | Serve inbox, message detail, labels, archive, delete, and search APIs |
 | `search-indexer` | Consume indexing events and update OpenSearch |
+| `attachment-worker` | Extract attachment metadata, compute content hashes, and support deduplication |
 | `quota-service` | Track user storage usage and enforce quota decisions |
 | `archival-worker` | Move old email content to archival object-storage prefixes |
 

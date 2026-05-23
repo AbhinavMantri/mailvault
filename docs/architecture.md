@@ -20,11 +20,13 @@ Client
   -> Return accepted response
 ```
 
-The write path should avoid blocking on search indexing, archival, or expensive attachment processing.
+The write path should avoid blocking on search indexing, archival, quota recalculation, or expensive attachment processing.
 
 ## Read Path
 
 Mailbox list and email detail APIs read from Postgres. Full-text search reads from OpenSearch and resolves canonical message state from Postgres when needed.
+
+Attachment metadata extraction and hash-based deduplication run asynchronously. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content.
 
 ## Consistency Model
 

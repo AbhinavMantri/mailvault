@@ -27,11 +27,11 @@ POST /emails/import
 ```text
 email.received
   -> search-indexer indexes body, subject, sender, recipients, labels
+  -> attachment-worker extracts metadata and computes content hashes
   -> quota-service updates usage
-  -> attachment worker extracts metadata
+  -> archival-worker evaluates lifecycle rules
 ```
 
 ## Reliability Notes
 
 Workers should be idempotent. Event handlers should tolerate duplicate delivery by checking stable IDs such as `emailId`, `attachmentId`, or `eventId`.
-
