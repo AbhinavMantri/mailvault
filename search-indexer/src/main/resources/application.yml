@@ -1,0 +1,30 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: search-indexer
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.mailvault.searchindexer.events.EmailReceivedEvent
+
+mailvault:
+  kafka:
+    email-received-topic: ${EMAIL_RECEIVED_TOPIC:email.received}
+    consumer-group-id: ${SEARCH_INDEXER_GROUP_ID:mailvault-search-indexer}
+  search:
+    base-url: ${OPENSEARCH_BASE_URL:http://localhost:9200}
+    email-index: ${EMAIL_SEARCH_INDEX:mailvault-emails}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

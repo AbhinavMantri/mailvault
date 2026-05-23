@@ -104,6 +104,8 @@ GET /mailboxes/{userId}/inbox
 GET /emails/search?userId=user-123&q=invoice
 ```
 
+Search API is planned. The current implemented search path is the asynchronous `search-indexer`, which consumes `email.received` and upserts email documents into OpenSearch.
+
 ## Storage Usage
 
 ```http

@@ -27,7 +27,7 @@ POST /emails/import
 
 ```text
 email.received
-  -> search-indexer indexes body, subject, sender, recipients, labels
+  -> search-indexer indexes subject, sender, recipients, user, and timestamps
   -> attachment-worker extracts metadata and computes content hashes
   -> archival-worker evaluates lifecycle rules
 
