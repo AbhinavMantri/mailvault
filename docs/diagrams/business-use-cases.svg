@@ -6,7 +6,7 @@
       .title { font: 700 54px Arial, Helvetica, sans-serif; fill: #111827; }
       .subtitle { font: 400 24px Arial, Helvetica, sans-serif; fill: #4b5563; }
       .group-title { font: 700 25px Arial, Helvetica, sans-serif; fill: #111827; }
-      .group-note { font: 400 18px Arial, Helvetica, sans-serif; fill: #64748b; }
+      .group-note { font: 400 16px Arial, Helvetica, sans-serif; fill: #64748b; }
       .box-title { font: 700 18px Arial, Helvetica, sans-serif; fill: #111827; }
       .box-body { font: 400 15px Arial, Helvetica, sans-serif; fill: #374151; }
       .small { font: 400 16px Arial, Helvetica, sans-serif; fill: #4b5563; }
@@ -95,7 +95,8 @@
 
   <rect x="1130" y="255" width="360" height="610" rx="30" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
   <text x="1170" y="305" class="group-title">Admin / Ops</text>
-  <text x="1170" y="335" class="group-note">Operational ownership and business visibility</text>
+  <text x="1170" y="333" class="group-note">Operational ownership</text>
+  <text x="1170" y="355" class="group-note">and business visibility</text>
 
   <rect x="1150" y="380" width="320" height="92" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
   <text x="1310" y="404" text-anchor="middle" class="box-title">Monitor Storage</text>
@@ -127,8 +128,9 @@
   <path class="soft-arrow" d="M1000 785 C1060 725 1098 686 1140 676" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1000 898 C1060 865 1100 820 1140 802" marker-end="url(#softArrow)"/>
 
-  <rect x="560" y="250" width="480" height="60" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-  <text x="800" y="288" text-anchor="middle" class="small">MailVault is designed around storage economics, not just mailbox CRUD.</text>
+  <rect x="540" y="245" width="520" height="70" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="800" y="273" text-anchor="middle" class="small">MailVault is designed around storage economics,</text>
+  <text x="800" y="295" text-anchor="middle" class="small">not just mailbox CRUD.</text>
 
   <text x="116" y="918" class="small">github.com/AbhinavMantri/mailvault</text>
 </svg>
