@@ -38,7 +38,7 @@
   </defs>
 
   <rect width="1600" height="1000" fill="url(#pageBg)"/>
-  <rect x="64" y="56" width="1472" height="888" rx="36" fill="#111827" fill-opacity="0.88" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="64" y="56" width="1472" height="888" rx="36" fill="#111827" fill-opacity="0.72"/>
 
   <text x="116" y="128" class="title">MailVault Business Use Cases</text>
   <text x="116" y="174" class="subtitle">A storage-aware mailbox platform focused on search, quota control, attachment safety, and archival cost reduction</text>
