@@ -23,6 +23,11 @@ The goal of MailVault is to demonstrate a production-minded design for this prob
 
 Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 
+Focused diagrams:
+
+- [Attachment Security Flow](docs/diagrams/attachment-security-flow.svg)
+- [Storage Lifecycle Flow](docs/diagrams/storage-lifecycle-flow.svg)
+
 ## MVP Scope
 
 - Import email through an API.
@@ -35,6 +40,13 @@ Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 - Deduplicate attachments using SHA-256 hashes.
 - Run the full stack locally with Docker Compose.
 
+## Production Hardening Roadmap
+
+- Add asynchronous antivirus scanning for attachments.
+- Block attachment downloads until a clean scan verdict exists.
+- Quarantine infected attachments and exclude them from download paths.
+- Add retry, timeout, and alerting behavior for scan failures.
+
 ## Planned Services
 
 | Service | Responsibility |
@@ -43,6 +55,7 @@ Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 | `mailbox-service` | Serve inbox, message detail, labels, archive, delete, and search APIs |
 | `search-indexer` | Consume indexing events and update OpenSearch |
 | `attachment-worker` | Extract attachment metadata, compute content hashes, and support deduplication |
+| `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
 | `quota-service` | Track user storage usage and enforce quota decisions |
 | `archival-worker` | Move old email content to archival object-storage prefixes |
 

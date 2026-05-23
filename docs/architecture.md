@@ -4,6 +4,12 @@ MailVault separates the email system into independent storage and processing res
 
 Editable Draw.io source: [architecture.drawio](architecture.drawio)
 
+## Diagrams
+
+- [Main HLD](architecture-linkedin.svg): high-level system view for README and portfolio scanning.
+- [Attachment Security Flow](diagrams/attachment-security-flow.svg): attachment hashing, deduplication, antivirus scanning, and quarantine behavior.
+- [Storage Lifecycle Flow](diagrams/storage-lifecycle-flow.svg): hot storage, archival movement, search continuity, and restore behavior.
+
 ## Core Principle
 
 Postgres is the source of truth for structured mailbox state. MinIO stores large immutable content. Kafka decouples non-critical work. OpenSearch serves fast full-text queries as a derived index.
@@ -27,6 +33,8 @@ The write path should avoid blocking on search indexing, archival, quota recalcu
 Mailbox list and email detail APIs read from Postgres. Full-text search reads from OpenSearch and resolves canonical message state from Postgres when needed.
 
 Attachment metadata extraction and hash-based deduplication run asynchronously. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content.
+
+Attachments are not considered downloadable until the security scan records a clean verdict. Unsafe attachments are marked quarantined and excluded from download paths.
 
 ## Consistency Model
 
