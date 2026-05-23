@@ -1,11 +1,11 @@
 package com.mailvault.ingestion.api.dto;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
+import java.util.UUID;
 
 public record EmailImportRequest(
         @NotBlank String userId,
@@ -14,7 +14,6 @@ public record EmailImportRequest(
         @NotBlank String subject,
         String textBody,
         String htmlBody,
-        @Valid List<AttachmentImportRequest> attachments
+        List<UUID> attachmentIds
 ) {
 }
-

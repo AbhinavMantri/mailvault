@@ -24,14 +24,14 @@ Stores large immutable content:
 - raw MIME message
 - normalized text body
 - HTML body
-- attachments
+- directly uploaded attachments
 
 Suggested object keys:
 
 ```text
 users/{userId}/emails/{emailId}/raw.eml
 users/{userId}/emails/{emailId}/body.txt
-attachments/{sha256}/{filename}
+users/{userId}/pending-attachments/{attachmentId}/{filename}
 archive/users/{userId}/emails/{emailId}/raw.eml
 ```
 

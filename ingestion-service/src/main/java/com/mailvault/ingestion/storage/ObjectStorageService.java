@@ -5,10 +5,13 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.http.Method;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 @Service
 public class ObjectStorageService {
@@ -39,6 +42,20 @@ public class ObjectStorageService {
         }
     }
 
+    public String presignedPutUrl(String objectKey, Duration expiry) {
+        try {
+            ensureBucketExists();
+            return minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
+                    .bucket(properties.bucket())
+                    .object(objectKey)
+                    .method(Method.PUT)
+                    .expiry((int) expiry.toSeconds())
+                    .build());
+        } catch (Exception exception) {
+            throw new ObjectStorageException("Failed to create upload URL for object " + objectKey, exception);
+        }
+    }
+
     private void ensureBucketExists() throws Exception {
         boolean bucketExists = minioClient.bucketExists(BucketExistsArgs.builder()
                 .bucket(properties.bucket())
@@ -50,4 +67,3 @@ public class ObjectStorageService {
         }
     }
 }
-

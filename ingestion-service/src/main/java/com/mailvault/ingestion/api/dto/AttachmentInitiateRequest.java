@@ -1,11 +1,13 @@
 package com.mailvault.ingestion.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 
-public record AttachmentImportRequest(
+public record AttachmentInitiateRequest(
+        @NotBlank String userId,
         @NotBlank String filename,
         @NotBlank String contentType,
-        @NotBlank String base64Content
+        @Positive long sizeBytes
 ) {
 }
 

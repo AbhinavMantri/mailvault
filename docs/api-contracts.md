@@ -2,6 +2,45 @@
 
 Initial API shape for the MVP.
 
+## Initiate Attachment Upload
+
+```http
+POST /attachments/initiate
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123",
+  "filename": "invoice.pdf",
+  "contentType": "application/pdf",
+  "sizeBytes": 5242880
+}
+```
+
+```json
+{
+  "attachmentId": "8e8f5f5c-5d4a-42b0-a3a4-7f1f8c0d9c99",
+  "uploadUrl": "http://localhost:9000/...",
+  "objectKey": "users/user-123/pending-attachments/8e8f5f5c-5d4a-42b0-a3a4-7f1f8c0d9c99/invoice.pdf",
+  "expiresInSeconds": 900,
+  "status": "PENDING_UPLOAD"
+}
+```
+
+## Complete Attachment Upload
+
+```http
+POST /attachments/{attachmentId}/complete
+```
+
+```json
+{
+  "attachmentId": "8e8f5f5c-5d4a-42b0-a3a4-7f1f8c0d9c99",
+  "status": "UPLOADED"
+}
+```
+
 ## Import Email
 
 ```http
@@ -17,13 +56,7 @@ Content-Type: application/json
   "subject": "Invoice for May",
   "textBody": "Invoice attached.",
   "htmlBody": "<p>Invoice attached.</p>",
-  "attachments": [
-    {
-      "filename": "invoice.pdf",
-      "contentType": "application/pdf",
-      "base64Content": "..."
-    }
-  ]
+  "attachmentIds": ["8e8f5f5c-5d4a-42b0-a3a4-7f1f8c0d9c99"]
 }
 ```
 
@@ -58,4 +91,3 @@ GET /users/{userId}/storage
   "usagePercent": 23.1
 }
 ```
-

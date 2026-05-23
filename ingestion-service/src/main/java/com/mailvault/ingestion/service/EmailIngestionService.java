@@ -1,9 +1,9 @@
 package com.mailvault.ingestion.service;
 
-import com.mailvault.ingestion.api.dto.AttachmentImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
 import com.mailvault.ingestion.domain.Attachment;
+import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailAttachmentRef;
 import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.domain.EmailRecipient;
@@ -20,11 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,7 +51,7 @@ public class EmailIngestionService {
     public EmailImportResponse importEmail(EmailImportRequest request) {
         UUID emailId = UUID.randomUUID();
         Instant receivedAt = Instant.now();
-        List<DecodedAttachment> attachments = decodeAttachments(request.attachments());
+        List<Attachment> attachments = findUploadedAttachments(request);
         long logicalSizeBytes = calculateLogicalSize(request, attachments);
 
         StorageUsage storageUsage = storageUsageRepository.findById(request.userId())
@@ -89,10 +85,7 @@ public class EmailIngestionService {
                 receivedAt
         );
         request.to().forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
-        attachments.forEach(attachment -> email.addAttachmentRef(new EmailAttachmentRef(
-                findOrCreateAttachment(attachment, request.userId(), receivedAt),
-                attachment.filename()
-        )));
+        attachments.forEach(attachment -> email.addAttachmentRef(new EmailAttachmentRef(attachment)));
 
         storageUsage.addUsage(logicalSizeBytes, receivedAt);
         storageUsageRepository.save(storageUsage);
@@ -112,51 +105,26 @@ public class EmailIngestionService {
         return new EmailImportResponse(emailId, "ACCEPTED", logicalSizeBytes);
     }
 
-    private Attachment findOrCreateAttachment(DecodedAttachment decodedAttachment, String userId, Instant createdAt) {
-        return attachmentRepository.findBySha256(decodedAttachment.sha256())
-                .orElseGet(() -> {
-                    UUID attachmentId = UUID.randomUUID();
-                    String objectKey = "attachments/%s/%s".formatted(decodedAttachment.sha256(), decodedAttachment.filename());
-                    objectStorageService.putBytes(objectKey, decodedAttachment.content(), decodedAttachment.contentType());
-                    return attachmentRepository.save(new Attachment(
-                            attachmentId,
-                            decodedAttachment.sha256(),
-                            objectKey,
-                            decodedAttachment.contentType(),
-                            decodedAttachment.content().length,
-                            createdAt
-                    ));
-                });
-    }
-
-    private List<DecodedAttachment> decodeAttachments(List<AttachmentImportRequest> attachments) {
-        if (attachments == null) {
+    private List<Attachment> findUploadedAttachments(EmailImportRequest request) {
+        if (request.attachmentIds() == null || request.attachmentIds().isEmpty()) {
             return List.of();
         }
-        return attachments.stream()
-                .map(this::decodeAttachment)
-                .toList();
-    }
-
-    private DecodedAttachment decodeAttachment(AttachmentImportRequest request) {
-        try {
-            byte[] content = Base64.getDecoder().decode(request.base64Content());
-            return new DecodedAttachment(
-                    request.filename(),
-                    request.contentType(),
-                    content,
-                    sha256(content)
-            );
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Attachment " + request.filename() + " is not valid Base64", exception);
+        List<Attachment> attachments = attachmentRepository.findByIdInAndUserIdAndStatus(
+                request.attachmentIds(),
+                request.userId(),
+                AttachmentStatus.UPLOADED
+        );
+        if (attachments.size() != request.attachmentIds().size()) {
+            throw new IllegalArgumentException("All attachments must be uploaded before email import");
         }
+        return attachments;
     }
 
-    private long calculateLogicalSize(EmailImportRequest request, List<DecodedAttachment> attachments) {
+    private long calculateLogicalSize(EmailImportRequest request, List<Attachment> attachments) {
         long bodySize = safeText(request.textBody()).getBytes(StandardCharsets.UTF_8).length;
         long htmlSize = safeText(request.htmlBody()).getBytes(StandardCharsets.UTF_8).length;
         long attachmentSize = attachments.stream()
-                .mapToLong(attachment -> attachment.content().length)
+                .mapToLong(Attachment::getSizeBytes)
                 .sum();
         return bodySize + htmlSize + attachmentSize;
     }
@@ -176,21 +144,4 @@ public class EmailIngestionService {
         return value == null ? "" : value;
     }
 
-    private String sha256(byte[] content) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(content));
-        } catch (NoSuchAlgorithmException exception) {
-            throw new IllegalStateException("SHA-256 algorithm is not available", exception);
-        }
-    }
-
-    private record DecodedAttachment(
-            String filename,
-            String contentType,
-            byte[] content,
-            String sha256
-    ) {
-    }
 }
-

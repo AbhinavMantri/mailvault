@@ -28,19 +28,14 @@ public class EmailAttachmentRef {
     @JoinColumn(name = "attachment_id", nullable = false)
     private Attachment attachment;
 
-    @Column(nullable = false)
-    private String filename;
-
     protected EmailAttachmentRef() {
     }
 
-    public EmailAttachmentRef(Attachment attachment, String filename) {
+    public EmailAttachmentRef(Attachment attachment) {
         this.attachment = attachment;
-        this.filename = filename;
     }
 
     void attachTo(EmailMessage email) {
         this.email = email;
     }
 }
-
