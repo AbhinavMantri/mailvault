@@ -19,7 +19,7 @@ The goal of MailVault is to demonstrate a production-minded design for this prob
 
 ## Target Architecture
 
-![MailVault architecture](docs/architecture-linkedin.svg)
+![MailVault architecture](docs/mailvault-hld.svg)
 
 Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 

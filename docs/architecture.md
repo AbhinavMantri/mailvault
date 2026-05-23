@@ -6,7 +6,7 @@ Editable Draw.io source: [architecture.drawio](architecture.drawio)
 
 ## Diagrams
 
-- [Main HLD](architecture-linkedin.svg): high-level system view for README and portfolio scanning.
+- [Main HLD](mailvault-hld.svg): high-level system view for README and portfolio scanning.
 - [Business Use Cases](diagrams/business-use-cases.svg): user, system, and operations scenarios that explain why the platform exists.
 - [Attachment Security Flow](diagrams/attachment-security-flow.svg): attachment hashing, deduplication, antivirus scanning, and quarantine behavior.
 - [Storage Lifecycle Flow](diagrams/storage-lifecycle-flow.svg): hot storage, archival movement, search continuity, and restore behavior.
