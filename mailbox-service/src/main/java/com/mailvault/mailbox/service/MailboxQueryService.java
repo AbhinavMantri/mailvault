@@ -4,14 +4,11 @@ import com.mailvault.mailbox.api.AttachmentResponse;
 import com.mailvault.mailbox.api.EmailDetailResponse;
 import com.mailvault.mailbox.api.InboxItemResponse;
 import com.mailvault.mailbox.api.RecipientResponse;
-import com.mailvault.mailbox.api.StorageUsageResponse;
 import com.mailvault.mailbox.repository.AttachmentRow;
 import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
-import com.mailvault.mailbox.repository.StorageUsageRepository;
-import com.mailvault.mailbox.repository.StorageUsageRow;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +22,9 @@ import java.util.UUID;
 public class MailboxQueryService {
 
     private final EmailMessageRepository emailMessageRepository;
-    private final StorageUsageRepository storageUsageRepository;
 
-    public MailboxQueryService(
-            EmailMessageRepository emailMessageRepository,
-            StorageUsageRepository storageUsageRepository
-    ) {
+    public MailboxQueryService(EmailMessageRepository emailMessageRepository) {
         this.emailMessageRepository = emailMessageRepository;
-        this.storageUsageRepository = storageUsageRepository;
     }
 
     public List<InboxItemResponse> getInbox(String userId, int limit) {
@@ -64,23 +56,6 @@ public class MailboxQueryService {
                 email.logicalSizeBytes(),
                 recipients,
                 attachments
-        );
-    }
-
-    public StorageUsageResponse getStorageUsage(String userId) {
-        StorageUsageRow usage = storageUsageRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "storage usage not found"));
-
-        double usedPercent = usage.quotaBytes() == 0
-                ? 0
-                : (usage.usedBytes() * 100.0) / usage.quotaBytes();
-
-        return new StorageUsageResponse(
-                usage.userId(),
-                usage.usedBytes(),
-                usage.quotaBytes(),
-                usedPercent,
-                usage.updatedAt()
         );
     }
 

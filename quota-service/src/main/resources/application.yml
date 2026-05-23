@@ -1,0 +1,16 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: quota-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/mailvault}
+    username: ${DB_USERNAME:mailvault}
+    password: ${DB_PASSWORD:mailvault}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

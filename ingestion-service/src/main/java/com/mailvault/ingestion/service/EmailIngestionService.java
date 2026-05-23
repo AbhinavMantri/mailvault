@@ -9,12 +9,11 @@ import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.domain.EmailRecipient;
 import com.mailvault.ingestion.domain.EmailStatus;
 import com.mailvault.ingestion.domain.RecipientType;
-import com.mailvault.ingestion.domain.StorageUsage;
 import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
+import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
-import com.mailvault.ingestion.repository.StorageUsageRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,23 +26,21 @@ import java.util.UUID;
 @Service
 public class EmailIngestionService {
 
-    private static final long DEFAULT_USER_QUOTA_BYTES = 5L * 1024 * 1024 * 1024;
-
     private final ObjectStorageService objectStorageService;
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
-    private final StorageUsageRepository storageUsageRepository;
+    private final QuotaClient quotaClient;
     private final EmailEventPublisher emailEventPublisher;
 
     public EmailIngestionService(ObjectStorageService objectStorageService,
                                  EmailMessageRepository emailMessageRepository,
                                  AttachmentRepository attachmentRepository,
-                                 StorageUsageRepository storageUsageRepository,
+                                 QuotaClient quotaClient,
                                  EmailEventPublisher emailEventPublisher) {
         this.objectStorageService = objectStorageService;
         this.emailMessageRepository = emailMessageRepository;
         this.attachmentRepository = attachmentRepository;
-        this.storageUsageRepository = storageUsageRepository;
+        this.quotaClient = quotaClient;
         this.emailEventPublisher = emailEventPublisher;
     }
 
@@ -54,11 +51,7 @@ public class EmailIngestionService {
         List<Attachment> attachments = findUploadedAttachments(request);
         long logicalSizeBytes = calculateLogicalSize(request, attachments);
 
-        StorageUsage storageUsage = storageUsageRepository.findById(request.userId())
-                .orElseGet(() -> new StorageUsage(request.userId(), 0, DEFAULT_USER_QUOTA_BYTES, receivedAt));
-        if (!storageUsage.canAccept(logicalSizeBytes)) {
-            throw new IllegalArgumentException("User storage quota exceeded");
-        }
+        quotaClient.reserve(request.userId(), logicalSizeBytes);
 
         String rawObjectKey = "users/%s/emails/%s/raw.eml".formatted(request.userId(), emailId);
         String textObjectKey = "users/%s/emails/%s/body.txt".formatted(request.userId(), emailId);
@@ -87,8 +80,6 @@ public class EmailIngestionService {
         request.to().forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
         attachments.forEach(attachment -> email.addAttachmentRef(new EmailAttachmentRef(attachment)));
 
-        storageUsage.addUsage(logicalSizeBytes, receivedAt);
-        storageUsageRepository.save(storageUsage);
         emailMessageRepository.save(email);
 
         // TODO: replace direct Kafka publish with transactional outbox and idempotency key support.

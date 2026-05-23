@@ -4,29 +4,28 @@ import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
-import com.mailvault.ingestion.domain.StorageUsage;
 import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
+import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
-import com.mailvault.ingestion.repository.StorageUsageRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +43,7 @@ class EmailIngestionServiceTest {
     private AttachmentRepository attachmentRepository;
 
     @Mock
-    private StorageUsageRepository storageUsageRepository;
+    private QuotaClient quotaClient;
 
     @Mock
     private EmailEventPublisher emailEventPublisher;
@@ -63,8 +62,6 @@ class EmailIngestionServiceTest {
                 "<p>Invoice attached.</p>",
                 List.of()
         );
-        when(storageUsageRepository.findById("user-123")).thenReturn(Optional.empty());
-
         var response = emailIngestionService.importEmail(request);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
@@ -72,7 +69,7 @@ class EmailIngestionServiceTest {
         verify(objectStorageService).putText(any(), any(), eq("message/rfc822"));
         verify(objectStorageService).putText(any(), eq("Invoice attached."), eq("text/plain"));
         verify(objectStorageService).putText(any(), eq("<p>Invoice attached.</p>"), eq("text/html"));
-        verify(storageUsageRepository).save(any(StorageUsage.class));
+        verify(quotaClient).reserve(eq("user-123"), anyLong());
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(emailEventPublisher).publishEmailReceived(any(EmailReceivedEvent.class));
     }
@@ -90,7 +87,6 @@ class EmailIngestionServiceTest {
                 null,
                 List.of(attachmentId)
         );
-        when(storageUsageRepository.findById("user-123")).thenReturn(Optional.empty());
         when(attachmentRepository.findByIdInAndUserIdAndStatus(
                 List.of(attachmentId),
                 "user-123",
@@ -100,6 +96,7 @@ class EmailIngestionServiceTest {
         var response = emailIngestionService.importEmail(request);
 
         assertThat(response.logicalSizeBytes()).isEqualTo("Body".length() + 512);
+        verify(quotaClient).reserve("user-123", "Body".length() + 512);
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(emailEventPublisher).publishEmailReceived(any(EmailReceivedEvent.class));
     }
@@ -125,6 +122,7 @@ class EmailIngestionServiceTest {
         assertThatThrownBy(() -> emailIngestionService.importEmail(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("All attachments must be uploaded before email import");
+        verify(quotaClient, never()).reserve(any(), anyLong());
         verify(emailMessageRepository, never()).save(any());
         verify(emailEventPublisher, never()).publishEmailReceived(any());
     }
@@ -140,8 +138,10 @@ class EmailIngestionServiceTest {
                 null,
                 List.of()
         );
-        StorageUsage usage = new StorageUsage("user-123", 5L * 1024 * 1024 * 1024, 5L * 1024 * 1024 * 1024, Instant.now());
-        when(storageUsageRepository.findById("user-123")).thenReturn(Optional.of(usage));
+        long logicalSizeBytes = "Body".length();
+        doThrow(new IllegalArgumentException("User storage quota exceeded"))
+                .when(quotaClient)
+                .reserve("user-123", logicalSizeBytes);
 
         assertThatThrownBy(() -> emailIngestionService.importEmail(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -164,4 +164,3 @@ class EmailIngestionServiceTest {
         );
     }
 }
-

@@ -19,8 +19,8 @@ Hardening items to complete before treating ingestion-service as production-read
 
 ## Quota
 
-- Decide whether quota is reserved at attachment initiate, upload complete, or email import.
-- Prevent quota races for concurrent uploads/imports from the same user.
+- Add compensation behavior if quota reservation succeeds but later object storage or metadata persistence fails.
+- Decide whether quota should be reserved earlier at attachment initiate/upload complete for very large uploads.
 
 ## Testing
 
@@ -33,4 +33,3 @@ Hardening items to complete before treating ingestion-service as production-read
 - Add asynchronous antivirus scanning.
 - Block attachment download until scan verdict is clean.
 - Quarantine infected attachments.
-

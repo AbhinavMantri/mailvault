@@ -5,8 +5,6 @@ import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
-import com.mailvault.mailbox.repository.StorageUsageRepository;
-import com.mailvault.mailbox.repository.StorageUsageRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,9 +26,6 @@ class MailboxQueryServiceTest {
 
     @Mock
     private EmailMessageRepository emailMessageRepository;
-
-    @Mock
-    private StorageUsageRepository storageUsageRepository;
 
     @InjectMocks
     private MailboxQueryService mailboxQueryService;
@@ -101,17 +96,4 @@ class MailboxQueryServiceTest {
                 .hasMessageContaining("404 NOT_FOUND");
     }
 
-    @Test
-    void getStorageUsageCalculatesUsedPercentage() {
-        Instant updatedAt = Instant.parse("2026-05-23T09:00:00Z");
-        when(storageUsageRepository.findByUserId("user-123"))
-                .thenReturn(Optional.of(new StorageUsageRow("user-123", 25L, 100L, updatedAt)));
-
-        var response = mailboxQueryService.getStorageUsage("user-123");
-
-        assertThat(response.usedBytes()).isEqualTo(25L);
-        assertThat(response.quotaBytes()).isEqualTo(100L);
-        assertThat(response.usedPercent()).isEqualTo(25.0);
-        assertThat(response.updatedAt()).isEqualTo(updatedAt);
-    }
 }

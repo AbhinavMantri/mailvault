@@ -1,0 +1,61 @@
+package com.mailvault.quota.service;
+
+import com.mailvault.quota.api.QuotaReservationResponse;
+import com.mailvault.quota.api.StorageUsageResponse;
+import com.mailvault.quota.repository.StorageUsageRepository;
+import com.mailvault.quota.repository.StorageUsageRow;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+@Transactional(readOnly = true)
+public class QuotaQueryService {
+
+    private static final long DEFAULT_USER_QUOTA_BYTES = 5L * 1024 * 1024 * 1024;
+
+    private final StorageUsageRepository storageUsageRepository;
+
+    public QuotaQueryService(StorageUsageRepository storageUsageRepository) {
+        this.storageUsageRepository = storageUsageRepository;
+    }
+
+    public StorageUsageResponse getStorageUsage(String userId) {
+        StorageUsageRow usage = storageUsageRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "storage usage not found"));
+
+        double usedPercent = usage.quotaBytes() == 0
+                ? 0
+                : (usage.usedBytes() * 100.0) / usage.quotaBytes();
+
+        return new StorageUsageResponse(
+                usage.userId(),
+                usage.usedBytes(),
+                usage.quotaBytes(),
+                usedPercent,
+                usage.updatedAt()
+        );
+    }
+
+    @Transactional
+    public QuotaReservationResponse reserve(String userId, long bytes) {
+        java.time.Instant now = java.time.Instant.now();
+        StorageUsageRow usage = storageUsageRepository.findByUserIdForUpdate(userId)
+                .orElseGet(() -> storageUsageRepository.insertDefaultUsage(userId, DEFAULT_USER_QUOTA_BYTES, now));
+
+        long updatedUsage = usage.usedBytes() + bytes;
+        if (updatedUsage > usage.quotaBytes()) {
+            throw new QuotaExceededException("User storage quota exceeded");
+        }
+
+        storageUsageRepository.updateUsage(userId, updatedUsage, now);
+        return new QuotaReservationResponse(
+                userId,
+                bytes,
+                updatedUsage,
+                usage.quotaBytes(),
+                "RESERVED"
+        );
+    }
+}

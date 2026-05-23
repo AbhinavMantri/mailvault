@@ -1,6 +1,6 @@
 # Ingestion Service
 
-Accepts email imports, creates presigned upload URLs for attachments, stores raw email content in MinIO, persists mailbox metadata in Postgres, updates logical storage usage, and publishes an `email.received` Kafka event.
+Accepts email imports, creates presigned upload URLs for attachments, stores raw email content in MinIO, persists mailbox metadata in Postgres, reserves logical storage through `quota-service`, and publishes an `email.received` Kafka event.
 
 ## Run Locally
 
@@ -9,6 +9,8 @@ From the repository root:
 ```bash
 docker compose up -d
 ```
+
+Start `quota-service` before importing emails because ingestion reserves quota through it.
 
 Then start the service:
 

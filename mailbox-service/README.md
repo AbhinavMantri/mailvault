@@ -6,7 +6,6 @@ Read-side service for mailbox APIs.
 
 - List a user's inbox from finalized email metadata.
 - Return email detail including recipients and attachment metadata.
-- Return storage usage for quota visibility.
 
 This service is intentionally read-only in the current phase. Schema ownership remains with `ingestion-service` until migrations are extracted into a shared database module.
 
@@ -45,10 +44,4 @@ Read an email detail record:
 
 ```bash
 curl "http://localhost:8082/emails/{emailId}?userId=user-123"
-```
-
-Read storage usage:
-
-```bash
-curl http://localhost:8082/users/user-123/storage
 ```

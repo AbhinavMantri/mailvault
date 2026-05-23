@@ -1,4 +1,4 @@
-package com.mailvault.mailbox.api;
+package com.mailvault.quota.api;
 
 import java.time.Instant;
 

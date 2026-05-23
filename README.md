@@ -32,13 +32,13 @@ Focused diagrams:
 ## MVP Scope
 
 - Import email through an API. _Implemented in `ingestion-service`._
-- Read inbox, email detail, and storage usage through APIs. _Implemented in `mailbox-service`._
+- Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events to Kafka. _Implemented for `email.received`._
 - Index searchable fields in OpenSearch.
 - Search by sender, recipient, subject, body, date, and labels.
-- Track per-user storage quota. _Initial logical usage tracking added._
+- Track per-user storage quota. _Initial quota reservation and storage usage APIs added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Planned in async attachment worker; upload lifecycle is implemented._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
 
@@ -50,7 +50,14 @@ Start the local infrastructure:
 docker compose up -d
 ```
 
-Run the ingestion service:
+Run the quota service:
+
+```bash
+cd quota-service
+mvn spring-boot:run
+```
+
+Run the ingestion service in another terminal:
 
 ```bash
 cd ingestion-service
@@ -105,6 +112,7 @@ Local endpoints:
 | --- | --- |
 | Ingestion service | `http://localhost:8081` |
 | Mailbox service | `http://localhost:8082` |
+| Quota service | `http://localhost:8083` |
 | MinIO console | `http://localhost:9001` |
 | OpenSearch | `http://localhost:9200` |
 | Postgres | `localhost:5432` |
@@ -122,11 +130,11 @@ Local endpoints:
 | Service | Responsibility |
 | --- | --- |
 | `ingestion-service` | Accept email imports, persist metadata, store raw content, publish events |
-| `mailbox-service` | Serve inbox, message detail, and storage usage read APIs |
+| `mailbox-service` | Serve inbox and message detail read APIs |
+| `quota-service` | Reserve quota, track logical storage usage, and serve storage usage APIs |
 | `search-indexer` | Consume indexing events and update OpenSearch |
 | `attachment-worker` | Extract attachment metadata, compute content hashes, and support deduplication |
 | `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
-| `quota-service` | Track user storage usage and enforce quota decisions |
 | `archival-worker` | Move old email content to archival object-storage prefixes |
 
 ## Engineering Themes
@@ -149,12 +157,14 @@ Implemented so far:
 - Docker Compose infrastructure for Postgres, Kafka, MinIO, and OpenSearch
 - Spring Boot `ingestion-service`
 - Spring Boot `mailbox-service`
+- Spring Boot `quota-service`
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
+- `POST /quota/reservations`
 - `GET /mailboxes/{userId}/inbox`
 - `GET /emails/{emailId}?userId={userId}`
-- `GET /users/{userId}/storage`
+- `GET /users/{userId}/storage` from `quota-service`
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
 - MinIO object writes for raw email/body and direct attachment uploads
 - uploaded attachment references on email import

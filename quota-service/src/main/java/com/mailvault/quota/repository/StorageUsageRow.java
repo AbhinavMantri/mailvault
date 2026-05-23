@@ -1,4 +1,4 @@
-package com.mailvault.mailbox.repository;
+package com.mailvault.quota.repository;
 
 import java.time.Instant;
 
