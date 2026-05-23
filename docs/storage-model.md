@@ -4,15 +4,18 @@
 
 Stores durable structured state:
 
-- users
-- mailboxes
 - emails
 - recipients
-- labels
 - attachments
 - email_attachment_refs
 - storage_usage
 - outbox_events
+
+Planned later:
+
+- users
+- mailboxes
+- labels
 
 ## Object Storage
 
@@ -42,4 +45,3 @@ Quota accounting can be configured in two ways:
 - logical usage: count attachment bytes per user reference
 
 For a consumer mailbox product, logical usage is usually easier to explain to users. For infrastructure cost analysis, physical usage is more accurate.
-
