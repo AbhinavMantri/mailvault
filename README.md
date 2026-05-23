@@ -19,26 +19,9 @@ The goal of MailVault is to demonstrate a production-minded design for this prob
 
 ## Target Architecture
 
-Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
+![MailVault architecture](docs/architecture.svg)
 
-```text
-Email Import API
-      |
-      v
-Ingestion Service
-      |
-      |-- metadata ----------> Postgres
-      |-- raw body/files ----> MinIO
-      |-- events ------------> Kafka
-                                |
-                                v
-               +----------------+----------------+
-               |                |                |
-          Search Indexer   Quota Worker   Archival Worker
-               |                |                |
-               v                v                v
-          OpenSearch        Postgres          MinIO archive
-```
+Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 
 ## MVP Scope
 

@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">MailVault architecture</title>
+  <desc id="desc">Scalable email storage, search, and archival architecture showing ingestion, metadata storage, object storage, Kafka events, async workers, search, quota, archival, and observability.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1F618D"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#148F77"/>
+    </marker>
+    <marker id="arrow-gold" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#B7950B"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#C0392B"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#7D3C98"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#566573"/>
+    </marker>
+    <style>
+      .title { font: 700 24px Arial, sans-serif; fill: #17202A; }
+      .box-title { font: 700 16px Arial, sans-serif; fill: #17202A; }
+      .box-subtitle { font: 12px Arial, sans-serif; fill: #2C3E50; }
+      .label { font: 12px Arial, sans-serif; fill: #34495E; }
+      .blue { stroke: #2874A6; fill: #EBF5FB; }
+      .client { stroke: #2E86C1; fill: #EAF2F8; }
+      .green { stroke: #148F77; fill: #E8F8F5; }
+      .gold { stroke: #B7950B; fill: #FEF9E7; }
+      .red { stroke: #C0392B; fill: #FDEDEC; }
+      .purple { stroke: #7D3C98; fill: #F4ECF7; }
+      .gray { stroke: #566573; fill: #EAECEE; }
+      .observability { stroke: #7B7D7D; fill: #F8F9F9; stroke-dasharray: 8 6; }
+      rect { stroke-width: 2; rx: 8; ry: 8; }
+      path, line, polyline { fill: none; stroke-width: 2.5; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="900" fill="#FFFFFF"/>
+  <text x="700" y="58" text-anchor="middle" class="title">MailVault - Scalable Email Storage, Search, and Archival Architecture</text>
+
+  <rect x="70" y="130" width="170" height="70" class="client"/>
+  <text x="155" y="160" text-anchor="middle" class="box-title">Client / Import API</text>
+  <text x="155" y="181" text-anchor="middle" class="box-subtitle">import and read APIs</text>
+
+  <rect x="330" y="130" width="190" height="80" class="blue"/>
+  <text x="425" y="160" text-anchor="middle" class="box-title">Ingestion Service</text>
+  <text x="425" y="183" text-anchor="middle" class="box-subtitle">validate, persist, publish</text>
+
+  <rect x="660" y="90" width="190" height="90" class="green"/>
+  <text x="755" y="123" text-anchor="middle" class="box-title">Postgres</text>
+  <text x="755" y="146" text-anchor="middle" class="box-subtitle">metadata, mailbox state</text>
+  <text x="755" y="164" text-anchor="middle" class="box-subtitle">quota, outbox</text>
+
+  <rect x="660" y="220" width="190" height="90" class="gold"/>
+  <text x="755" y="252" text-anchor="middle" class="box-title">MinIO Object Storage</text>
+  <text x="755" y="275" text-anchor="middle" class="box-subtitle">raw MIME, bodies</text>
+  <text x="755" y="293" text-anchor="middle" class="box-subtitle">attachments</text>
+
+  <rect x="660" y="360" width="190" height="100" class="red"/>
+  <text x="755" y="392" text-anchor="middle" class="box-title">Kafka</text>
+  <text x="755" y="415" text-anchor="middle" class="box-subtitle">email.received</text>
+  <text x="755" y="433" text-anchor="middle" class="box-subtitle">quota events</text>
+  <text x="755" y="451" text-anchor="middle" class="box-subtitle">archival events</text>
+
+  <rect x="980" y="310" width="170" height="70" class="purple"/>
+  <text x="1065" y="351" text-anchor="middle" class="box-title">Search Indexer</text>
+
+  <rect x="980" y="410" width="170" height="70" class="purple"/>
+  <text x="1065" y="439" text-anchor="middle" class="box-title">Quota Service</text>
+  <text x="1065" y="462" text-anchor="middle" class="box-subtitle">usage accounting</text>
+
+  <rect x="980" y="510" width="170" height="70" class="purple"/>
+  <text x="1065" y="539" text-anchor="middle" class="box-title">Archival Worker</text>
+  <text x="1065" y="562" text-anchor="middle" class="box-subtitle">lifecycle policies</text>
+
+  <rect x="1210" y="310" width="170" height="80" class="gray"/>
+  <text x="1295" y="344" text-anchor="middle" class="box-title">OpenSearch</text>
+  <text x="1295" y="367" text-anchor="middle" class="box-subtitle">derived search index</text>
+
+  <rect x="1210" y="510" width="170" height="80" class="gold"/>
+  <text x="1295" y="542" text-anchor="middle" class="box-title">Archive Prefix</text>
+  <text x="1295" y="565" text-anchor="middle" class="box-subtitle">older raw content</text>
+
+  <rect x="330" y="570" width="190" height="90" class="blue"/>
+  <text x="425" y="602" text-anchor="middle" class="box-title">Mailbox Service</text>
+  <text x="425" y="625" text-anchor="middle" class="box-subtitle">inbox, detail, labels</text>
+  <text x="425" y="643" text-anchor="middle" class="box-subtitle">search API</text>
+
+  <rect x="660" y="650" width="260" height="90" class="observability"/>
+  <text x="790" y="682" text-anchor="middle" class="box-title">Observability</text>
+  <text x="790" y="705" text-anchor="middle" class="box-subtitle">logs, metrics, traces</text>
+  <text x="790" y="723" text-anchor="middle" class="box-subtitle">queue lag, quota rejects</text>
+
+  <line x1="240" y1="165" x2="330" y2="170" stroke="#1F618D" marker-end="url(#arrow-blue)"/>
+  <text x="285" y="151" text-anchor="middle" class="label">import email</text>
+
+  <line x1="520" y1="155" x2="660" y2="135" stroke="#148F77" marker-end="url(#arrow-green)"/>
+  <text x="590" y="132" text-anchor="middle" class="label">metadata</text>
+
+  <line x1="520" y1="185" x2="660" y2="265" stroke="#B7950B" marker-end="url(#arrow-gold)"/>
+  <text x="582" y="239" text-anchor="middle" class="label">raw body + attachments</text>
+
+  <polyline points="425,210 425,410 660,410" stroke="#C0392B" marker-end="url(#arrow-red)"/>
+  <text x="535" y="392" text-anchor="middle" class="label">events</text>
+
+  <line x1="850" y1="395" x2="980" y2="345" stroke="#7D3C98" marker-end="url(#arrow-purple)"/>
+  <text x="915" y="354" text-anchor="middle" class="label">consume</text>
+
+  <line x1="850" y1="420" x2="980" y2="445" stroke="#7D3C98" marker-end="url(#arrow-purple)"/>
+  <text x="915" y="421" text-anchor="middle" class="label">consume</text>
+
+  <line x1="850" y1="445" x2="980" y2="545" stroke="#7D3C98" marker-end="url(#arrow-purple)"/>
+  <text x="914" y="510" text-anchor="middle" class="label">consume</text>
+
+  <line x1="1150" y1="345" x2="1210" y2="350" stroke="#566573" marker-end="url(#arrow-gray)"/>
+  <text x="1180" y="333" text-anchor="middle" class="label">index document</text>
+
+  <polyline points="980,445 900,445 900,135 850,135" stroke="#148F77" marker-end="url(#arrow-green)"/>
+  <text x="916" y="294" text-anchor="middle" class="label">usage update</text>
+
+  <line x1="1150" y1="545" x2="1210" y2="550" stroke="#B7950B" marker-end="url(#arrow-gold)"/>
+  <text x="1180" y="532" text-anchor="middle" class="label">move old content</text>
+
+  <polyline points="520,602 610,602 610,155 660,155" stroke="#148F77" marker-end="url(#arrow-green)"/>
+  <text x="586" y="370" text-anchor="middle" class="label">mailbox reads</text>
+
+  <polyline points="520,632 1295,632 1295,390" stroke="#566573" marker-end="url(#arrow-gray)"/>
+  <text x="896" y="620" text-anchor="middle" class="label">search queries</text>
+
+  <polyline points="155,200 155,615 330,615" stroke="#1F618D" marker-end="url(#arrow-blue)"/>
+  <text x="230" y="602" text-anchor="middle" class="label">read APIs</text>
+
+  <line x1="755" y1="460" x2="790" y2="650" stroke="#7B7D7D" stroke-dasharray="8 6" marker-end="url(#arrow-gray)"/>
+  <text x="743" y="558" text-anchor="middle" class="label">signals</text>
+
+  <line x1="520" y1="640" x2="660" y2="690" stroke="#7B7D7D" stroke-dasharray="8 6" marker-end="url(#arrow-gray)"/>
+  <text x="590" y="648" text-anchor="middle" class="label">signals</text>
+</svg>
