@@ -1,0 +1,22 @@
+# Build outputs
+target/
+build/
+dist/
+out/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store
+
