@@ -16,6 +16,7 @@ email.archived
 
 ```text
 POST /emails/import
+  -> reserve quota through quota-service
   -> store objects
   -> persist metadata
   -> write outbox event
@@ -28,8 +29,11 @@ POST /emails/import
 email.received
   -> search-indexer indexes body, subject, sender, recipients, labels
   -> attachment-worker extracts metadata and computes content hashes
-  -> quota-service updates usage
   -> archival-worker evaluates lifecycle rules
+
+quota-service
+  -> records quota reservation during import
+  -> may publish quota.updated for projections and observability
 ```
 
 ## Reliability Notes

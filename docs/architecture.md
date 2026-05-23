@@ -21,17 +21,18 @@ Postgres is the source of truth for structured mailbox state. MinIO stores large
 Client
   -> Ingestion Service
   -> Validate request
+  -> Reserve logical storage in Quota Service
   -> Store raw content and attachments in MinIO
   -> Save metadata in Postgres
   -> Publish email.received event
   -> Return accepted response
 ```
 
-The write path should avoid blocking on search indexing, archival, quota recalculation, or expensive attachment processing.
+The write path blocks only on work required to safely accept the email: validation, quota reservation, object storage, metadata persistence, and event handoff. Search indexing, archival, antivirus scanning, deduplication, and quota reconciliation remain asynchronous.
 
 ## Read Path
 
-Mailbox list and email detail APIs read from Postgres. Full-text search reads from OpenSearch and resolves canonical message state from Postgres when needed.
+Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. Full-text search reads from OpenSearch and resolves canonical message state from Postgres when needed.
 
 Attachment metadata extraction and hash-based deduplication run asynchronously. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content.
 
@@ -46,4 +47,5 @@ Email metadata is strongly persisted before the import request succeeds. Search 
 - If OpenSearch is unavailable, email ingestion should continue.
 - If Kafka publish fails after metadata persistence, an outbox table can be used to recover event delivery.
 - If MinIO storage fails, ingestion should fail before metadata is committed.
-- If quota calculation lags, the system should use a conservative stored usage value before accepting large imports.
+- If quota reservation fails, ingestion should reject the import before writing objects.
+- If quota reservation succeeds but later storage or metadata persistence fails, a compensation path should release the reserved bytes.

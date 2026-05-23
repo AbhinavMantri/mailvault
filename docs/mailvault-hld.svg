@@ -65,20 +65,20 @@
 
   <rect x="430" y="225" width="880" height="635" rx="30" fill="#07111F" stroke="#E2E8F0" stroke-width="3"/>
   <text x="470" y="275" class="group-title">Core MailVault Services</text>
-  <text x="470" y="307" class="group-note">The critical path stores durable truth first. Expensive work moves behind Kafka.</text>
+  <text x="470" y="307" class="group-note">Quota is reserved before import persistence. Expensive work moves behind Kafka.</text>
 
   <path class="arrow" d="M372 583 L420 583" marker-end="url(#arrow)"/>
   <text x="382" y="556" class="label">service calls</text>
 
   <rect x="455" y="360" width="250" height="145" class="box" fill="#252A55" stroke="#818CF8" filter="url(#shadow)"/>
   <text x="580" y="412" text-anchor="middle" class="box-title">Ingestion</text>
-  <text x="580" y="452" text-anchor="middle" class="box-body">Validate, store,</text>
-  <text x="580" y="481" text-anchor="middle" class="box-body">publish event</text>
+  <text x="580" y="452" text-anchor="middle" class="box-body">Validate, reserve,</text>
+  <text x="580" y="481" text-anchor="middle" class="box-body">store and publish</text>
 
   <rect x="745" y="360" width="250" height="145" class="box" fill="#173B2D" stroke="#34D399" filter="url(#shadow)"/>
   <text x="870" y="412" text-anchor="middle" class="box-title">Mailbox</text>
-  <text x="870" y="452" text-anchor="middle" class="box-body">Inbox, detail,</text>
-  <text x="870" y="481" text-anchor="middle" class="box-body">labels, archive</text>
+  <text x="870" y="452" text-anchor="middle" class="box-body">Inbox and</text>
+  <text x="870" y="481" text-anchor="middle" class="box-body">message detail</text>
 
   <rect x="1035" y="360" width="250" height="145" class="box" fill="#34224F" stroke="#A78BFA" filter="url(#shadow)"/>
   <text x="1160" y="412" text-anchor="middle" class="box-title">Search API</text>
@@ -87,8 +87,8 @@
 
   <rect x="455" y="620" width="250" height="145" class="box" fill="#4A3415" stroke="#FBBF24" filter="url(#shadow)"/>
   <text x="580" y="672" text-anchor="middle" class="box-title">Quota Service</text>
-  <text x="580" y="712" text-anchor="middle" class="box-body">Usage accounting,</text>
-  <text x="580" y="741" text-anchor="middle" class="box-body">quota decisions</text>
+  <text x="580" y="712" text-anchor="middle" class="box-body">Reserve usage,</text>
+  <text x="580" y="741" text-anchor="middle" class="box-body">storage API</text>
 
   <rect x="745" y="620" width="250" height="145" class="box" fill="#4A1F2A" stroke="#F87171" filter="url(#shadow)"/>
   <text x="870" y="672" text-anchor="middle" class="box-title">Search Indexer</text>
@@ -123,11 +123,15 @@
 
   <path class="soft-arrow" d="M705 432 L735 432" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M995 432 L1025 432" marker-end="url(#softArrow)"/>
+  <path class="arrow" d="M580 505 L580 610" marker-end="url(#arrow)"/>
+  <text x="602" y="565" class="label">reserve quota</text>
   <path class="soft-arrow" d="M870 505 L870 610" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1160 505 L1160 610" marker-end="url(#softArrow)"/>
 
   <path class="soft-arrow" d="M1285 404 L1350 320" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1285 455 L1350 480" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M705 688 C900 680 1160 350 1350 335" marker-end="url(#softArrow)"/>
+  <text x="1000" y="555" class="label">usage ledger</text>
   <path class="soft-arrow" d="M1285 660 L1330 640" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1285 715 L1350 800" marker-end="url(#softArrow)"/>
 
@@ -138,7 +142,6 @@
   <path class="event-arrow" d="M580 765 L580 895" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M870 765 L870 895" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M1160 765 L1160 895" marker-end="url(#eventArrow)"/>
-  <path class="event-arrow" d="M580 620 C580 575 580 550 580 515" marker-end="url(#eventArrow)"/>
 
   <rect x="92" y="840" width="300" height="170" rx="24" fill="#07111F" stroke="#E2E8F0" stroke-width="3" filter="url(#shadow)"/>
   <text x="242" y="902" text-anchor="middle" class="box-title">Core Rule</text>
