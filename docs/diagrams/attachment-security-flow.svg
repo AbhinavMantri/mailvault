@@ -10,9 +10,9 @@
       .small { font: 400 14px Arial, Helvetica, sans-serif; fill: #4b5563; }
       .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #334155; }
       .white-title { font: 700 26px Arial, Helvetica, sans-serif; fill: #ffffff; }
-      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #dbeafe; }
+      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #D8F3EE; }
       .arrow { stroke: #334155; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-      .event-arrow { stroke: #ea580c; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .event-arrow { stroke: #B7791F; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
       .soft-arrow { stroke: #64748b; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; }
       .box { stroke-width: 3; rx: 22; }
     </style>
@@ -20,19 +20,19 @@
       <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
     </marker>
     <marker id="eventArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-      <path d="M0 0 L10 5 L0 10 z" fill="#ea580c"/>
+      <path d="M0 0 L10 5 L0 10 z" fill="#B7791F"/>
     </marker>
     <marker id="softArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
     </marker>
     <linearGradient id="pageBg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
       <stop stop-color="#f8fafc"/>
-      <stop offset="0.56" stop-color="#eff6ff"/>
-      <stop offset="1" stop-color="#f0fdf4"/>
+      <stop offset="0.56" stop-color="#EEF6F3"/>
+      <stop offset="1" stop-color="#F6F8EE"/>
     </linearGradient>
     <linearGradient id="scannerBg" x1="610" y1="682" x2="990" y2="782" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#7f1d1d"/>
+      <stop offset="1" stop-color="#5C1F2E"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
@@ -45,23 +45,23 @@
   <text x="116" y="128" class="title">Attachment Security Flow</text>
   <text x="116" y="174" class="subtitle">Deduplicate files, scan before download, and quarantine unsafe content off the critical ingest path</text>
 
-  <rect x="115" y="290" width="240" height="130" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <rect x="115" y="290" width="240" height="130" class="box" fill="#D8F3EE" stroke="#0F766E" filter="url(#shadow)"/>
   <text x="235" y="342" text-anchor="middle" class="box-title">Email Stored</text>
   <text x="235" y="382" text-anchor="middle" class="box-body">Metadata committed</text>
   <text x="235" y="410" text-anchor="middle" class="box-body">objects in MinIO</text>
 
-  <rect x="445" y="290" width="240" height="130" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <rect x="445" y="290" width="240" height="130" class="box" fill="#FFF1D6" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="565" y="342" text-anchor="middle" class="box-title">Kafka Event</text>
   <text x="565" y="382" text-anchor="middle" class="box-body">email.received</text>
   <text x="565" y="410" text-anchor="middle" class="box-body">attachment pending</text>
 
-  <rect x="775" y="290" width="240" height="130" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <rect x="775" y="290" width="240" height="130" class="box" fill="#E8EAFF" stroke="#4F46E5" filter="url(#shadow)"/>
   <text x="895" y="334" text-anchor="middle" class="box-title">Attachment</text>
   <text x="895" y="362" text-anchor="middle" class="box-title">Worker</text>
   <text x="895" y="382" text-anchor="middle" class="box-body">Extract metadata</text>
   <text x="895" y="410" text-anchor="middle" class="box-body">compute SHA-256</text>
 
-  <rect x="1105" y="290" width="240" height="130" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="1105" y="290" width="240" height="130" class="box" fill="#E9F7EF" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="1225" y="342" text-anchor="middle" class="box-title">Dedupe Check</text>
   <text x="1225" y="382" text-anchor="middle" class="box-body">Reuse known object</text>
   <text x="1225" y="410" text-anchor="middle" class="box-body">or store new hash</text>
@@ -77,12 +77,12 @@
   <path class="event-arrow" d="M1225 420 C1225 570 1030 705 1000 728" marker-end="url(#eventArrow)"/>
   <text x="1192" y="555" class="label">scan.requested</text>
 
-  <rect x="245" y="645" width="250" height="145" class="box" fill="#f0fdf4" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="245" y="645" width="250" height="145" class="box" fill="#F6F8EE" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="370" y="697" text-anchor="middle" class="box-title">CLEAN</text>
   <text x="370" y="737" text-anchor="middle" class="box-body">Enable download</text>
   <text x="370" y="766" text-anchor="middle" class="box-body">include in quota</text>
 
-  <rect x="1105" y="645" width="250" height="145" class="box" fill="#fef2f2" stroke="#dc2626" filter="url(#shadow)"/>
+  <rect x="1105" y="645" width="250" height="145" class="box" fill="#FDECEC" stroke="#B91C1C" filter="url(#shadow)"/>
   <text x="1230" y="697" text-anchor="middle" class="box-title">INFECTED</text>
   <text x="1230" y="737" text-anchor="middle" class="box-body">Block download</text>
   <text x="1230" y="766" text-anchor="middle" class="box-body">quarantine object</text>

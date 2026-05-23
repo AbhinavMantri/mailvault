@@ -12,7 +12,7 @@
       .small { font: 400 16px Arial, Helvetica, sans-serif; fill: #4b5563; }
       .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #334155; }
       .white-title { font: 700 28px Arial, Helvetica, sans-serif; fill: #ffffff; }
-      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #dbeafe; }
+      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #D8F3EE; }
       .arrow { stroke: #334155; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
       .soft-arrow { stroke: #64748b; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; }
       .box { stroke-width: 3; rx: 20; }
@@ -25,12 +25,12 @@
     </marker>
     <linearGradient id="pageBg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
       <stop stop-color="#f8fafc"/>
-      <stop offset="0.58" stop-color="#eff6ff"/>
-      <stop offset="1" stop-color="#f0fdf4"/>
+      <stop offset="0.58" stop-color="#EEF6F3"/>
+      <stop offset="1" stop-color="#F6F8EE"/>
     </linearGradient>
     <linearGradient id="problemBg" x1="560" y1="345" x2="1040" y2="540" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#164e63"/>
+      <stop offset="1" stop-color="#124E57"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
@@ -47,22 +47,22 @@
   <text x="150" y="305" class="group-title">End User</text>
   <text x="150" y="335" class="group-note">Mailbox actions visible to users</text>
 
-  <rect x="130" y="380" width="320" height="92" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <rect x="130" y="380" width="320" height="92" class="box" fill="#D8F3EE" stroke="#0F766E" filter="url(#shadow)"/>
   <text x="290" y="407" text-anchor="middle" class="box-title">Import / Receive</text>
   <text x="290" y="430" text-anchor="middle" class="box-title">Email</text>
   <text x="290" y="454" text-anchor="middle" class="box-body">Body and attachments enter</text>
 
-  <rect x="130" y="505" width="320" height="92" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <rect x="130" y="505" width="320" height="92" class="box" fill="#E8EAFF" stroke="#4F46E5" filter="url(#shadow)"/>
   <text x="290" y="541" text-anchor="middle" class="box-title">Search Mailbox</text>
   <text x="290" y="566" text-anchor="middle" class="box-body">Find by sender, subject,</text>
   <text x="290" y="587" text-anchor="middle" class="box-body">body, and date</text>
 
-  <rect x="130" y="630" width="320" height="92" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="130" y="630" width="320" height="92" class="box" fill="#E9F7EF" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="290" y="660" text-anchor="middle" class="box-title">Manage Storage</text>
   <text x="290" y="685" text-anchor="middle" class="box-body">See usage, delete, archive</text>
   <text x="290" y="706" text-anchor="middle" class="box-body">reduce quota pressure</text>
 
-  <rect x="130" y="755" width="320" height="92" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <rect x="130" y="755" width="320" height="92" class="box" fill="#FFF1D6" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="290" y="783" text-anchor="middle" class="box-title">Download</text>
   <text x="290" y="806" text-anchor="middle" class="box-title">Attachments</text>
   <text x="290" y="831" text-anchor="middle" class="box-body">Only after clean scan</text>
@@ -77,19 +77,19 @@
   <text x="610" y="670" class="group-title">System Automation</text>
   <text x="610" y="700" class="group-note">Background work protecting cost and reliability</text>
 
-  <rect x="600" y="735" width="190" height="88" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="600" y="735" width="190" height="88" class="box" fill="#E9F7EF" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="695" y="769" text-anchor="middle" class="box-title">Deduplicate</text>
   <text x="695" y="800" text-anchor="middle" class="box-body">Hash attachments</text>
 
-  <rect x="810" y="735" width="190" height="88" class="box" fill="#fef2f2" stroke="#dc2626" filter="url(#shadow)"/>
+  <rect x="810" y="735" width="190" height="88" class="box" fill="#FDECEC" stroke="#B91C1C" filter="url(#shadow)"/>
   <text x="905" y="769" text-anchor="middle" class="box-title">Scan</text>
   <text x="905" y="800" text-anchor="middle" class="box-body">Block unsafe files</text>
 
-  <rect x="600" y="850" width="190" height="88" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <rect x="600" y="850" width="190" height="88" class="box" fill="#FFF1D6" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="695" y="884" text-anchor="middle" class="box-title">Enforce Quota</text>
   <text x="695" y="915" text-anchor="middle" class="box-body">Track usage</text>
 
-  <rect x="810" y="850" width="190" height="88" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <rect x="810" y="850" width="190" height="88" class="box" fill="#E8EAFF" stroke="#4F46E5" filter="url(#shadow)"/>
   <text x="905" y="884" text-anchor="middle" class="box-title">Archive</text>
   <text x="905" y="915" text-anchor="middle" class="box-body">Move old content</text>
 
@@ -98,22 +98,22 @@
   <text x="1170" y="333" class="group-note">Operational ownership</text>
   <text x="1170" y="355" class="group-note">and business visibility</text>
 
-  <rect x="1150" y="380" width="320" height="92" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <rect x="1150" y="380" width="320" height="92" class="box" fill="#D8F3EE" stroke="#0F766E" filter="url(#shadow)"/>
   <text x="1310" y="404" text-anchor="middle" class="box-title">Monitor Storage</text>
   <text x="1310" y="427" text-anchor="middle" class="box-title">Growth</text>
   <text x="1310" y="452" text-anchor="middle" class="box-body">Cost and quota pressure</text>
 
-  <rect x="1150" y="505" width="320" height="92" class="box" fill="#fef2f2" stroke="#dc2626" filter="url(#shadow)"/>
+  <rect x="1150" y="505" width="320" height="92" class="box" fill="#FDECEC" stroke="#B91C1C" filter="url(#shadow)"/>
   <text x="1310" y="532" text-anchor="middle" class="box-title">Track Security</text>
   <text x="1310" y="555" text-anchor="middle" class="box-title">Verdicts</text>
   <text x="1310" y="580" text-anchor="middle" class="box-body">Review bad scans</text>
 
-  <rect x="1150" y="630" width="320" height="92" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <rect x="1150" y="630" width="320" height="92" class="box" fill="#FFF1D6" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="1310" y="666" text-anchor="middle" class="box-title">Observe Queue Lag</text>
   <text x="1310" y="691" text-anchor="middle" class="box-body">Detect indexing or</text>
   <text x="1310" y="712" text-anchor="middle" class="box-body">worker backlogs</text>
 
-  <rect x="1150" y="755" width="320" height="92" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="1150" y="755" width="320" height="92" class="box" fill="#E9F7EF" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="1310" y="783" text-anchor="middle" class="box-title">Tune Retention</text>
   <text x="1310" y="806" text-anchor="middle" class="box-title">Policy</text>
   <text x="1310" y="831" text-anchor="middle" class="box-body">Balance cost and speed</text>

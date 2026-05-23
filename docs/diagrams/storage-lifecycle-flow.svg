@@ -10,10 +10,10 @@
       .small { font: 400 14px Arial, Helvetica, sans-serif; fill: #4b5563; }
       .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #334155; }
       .white-title { font: 700 26px Arial, Helvetica, sans-serif; fill: #ffffff; }
-      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #dbeafe; }
+      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #D8F3EE; }
       .arrow { stroke: #334155; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
       .soft-arrow { stroke: #64748b; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; }
-      .cost-arrow { stroke: #16a34a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .cost-arrow { stroke: #168A5B; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
       .box { stroke-width: 3; rx: 22; }
     </style>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
@@ -23,16 +23,16 @@
       <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
     </marker>
     <marker id="costArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
-      <path d="M0 0 L10 5 L0 10 z" fill="#16a34a"/>
+      <path d="M0 0 L10 5 L0 10 z" fill="#168A5B"/>
     </marker>
     <linearGradient id="pageBg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
       <stop stop-color="#f8fafc"/>
-      <stop offset="0.58" stop-color="#eff6ff"/>
-      <stop offset="1" stop-color="#f0fdf4"/>
+      <stop offset="0.58" stop-color="#EEF6F3"/>
+      <stop offset="1" stop-color="#F6F8EE"/>
     </linearGradient>
     <linearGradient id="archiveBg" x1="1038" y1="300" x2="1365" y2="445" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#14532d"/>
+      <stop offset="1" stop-color="#124E57"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
       <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
@@ -45,17 +45,17 @@
   <text x="116" y="128" class="title">Storage Lifecycle Flow</text>
   <text x="116" y="174" class="subtitle">Keep recent mailbox access fast while moving old heavy content into a cheaper archival tier</text>
 
-  <rect x="112" y="300" width="260" height="145" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <rect x="112" y="300" width="260" height="145" class="box" fill="#D8F3EE" stroke="#0F766E" filter="url(#shadow)"/>
   <text x="242" y="352" text-anchor="middle" class="box-title">Recent Email</text>
   <text x="242" y="392" text-anchor="middle" class="box-body">Metadata hot</text>
   <text x="242" y="421" text-anchor="middle" class="box-body">content in hot prefix</text>
 
-  <rect x="455" y="300" width="260" height="145" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <rect x="455" y="300" width="260" height="145" class="box" fill="#E9F7EF" stroke="#168A5B" filter="url(#shadow)"/>
   <text x="585" y="352" text-anchor="middle" class="box-title">Lifecycle Rule</text>
   <text x="585" y="392" text-anchor="middle" class="box-body">Age, size, access</text>
   <text x="585" y="421" text-anchor="middle" class="box-body">and policy checks</text>
 
-  <rect x="790" y="300" width="260" height="145" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <rect x="790" y="300" width="260" height="145" class="box" fill="#FFF1D6" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="920" y="344" text-anchor="middle" class="box-title">Archival</text>
   <text x="920" y="372" text-anchor="middle" class="box-title">Worker</text>
   <text x="920" y="392" text-anchor="middle" class="box-body">Move raw content</text>
@@ -76,12 +76,12 @@
   <text x="380" y="717" text-anchor="middle" class="box-body">Mailbox state stays hot</text>
   <text x="380" y="746" text-anchor="middle" class="box-body">object pointer changes</text>
 
-  <rect x="660" y="625" width="280" height="130" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <rect x="660" y="625" width="280" height="130" class="box" fill="#E8EAFF" stroke="#4F46E5" filter="url(#shadow)"/>
   <text x="800" y="677" text-anchor="middle" class="box-title">OpenSearch</text>
   <text x="800" y="717" text-anchor="middle" class="box-body">Search still works</text>
   <text x="800" y="746" text-anchor="middle" class="box-body">from derived index</text>
 
-  <rect x="1080" y="625" width="280" height="130" class="box" fill="#fef3c7" stroke="#d97706" filter="url(#shadow)"/>
+  <rect x="1080" y="625" width="280" height="130" class="box" fill="#FFF0C2" stroke="#B7791F" filter="url(#shadow)"/>
   <text x="1220" y="677" text-anchor="middle" class="box-title">Restore Path</text>
   <text x="1220" y="717" text-anchor="middle" class="box-body">Fetch archived object</text>
   <text x="1220" y="746" text-anchor="middle" class="box-body">slower but available</text>
