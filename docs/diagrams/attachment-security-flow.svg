@@ -90,9 +90,10 @@
   <path class="arrow" d="M610 733 C555 733 527 733 505 733" marker-end="url(#arrow)"/>
   <path class="arrow" d="M990 733 C1045 733 1073 733 1095 733" marker-end="url(#arrow)"/>
 
-  <rect x="610" y="830" width="380" height="54" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-  <text x="800" y="852" text-anchor="middle" class="small">Postgres stores scan status:</text>
-  <text x="800" y="872" text-anchor="middle" class="small">PENDING, SCANNING, CLEAN, INFECTED, FAILED, QUARANTINED</text>
+  <rect x="585" y="820" width="430" height="76" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="800" y="844" text-anchor="middle" class="small">Postgres stores scan status</text>
+  <text x="800" y="864" text-anchor="middle" class="small">PENDING, SCANNING, CLEAN</text>
+  <text x="800" y="884" text-anchor="middle" class="small">INFECTED, FAILED, QUARANTINED</text>
 
   <path class="soft-arrow" d="M370 645 C430 560 535 505 775 405" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1230 645 C1210 560 1190 500 1225 420" marker-end="url(#softArrow)"/>
