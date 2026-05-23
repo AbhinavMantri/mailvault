@@ -10,6 +10,8 @@ Read-side service for mailbox APIs.
 
 This service is intentionally read-only in the current phase. Schema ownership remains with `ingestion-service` until migrations are extracted into a shared database module.
 
+The service uses JDBC row projections instead of copying ingestion JPA entities. That keeps the mailbox boundary focused on read API shapes and avoids turning the read service into a second owner of the write-side domain model.
+
 ## Run Locally
 
 From the repository root:

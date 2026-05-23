@@ -5,20 +5,18 @@ import com.mailvault.mailbox.api.EmailDetailResponse;
 import com.mailvault.mailbox.api.InboxItemResponse;
 import com.mailvault.mailbox.api.RecipientResponse;
 import com.mailvault.mailbox.api.StorageUsageResponse;
-import com.mailvault.mailbox.domain.Attachment;
-import com.mailvault.mailbox.domain.EmailAttachmentRef;
-import com.mailvault.mailbox.domain.EmailMessage;
-import com.mailvault.mailbox.domain.EmailRecipient;
-import com.mailvault.mailbox.domain.StorageUsage;
+import com.mailvault.mailbox.repository.AttachmentRow;
+import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
+import com.mailvault.mailbox.repository.InboxRow;
+import com.mailvault.mailbox.repository.RecipientRow;
 import com.mailvault.mailbox.repository.StorageUsageRepository;
-import org.springframework.data.domain.PageRequest;
+import com.mailvault.mailbox.repository.StorageUsageRow;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,79 +36,80 @@ public class MailboxQueryService {
     }
 
     public List<InboxItemResponse> getInbox(String userId, int limit) {
-        return emailMessageRepository.findByUserIdOrderByReceivedAtDesc(userId, PageRequest.of(0, limit))
+        return emailMessageRepository.findInbox(userId, limit)
                 .stream()
                 .map(this::toInboxItem)
                 .toList();
     }
 
     public EmailDetailResponse getEmailDetail(String userId, UUID emailId) {
-        EmailMessage email = emailMessageRepository.findByIdAndUserId(emailId, userId)
+        EmailHeaderRow email = emailMessageRepository.findHeader(emailId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "email not found"));
 
-        List<RecipientResponse> recipients = email.getRecipients().stream()
-                .sorted(Comparator.comparing(EmailRecipient::getRecipientType)
-                        .thenComparing(EmailRecipient::getRecipientAddress))
-                .map(recipient -> new RecipientResponse(
-                        recipient.getRecipientAddress(),
-                        recipient.getRecipientType()
-                ))
+        List<RecipientResponse> recipients = emailMessageRepository.findRecipients(emailId).stream()
+                .map(this::toRecipient)
                 .toList();
 
-        List<AttachmentResponse> attachments = email.getAttachmentRefs().stream()
-                .map(EmailAttachmentRef::getAttachment)
+        List<AttachmentResponse> attachments = emailMessageRepository.findAttachments(emailId).stream()
                 .map(this::toAttachment)
                 .toList();
 
         return new EmailDetailResponse(
-                email.getId(),
-                email.getUserId(),
-                email.getSender(),
-                email.getSubject(),
-                email.getStatus(),
-                email.getReceivedAt(),
-                email.getLogicalSizeBytes(),
+                email.id(),
+                email.userId(),
+                email.sender(),
+                email.subject(),
+                email.status(),
+                email.receivedAt(),
+                email.logicalSizeBytes(),
                 recipients,
                 attachments
         );
     }
 
     public StorageUsageResponse getStorageUsage(String userId) {
-        StorageUsage usage = storageUsageRepository.findById(userId)
+        StorageUsageRow usage = storageUsageRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "storage usage not found"));
 
-        double usedPercent = usage.getQuotaBytes() == 0
+        double usedPercent = usage.quotaBytes() == 0
                 ? 0
-                : (usage.getUsedBytes() * 100.0) / usage.getQuotaBytes();
+                : (usage.usedBytes() * 100.0) / usage.quotaBytes();
 
         return new StorageUsageResponse(
-                usage.getUserId(),
-                usage.getUsedBytes(),
-                usage.getQuotaBytes(),
+                usage.userId(),
+                usage.usedBytes(),
+                usage.quotaBytes(),
                 usedPercent,
-                usage.getUpdatedAt()
+                usage.updatedAt()
         );
     }
 
-    private InboxItemResponse toInboxItem(EmailMessage email) {
+    private InboxItemResponse toInboxItem(InboxRow email) {
         return new InboxItemResponse(
-                email.getId(),
-                email.getSender(),
-                email.getSubject(),
-                email.getStatus(),
-                email.getReceivedAt(),
-                email.getLogicalSizeBytes(),
-                email.getAttachmentRefs().size()
+                email.id(),
+                email.sender(),
+                email.subject(),
+                email.status(),
+                email.receivedAt(),
+                email.logicalSizeBytes(),
+                email.attachmentCount()
         );
     }
 
-    private AttachmentResponse toAttachment(Attachment attachment) {
+    private RecipientResponse toRecipient(RecipientRow recipient) {
+        return new RecipientResponse(
+                recipient.address(),
+                recipient.type()
+        );
+    }
+
+    private AttachmentResponse toAttachment(AttachmentRow attachment) {
         return new AttachmentResponse(
-                attachment.getId(),
-                attachment.getFilename(),
-                attachment.getContentType(),
-                attachment.getSizeBytes(),
-                attachment.getStatus()
+                attachment.id(),
+                attachment.filename(),
+                attachment.contentType(),
+                attachment.sizeBytes(),
+                attachment.status()
         );
     }
 }

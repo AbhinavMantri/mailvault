@@ -1,9 +1,9 @@
-package com.mailvault.mailbox.api;
+package com.mailvault.mailbox.repository;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public record InboxItemResponse(
+public record InboxRow(
         UUID id,
         String sender,
         String subject,
