@@ -32,6 +32,7 @@ Focused diagrams:
 ## MVP Scope
 
 - Import email through an API. _Implemented in `ingestion-service`._
+- Read inbox, email detail, and storage usage through APIs. _Implemented in `mailbox-service`._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events to Kafka. _Implemented for `email.received`._
@@ -53,6 +54,13 @@ Run the ingestion service:
 
 ```bash
 cd ingestion-service
+mvn spring-boot:run
+```
+
+Run the mailbox service in another terminal:
+
+```bash
+cd mailbox-service
 mvn spring-boot:run
 ```
 
@@ -96,6 +104,7 @@ Local endpoints:
 | Component | URL |
 | --- | --- |
 | Ingestion service | `http://localhost:8081` |
+| Mailbox service | `http://localhost:8082` |
 | MinIO console | `http://localhost:9001` |
 | OpenSearch | `http://localhost:9200` |
 | Postgres | `localhost:5432` |
@@ -113,7 +122,7 @@ Local endpoints:
 | Service | Responsibility |
 | --- | --- |
 | `ingestion-service` | Accept email imports, persist metadata, store raw content, publish events |
-| `mailbox-service` | Serve inbox, message detail, labels, archive, delete, and search APIs |
+| `mailbox-service` | Serve inbox, message detail, and storage usage read APIs |
 | `search-indexer` | Consume indexing events and update OpenSearch |
 | `attachment-worker` | Extract attachment metadata, compute content hashes, and support deduplication |
 | `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
@@ -133,15 +142,19 @@ Local endpoints:
 
 ## Status
 
-Phase 1 foundation in progress. The repository now includes local infrastructure and the first runnable service: `ingestion-service`.
+Phase 1 foundation in progress. The repository now includes local infrastructure plus the first write-side and read-side services.
 
 Implemented so far:
 
 - Docker Compose infrastructure for Postgres, Kafka, MinIO, and OpenSearch
 - Spring Boot `ingestion-service`
+- Spring Boot `mailbox-service`
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
+- `GET /mailboxes/{userId}/inbox`
+- `GET /emails/{emailId}?userId={userId}`
+- `GET /users/{userId}/storage`
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
 - MinIO object writes for raw email/body and direct attachment uploads
 - uploaded attachment references on email import

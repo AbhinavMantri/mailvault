@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: mailbox-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/mailvault}
+    username: ${DB_USERNAME:mailvault}
+    password: ${DB_PASSWORD:mailvault}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
