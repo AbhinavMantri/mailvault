@@ -25,6 +25,7 @@ Editable Draw.io source: [`docs/architecture.drawio`](docs/architecture.drawio)
 
 Focused diagrams:
 
+- [Business Use Cases](docs/diagrams/business-use-cases.svg)
 - [Attachment Security Flow](docs/diagrams/attachment-security-flow.svg)
 - [Storage Lifecycle Flow](docs/diagrams/storage-lifecycle-flow.svg)
 

@@ -1,0 +1,126 @@
+<svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MailVault business use cases</title>
+  <desc id="desc">Business use case diagram for MailVault showing end user actions, system automation, and admin operations around email storage, search, quota, security, and archival.</desc>
+  <defs>
+    <style>
+      .title { font: 700 54px Arial, Helvetica, sans-serif; fill: #111827; }
+      .subtitle { font: 400 24px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .group-title { font: 700 25px Arial, Helvetica, sans-serif; fill: #111827; }
+      .group-note { font: 400 18px Arial, Helvetica, sans-serif; fill: #64748b; }
+      .box-title { font: 700 22px Arial, Helvetica, sans-serif; fill: #111827; }
+      .box-body { font: 400 17px Arial, Helvetica, sans-serif; fill: #374151; }
+      .small { font: 400 16px Arial, Helvetica, sans-serif; fill: #4b5563; }
+      .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #334155; }
+      .white-title { font: 700 28px Arial, Helvetica, sans-serif; fill: #ffffff; }
+      .white-small { font: 400 18px Arial, Helvetica, sans-serif; fill: #dbeafe; }
+      .arrow { stroke: #334155; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .soft-arrow { stroke: #64748b; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; }
+      .box { stroke-width: 3; rx: 20; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="softArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+    <linearGradient id="pageBg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="0.58" stop-color="#eff6ff"/>
+      <stop offset="1" stop-color="#f0fdf4"/>
+    </linearGradient>
+    <linearGradient id="problemBg" x1="560" y1="345" x2="1040" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#164e63"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#pageBg)"/>
+  <rect x="64" y="56" width="1472" height="888" rx="36" fill="#ffffff" fill-opacity="0.88" stroke="#d8e2ee" stroke-width="2"/>
+
+  <text x="116" y="128" class="title">MailVault Business Use Cases</text>
+  <text x="116" y="174" class="subtitle">A storage-aware mailbox platform focused on search, quota control, attachment safety, and archival cost reduction</text>
+
+  <rect x="110" y="255" width="360" height="610" rx="30" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+  <text x="150" y="305" class="group-title">End User</text>
+  <text x="150" y="335" class="group-note">Mailbox actions visible to users</text>
+
+  <rect x="130" y="380" width="320" height="92" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <text x="290" y="416" text-anchor="middle" class="box-title">Import / Receive Email</text>
+  <text x="290" y="447" text-anchor="middle" class="box-body">Message body and attachments enter the system</text>
+
+  <rect x="130" y="505" width="320" height="92" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <text x="290" y="541" text-anchor="middle" class="box-title">Search Mailbox</text>
+  <text x="290" y="572" text-anchor="middle" class="box-body">Find email by sender, subject, body, date</text>
+
+  <rect x="130" y="630" width="320" height="92" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <text x="290" y="666" text-anchor="middle" class="box-title">Manage Storage</text>
+  <text x="290" y="697" text-anchor="middle" class="box-body">See usage, delete, archive, reduce quota pressure</text>
+
+  <rect x="130" y="755" width="320" height="92" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <text x="290" y="791" text-anchor="middle" class="box-title">Download Attachments</text>
+  <text x="290" y="822" text-anchor="middle" class="box-body">Only when scan verdict is clean</text>
+
+  <rect x="560" y="345" width="480" height="195" rx="32" fill="url(#problemBg)" filter="url(#shadow)"/>
+  <text x="800" y="405" text-anchor="middle" class="white-title">Business Problem</text>
+  <text x="800" y="450" text-anchor="middle" class="white-small">Email storage grows forever.</text>
+  <text x="800" y="482" text-anchor="middle" class="white-small">Attachments duplicate, search indexes expand,</text>
+  <text x="800" y="514" text-anchor="middle" class="white-small">and free quota becomes expensive to operate.</text>
+
+  <rect x="570" y="620" width="460" height="245" rx="30" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+  <text x="610" y="670" class="group-title">System Automation</text>
+  <text x="610" y="700" class="group-note">Background work that protects cost and reliability</text>
+
+  <rect x="600" y="735" width="190" height="88" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <text x="695" y="769" text-anchor="middle" class="box-title">Deduplicate</text>
+  <text x="695" y="800" text-anchor="middle" class="box-body">Hash attachments</text>
+
+  <rect x="810" y="735" width="190" height="88" class="box" fill="#fef2f2" stroke="#dc2626" filter="url(#shadow)"/>
+  <text x="905" y="769" text-anchor="middle" class="box-title">Scan</text>
+  <text x="905" y="800" text-anchor="middle" class="box-body">Block unsafe files</text>
+
+  <rect x="600" y="850" width="190" height="88" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <text x="695" y="884" text-anchor="middle" class="box-title">Enforce Quota</text>
+  <text x="695" y="915" text-anchor="middle" class="box-body">Track usage</text>
+
+  <rect x="810" y="850" width="190" height="88" class="box" fill="#eef2ff" stroke="#4f46e5" filter="url(#shadow)"/>
+  <text x="905" y="884" text-anchor="middle" class="box-title">Archive</text>
+  <text x="905" y="915" text-anchor="middle" class="box-body">Move old content</text>
+
+  <rect x="1130" y="255" width="360" height="610" rx="30" fill="#f8fafc" stroke="#cbd5e1" stroke-width="3"/>
+  <text x="1170" y="305" class="group-title">Admin / Ops</text>
+  <text x="1170" y="335" class="group-note">Operational ownership and business visibility</text>
+
+  <rect x="1150" y="380" width="320" height="92" class="box" fill="#dbeafe" stroke="#2563eb" filter="url(#shadow)"/>
+  <text x="1310" y="416" text-anchor="middle" class="box-title">Monitor Storage Growth</text>
+  <text x="1310" y="447" text-anchor="middle" class="box-body">Understand cost and quota pressure</text>
+
+  <rect x="1150" y="505" width="320" height="92" class="box" fill="#fef2f2" stroke="#dc2626" filter="url(#shadow)"/>
+  <text x="1310" y="541" text-anchor="middle" class="box-title">Track Security Verdicts</text>
+  <text x="1310" y="572" text-anchor="middle" class="box-body">Review infected and failed scans</text>
+
+  <rect x="1150" y="630" width="320" height="92" class="box" fill="#fff7ed" stroke="#f97316" filter="url(#shadow)"/>
+  <text x="1310" y="666" text-anchor="middle" class="box-title">Observe Queue Lag</text>
+  <text x="1310" y="697" text-anchor="middle" class="box-body">Detect indexing or worker backlogs</text>
+
+  <rect x="1150" y="755" width="320" height="92" class="box" fill="#ecfdf5" stroke="#16a34a" filter="url(#shadow)"/>
+  <text x="1310" y="791" text-anchor="middle" class="box-title">Tune Retention Policy</text>
+  <text x="1310" y="822" text-anchor="middle" class="box-body">Balance cost, speed, and compliance</text>
+
+  <path class="arrow" d="M470 426 C520 420 525 412 550 405" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M470 552 C520 535 535 505 550 486" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M470 676 C520 685 540 718 570 760" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M470 802 C530 804 550 795 590 782" marker-end="url(#arrow)"/>
+
+  <path class="soft-arrow" d="M1040 420 C1080 410 1092 408 1120 424" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1040 482 C1090 500 1100 530 1120 552" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1000 785 C1060 725 1098 686 1140 676" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1000 898 C1060 865 1100 820 1140 802" marker-end="url(#softArrow)"/>
+
+  <rect x="560" y="250" width="480" height="60" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="800" y="288" text-anchor="middle" class="small">MailVault is designed around storage economics, not just mailbox CRUD.</text>
+
+  <text x="116" y="918" class="small">github.com/AbhinavMantri/mailvault</text>
+</svg>
