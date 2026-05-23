@@ -32,7 +32,7 @@ The write path blocks only on work required to safely accept the email: validati
 
 ## Read Path
 
-Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. The current `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. A future Search API can query OpenSearch and resolve canonical message state from Postgres when needed.
+Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
 
 Attachment metadata extraction and hash-based deduplication run asynchronously. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content.
 

@@ -1,0 +1,17 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: search-service
+
+mailvault:
+  search:
+    base-url: ${OPENSEARCH_BASE_URL:http://localhost:9200}
+    email-index: ${EMAIL_SEARCH_INDEX:mailvault-emails}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

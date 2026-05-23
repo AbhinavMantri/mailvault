@@ -104,7 +104,20 @@ GET /mailboxes/{userId}/inbox
 GET /emails/search?userId=user-123&q=invoice
 ```
 
-Search API is planned. The current implemented search path is the asynchronous `search-indexer`, which consumes `email.received` and upserts email documents into OpenSearch.
+`search-service` owns the user-facing search API. The current implementation queries OpenSearch documents written by `search-indexer`.
+
+```json
+[
+  {
+    "emailId": "28c13478-95df-4c11-a7f5-3695f63202f7",
+    "sender": "billing@example.com",
+    "recipients": ["abhinav@example.com"],
+    "subject": "Invoice for May",
+    "receivedAt": "2026-05-23T12:00:00Z",
+    "logicalSizeBytes": 2048
+  }
+]
+```
 
 ## Storage Usage
 

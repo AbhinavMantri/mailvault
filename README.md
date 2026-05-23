@@ -37,7 +37,7 @@ Focused diagrams:
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events to Kafka. _Implemented for `email.received`._
 - Index searchable fields in OpenSearch. _Initial async `search-indexer` added for event fields._
-- Search by sender, recipient, subject, body, date, and labels.
+- Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
 - Track per-user storage quota. _Initial quota reservation and storage usage APIs added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Planned in async attachment worker; upload lifecycle is implemented._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
@@ -75,6 +75,13 @@ Run the search indexer in another terminal:
 
 ```bash
 cd search-indexer
+mvn spring-boot:run
+```
+
+Run the search service in another terminal:
+
+```bash
+cd search-service
 mvn spring-boot:run
 ```
 
@@ -121,6 +128,7 @@ Local endpoints:
 | Mailbox service | `http://localhost:8082` |
 | Quota service | `http://localhost:8083` |
 | Search indexer | `http://localhost:8084` |
+| Search service | `http://localhost:8085` |
 | MinIO console | `http://localhost:9001` |
 | OpenSearch | `http://localhost:9200` |
 | Postgres | `localhost:5432` |
@@ -141,6 +149,7 @@ Local endpoints:
 | `mailbox-service` | Serve inbox and message detail read APIs |
 | `quota-service` | Reserve quota, track logical storage usage, and serve storage usage APIs |
 | `search-indexer` | Consume email events and update OpenSearch |
+| `search-service` | Serve user search queries from OpenSearch |
 | `attachment-worker` | Extract attachment metadata, compute content hashes, and support deduplication |
 | `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
 | `archival-worker` | Move old email content to archival object-storage prefixes |
@@ -167,6 +176,7 @@ Implemented so far:
 - Spring Boot `mailbox-service`
 - Spring Boot `quota-service`
 - Spring Boot `search-indexer`
+- Spring Boot `search-service`
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
@@ -174,6 +184,7 @@ Implemented so far:
 - `GET /mailboxes/{userId}/inbox`
 - `GET /emails/{emailId}?userId={userId}`
 - `GET /users/{userId}/storage` from `quota-service`
+- `GET /emails/search?userId={userId}&q={query}` from `search-service`
 - Kafka consumer for `email.received` in `search-indexer`
 - OpenSearch document upsert for indexed email fields
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
