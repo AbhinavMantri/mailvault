@@ -30,6 +30,7 @@ public class AttachmentUploadService {
 
     @Transactional
     public AttachmentInitiateResponse initiateUpload(AttachmentInitiateRequest request) {
+        // TODO: enforce attachment size, content type, and per-email attachment count limits.
         UUID attachmentId = UUID.randomUUID();
         String objectKey = "users/%s/pending-attachments/%s/%s"
                 .formatted(request.userId(), attachmentId, sanitizeFilename(request.filename()));
@@ -62,6 +63,7 @@ public class AttachmentUploadService {
         if (attachment.getStatus() != AttachmentStatus.PENDING_UPLOAD) {
             throw new IllegalArgumentException("Attachment is not pending upload");
         }
+        // TODO: verify object existence and expected size in object storage before marking uploaded.
         attachment.markUploaded();
         attachmentRepository.save(attachment);
         return new AttachmentCompleteResponse(attachmentId, attachment.getStatus().name());
@@ -71,4 +73,3 @@ public class AttachmentUploadService {
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 }
-

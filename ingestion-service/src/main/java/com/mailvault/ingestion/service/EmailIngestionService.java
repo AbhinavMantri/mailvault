@@ -91,6 +91,7 @@ public class EmailIngestionService {
         storageUsageRepository.save(storageUsage);
         emailMessageRepository.save(email);
 
+        // TODO: replace direct Kafka publish with transactional outbox and idempotency key support.
         emailEventPublisher.publishEmailReceived(new EmailReceivedEvent(
                 UUID.randomUUID(),
                 emailId,
