@@ -9,14 +9,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 import java.util.Optional;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,30 +46,5 @@ class QuotaQueryServiceTest {
         assertThatThrownBy(() -> quotaQueryService.getStorageUsage("user-123"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("404 NOT_FOUND");
-    }
-
-    @Test
-    void reserveUpdatesUsageWhenQuotaAllows() {
-        Instant updatedAt = Instant.parse("2026-05-23T09:00:00Z");
-        when(storageUsageRepository.findByUserIdForUpdate("user-123"))
-                .thenReturn(Optional.of(new StorageUsageRow("user-123", 25L, 100L, updatedAt)));
-
-        var response = quotaQueryService.reserve("user-123", 10L);
-
-        assertThat(response.status()).isEqualTo("RESERVED");
-        assertThat(response.usedBytes()).isEqualTo(35L);
-        assertThat(response.quotaBytes()).isEqualTo(100L);
-        verify(storageUsageRepository).updateUsage(eq("user-123"), eq(35L), any(Instant.class));
-    }
-
-    @Test
-    void reserveRejectsWhenQuotaWouldBeExceeded() {
-        Instant updatedAt = Instant.parse("2026-05-23T09:00:00Z");
-        when(storageUsageRepository.findByUserIdForUpdate("user-123"))
-                .thenReturn(Optional.of(new StorageUsageRow("user-123", 95L, 100L, updatedAt)));
-
-        assertThatThrownBy(() -> quotaQueryService.reserve("user-123", 10L))
-                .isInstanceOf(QuotaExceededException.class)
-                .hasMessage("User storage quota exceeded");
     }
 }

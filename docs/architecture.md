@@ -23,18 +23,17 @@ Postgres is the source of truth for structured mailbox state. MinIO stores large
 Client
   -> Ingestion Service
   -> Validate request
-  -> Reserve logical storage in Quota Service
   -> Store raw content and attachments in MinIO
   -> Save metadata in Postgres
   -> Write email.received outbox event
   -> Return accepted response
 ```
 
-The write path blocks only on work required to safely accept the email: validation, quota reservation, object storage, metadata persistence, and event handoff. Search indexing, archival, antivirus scanning, deduplication, and quota reconciliation remain asynchronous.
+The write path blocks only on work required to safely accept the email: validation, object storage, metadata persistence, and event handoff. Search indexing, quota accounting, archival, antivirus scanning, and deduplication remain asynchronous.
 
 ## Read Path
 
-Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
+Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `quota-service` also consumes `email.received` and updates logical storage usage asynchronously. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
 
 Attachment metadata extraction and SHA-256 hash calculation run asynchronously in `attachment-worker`. Postgres keeps logical attachment rows and canonical `attachment_blobs` rows, while MinIO stores both temporary pending uploads and canonical SHA-256 blob objects. Duplicate attachment content reuses the same canonical blob after hashing.
 
@@ -53,5 +52,5 @@ Consumers are idempotent by service-specific durable state, not by one global pr
 - If OpenSearch is unavailable, email ingestion should continue.
 - If Kafka publish fails after metadata persistence, the outbox row remains durable. The MVP scheduled publisher can retry it; the production CDC path would rely on Debezium/Kafka Connect offsets and retries.
 - If MinIO storage fails, ingestion should fail before metadata is committed.
-- If quota reservation fails, ingestion should reject the import before writing objects.
-- If quota reservation succeeds but later storage or metadata persistence fails, a compensation path should release the reserved bytes.
+- If quota-service is unavailable, ingestion can still accept email and quota usage catches up from Kafka later.
+- Strict quota enforcement can be added later with a pre-check or post-import hold/reject workflow.

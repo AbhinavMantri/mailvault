@@ -16,7 +16,6 @@ email.archived
 
 ```text
 POST /emails/import
-  -> reserve quota through quota-service
   -> store objects
   -> persist metadata
   -> write email.received outbox event in the same transaction
@@ -48,8 +47,10 @@ attachment-worker
   -> marks attachments READY or FAILED
 
 quota-service
-  -> records quota reservation during import
-  -> may publish quota.updated for projections and observability
+  -> consumes email.received
+  -> records eventId in storage_usage_events
+  -> updates logical storage_usage asynchronously
+  -> may publish quota.updated later for projections and observability
 ```
 
 ## Reliability Notes

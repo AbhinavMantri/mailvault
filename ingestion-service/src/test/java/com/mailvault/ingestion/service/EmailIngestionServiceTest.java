@@ -6,7 +6,6 @@ import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
-import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
@@ -23,9 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,9 +38,6 @@ class EmailIngestionServiceTest {
 
     @Mock
     private AttachmentRepository attachmentRepository;
-
-    @Mock
-    private QuotaClient quotaClient;
 
     @Mock
     private OutboxEventService outboxEventService;
@@ -69,7 +63,6 @@ class EmailIngestionServiceTest {
         verify(objectStorageService).putText(any(), any(), eq("message/rfc822"));
         verify(objectStorageService).putText(any(), eq("Invoice attached."), eq("text/plain"));
         verify(objectStorageService).putText(any(), eq("<p>Invoice attached.</p>"), eq("text/html"));
-        verify(quotaClient).reserve(eq("user-123"), anyLong());
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
@@ -96,7 +89,6 @@ class EmailIngestionServiceTest {
         var response = emailIngestionService.importEmail(request);
 
         assertThat(response.logicalSizeBytes()).isEqualTo("Body".length() + 512);
-        verify(quotaClient).reserve("user-123", "Body".length() + 512);
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
@@ -122,32 +114,6 @@ class EmailIngestionServiceTest {
         assertThatThrownBy(() -> emailIngestionService.importEmail(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("All attachments must be uploaded before email import");
-        verify(quotaClient, never()).reserve(any(), anyLong());
-        verify(emailMessageRepository, never()).save(any());
-        verify(outboxEventService, never()).saveEmailReceived(any(), any());
-    }
-
-    @Test
-    void importEmailRejectsQuotaExceededBeforeWritingObjects() {
-        EmailImportRequest request = new EmailImportRequest(
-                "user-123",
-                "billing@example.com",
-                List.of("abhinav@example.com"),
-                "Invoice for May",
-                "Body",
-                null,
-                List.of()
-        );
-        long logicalSizeBytes = "Body".length();
-        doThrow(new IllegalArgumentException("User storage quota exceeded"))
-                .when(quotaClient)
-                .reserve("user-123", logicalSizeBytes);
-
-        assertThatThrownBy(() -> emailIngestionService.importEmail(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("User storage quota exceeded");
-
-        verify(objectStorageService, never()).putText(any(), any(), any());
         verify(emailMessageRepository, never()).save(any());
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }

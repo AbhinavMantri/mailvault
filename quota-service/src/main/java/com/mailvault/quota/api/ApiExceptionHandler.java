@@ -1,6 +1,5 @@
 package com.mailvault.quota.api;
 
-import com.mailvault.quota.service.QuotaExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,15 +19,6 @@ public class ApiExceptionHandler {
                 .findFirst()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("Request validation failed"));
-        return detail;
-    }
-
-    @ExceptionHandler(QuotaExceededException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    ProblemDetail handleQuotaExceeded(QuotaExceededException exception) {
-        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-        detail.setTitle("Quota exceeded");
-        detail.setDetail(exception.getMessage());
         return detail;
     }
 }

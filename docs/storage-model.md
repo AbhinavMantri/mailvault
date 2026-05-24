@@ -9,9 +9,10 @@ Stores durable structured state:
 - attachments
 - email_attachment_refs
 - storage_usage
+- storage_usage_events
 - outbox_events
 
-`storage_usage` is owned by `quota-service`. The table is still created by the initial schema for local development, but application writes should go through quota APIs rather than ingestion or mailbox code.
+`storage_usage` and `storage_usage_events` are owned by `quota-service`. The tables are still created by the shared local-development schema, but application writes should come from quota-service's event consumer rather than ingestion or mailbox code.
 
 Planned later:
 
@@ -62,4 +63,4 @@ Quota accounting can be configured in two ways:
 
 For a consumer mailbox product, logical usage is usually easier to explain to users. For infrastructure cost analysis, physical usage is more accurate.
 
-The MVP uses logical usage. `quota-service` reserves logical bytes before ingestion stores a message so concurrent imports cannot overshoot quota.
+The MVP uses logical usage. `quota-service` consumes `email.received`, records the event in `storage_usage_events` for idempotency, and updates `storage_usage` asynchronously.

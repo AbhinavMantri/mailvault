@@ -11,7 +11,6 @@ import com.mailvault.ingestion.domain.EmailStatus;
 import com.mailvault.ingestion.domain.RecipientType;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
-import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
@@ -29,18 +28,15 @@ public class EmailIngestionService {
     private final ObjectStorageService objectStorageService;
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
-    private final QuotaClient quotaClient;
     private final OutboxEventService outboxEventService;
 
     public EmailIngestionService(ObjectStorageService objectStorageService,
                                  EmailMessageRepository emailMessageRepository,
                                  AttachmentRepository attachmentRepository,
-                                 QuotaClient quotaClient,
                                  OutboxEventService outboxEventService) {
         this.objectStorageService = objectStorageService;
         this.emailMessageRepository = emailMessageRepository;
         this.attachmentRepository = attachmentRepository;
-        this.quotaClient = quotaClient;
         this.outboxEventService = outboxEventService;
     }
 
@@ -50,8 +46,6 @@ public class EmailIngestionService {
         Instant receivedAt = Instant.now();
         List<Attachment> attachments = findUploadedAttachments(request);
         long logicalSizeBytes = calculateLogicalSize(request, attachments);
-
-        quotaClient.reserve(request.userId(), logicalSizeBytes);
 
         String rawObjectKey = "users/%s/emails/%s/raw.eml".formatted(request.userId(), emailId);
         String textObjectKey = "users/%s/emails/%s/body.txt".formatted(request.userId(), emailId);

@@ -62,31 +62,8 @@ Content-Type: application/json
 }
 ```
 
-Before storing the imported email, `ingestion-service` reserves logical bytes through `quota-service`.
+After storing the imported email, `quota-service` consumes `email.received` and updates logical storage usage asynchronously.
 
-## Reserve Quota
-
-```http
-POST /quota/reservations
-Content-Type: application/json
-```
-
-```json
-{
-  "userId": "user-123",
-  "bytes": 5242880
-}
-```
-
-```json
-{
-  "userId": "user-123",
-  "reservedBytes": 5242880,
-  "usedBytes": 1240000000,
-  "quotaBytes": 5368709120,
-  "status": "RESERVED"
-}
-```
 
 ## Get Email
 

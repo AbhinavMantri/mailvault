@@ -2,6 +2,7 @@ package com.mailvault.quota.repository;
 
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class StorageUsageRepository {
@@ -71,6 +73,7 @@ public class StorageUsageRepository {
         String sql = """
                 INSERT INTO storage_usage (user_id, used_bytes, quota_bytes, updated_at)
                 VALUES (:userId, 0, :quotaBytes, :updatedAt)
+                ON CONFLICT (user_id) DO NOTHING
                 """;
 
         jdbcTemplate.update(
@@ -80,7 +83,8 @@ public class StorageUsageRepository {
                         .addValue("quotaBytes", quotaBytes)
                         .addValue("updatedAt", OffsetDateTime.ofInstant(updatedAt, java.time.ZoneOffset.UTC))
         );
-        return new StorageUsageRow(userId, 0, quotaBytes, updatedAt);
+        return findByUserIdForUpdate(userId)
+                .orElse(new StorageUsageRow(userId, 0, quotaBytes, updatedAt));
     }
 
     public void updateUsage(String userId, long usedBytes, Instant updatedAt) {
@@ -98,6 +102,36 @@ public class StorageUsageRepository {
                         .addValue("usedBytes", usedBytes)
                         .addValue("updatedAt", OffsetDateTime.ofInstant(updatedAt, java.time.ZoneOffset.UTC))
         );
+    }
+
+    public boolean insertUsageEvent(
+            UUID eventId,
+            UUID emailId,
+            String userId,
+            long bytesDelta,
+            String eventType,
+            Instant processedAt
+    ) {
+        String sql = """
+                INSERT INTO storage_usage_events (event_id, email_id, user_id, bytes_delta, event_type, processed_at)
+                VALUES (:eventId, :emailId, :userId, :bytesDelta, :eventType, :processedAt)
+                """;
+
+        try {
+            jdbcTemplate.update(
+                    sql,
+                    new MapSqlParameterSource()
+                            .addValue("eventId", eventId)
+                            .addValue("emailId", emailId)
+                            .addValue("userId", userId)
+                            .addValue("bytesDelta", bytesDelta)
+                            .addValue("eventType", eventType)
+                            .addValue("processedAt", OffsetDateTime.ofInstant(processedAt, java.time.ZoneOffset.UTC))
+            );
+            return true;
+        } catch (DuplicateKeyException exception) {
+            return false;
+        }
     }
 
     private Instant toInstant(ResultSet rs, String columnName) throws SQLException {

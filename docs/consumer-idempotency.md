@@ -45,6 +45,7 @@ archival-worker
 
 quota-service / storage-ledger-service
   -> append ledger rows with unique eventId when auditability is required
+  -> quota-service currently uses storage_usage_events(event_id) before updating storage_usage
 ```
 
 ## Retention

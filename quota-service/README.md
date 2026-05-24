@@ -4,12 +4,14 @@ Owns quota and storage usage APIs for MailVault.
 
 ## Responsibilities
 
-- Reserve logical storage for accepted imports.
+- Consume `email.received` events from Kafka.
+- Update per-user logical storage usage asynchronously.
+- Record storage usage events idempotently by `eventId`.
 - Return per-user logical storage usage.
 - Calculate usage percentage against quota.
 - Provide the boundary for future quota reconciliation and plan-based quota limits.
 
-`ingestion-service` calls this service before storing an imported email. The reservation uses a database row lock to avoid concurrent imports overshooting the user's quota.
+`ingestion-service` does not call quota-service during email import. It publishes `email.received`; quota-service consumes that event and updates `storage_usage`. Duplicate events are ignored through the `storage_usage_events` ledger.
 
 ## Run Locally
 
@@ -33,17 +35,6 @@ curl http://localhost:8083/actuator/health
 ```
 
 ## APIs
-
-Reserve quota:
-
-```bash
-curl -X POST http://localhost:8083/quota/reservations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "userId": "user-123",
-    "bytes": 1048576
-  }'
-```
 
 Read storage usage:
 

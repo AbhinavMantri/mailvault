@@ -32,9 +32,6 @@ mailvault:
     bucket: ${MINIO_BUCKET:mailvault-emails}
   kafka:
     email-received-topic: ${EMAIL_RECEIVED_TOPIC:email.received}
-  quota:
-    base-url: ${QUOTA_SERVICE_BASE_URL:http://localhost:8083}
-
 management:
   endpoints:
     web:

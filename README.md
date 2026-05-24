@@ -43,7 +43,7 @@ Architecture notes:
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
 - Index searchable fields in OpenSearch. _Initial async `search-indexer` added for event fields._
 - Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
-- Track per-user storage quota. _Initial quota reservation and storage usage APIs added in `quota-service`._
+- Track per-user storage quota. _Async usage accounting and storage usage API added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Initial canonical blob dedupe is implemented in `attachment-worker`._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
 
@@ -161,7 +161,7 @@ Local endpoints:
 | --- | --- |
 | `ingestion-service` | Accept email imports, persist metadata, store raw content, write outbox events |
 | `mailbox-service` | Serve inbox and message detail read APIs |
-| `quota-service` | Reserve quota, track logical storage usage, and serve storage usage APIs |
+| `quota-service` | Consume email events, track logical storage usage, and serve storage usage APIs |
 | `search-indexer` | Consume email events and update OpenSearch |
 | `search-service` | Serve user search queries from OpenSearch |
 | `attachment-worker` | Compute attachment hashes and prepare dedupe metadata |
@@ -195,12 +195,12 @@ Implemented so far:
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
-- `POST /quota/reservations`
 - `GET /mailboxes/{userId}/inbox`
 - `GET /emails/{emailId}?userId={userId}`
 - `GET /users/{userId}/storage` from `quota-service`
 - `GET /emails/search?userId={userId}&q={query}` from `search-service`
 - Kafka consumer for `email.received` in `search-indexer`
+- Kafka consumer for `email.received` in `quota-service`
 - OpenSearch document upsert for indexed email fields
 - scheduled attachment worker for SHA-256 hash processing
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events

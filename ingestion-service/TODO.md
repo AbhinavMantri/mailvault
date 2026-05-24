@@ -20,8 +20,8 @@ Hardening items to complete before treating ingestion-service as production-read
 
 ## Quota
 
-- Add compensation behavior if quota reservation succeeds but later object storage or metadata persistence fails.
-- Decide whether quota should be reserved earlier at attachment initiate/upload complete for very large uploads.
+- Add optional quota pre-check before accepting very large imports.
+- Decide whether strict quota enforcement should hold/reject imported email after async quota accounting detects overage.
 
 ## Testing
 

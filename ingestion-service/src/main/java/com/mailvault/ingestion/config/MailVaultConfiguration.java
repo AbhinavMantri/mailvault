@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({StorageProperties.class, KafkaTopicProperties.class, QuotaProperties.class})
+@EnableConfigurationProperties({StorageProperties.class, KafkaTopicProperties.class})
 public class MailVaultConfiguration {
 
     @Bean

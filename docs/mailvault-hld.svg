@@ -65,15 +65,15 @@
 
   <rect x="430" y="225" width="880" height="635" rx="30" fill="#07111F" stroke="#E2E8F0" stroke-width="3"/>
   <text x="470" y="275" class="group-title">Core MailVault Services</text>
-  <text x="470" y="307" class="group-note">Quota is reserved before import persistence. Expensive work moves behind Kafka.</text>
+  <text x="470" y="307" class="group-note">Import persists durable truth first. Indexing, quota accounting, and archival move behind Kafka.</text>
 
   <path class="arrow" d="M372 583 L420 583" marker-end="url(#arrow)"/>
   <text x="382" y="556" class="label">service calls</text>
 
   <rect x="455" y="360" width="250" height="145" class="box" fill="#252A55" stroke="#818CF8" filter="url(#shadow)"/>
   <text x="580" y="412" text-anchor="middle" class="box-title">Ingestion</text>
-  <text x="580" y="452" text-anchor="middle" class="box-body">Validate, reserve,</text>
-  <text x="580" y="481" text-anchor="middle" class="box-body">store and publish</text>
+  <text x="580" y="452" text-anchor="middle" class="box-body">Validate, store,</text>
+  <text x="580" y="481" text-anchor="middle" class="box-body">write outbox</text>
 
   <rect x="745" y="360" width="250" height="145" class="box" fill="#173B2D" stroke="#34D399" filter="url(#shadow)"/>
   <text x="870" y="412" text-anchor="middle" class="box-title">Mailbox</text>
@@ -87,7 +87,7 @@
 
   <rect x="455" y="620" width="250" height="145" class="box" fill="#4A3415" stroke="#FBBF24" filter="url(#shadow)"/>
   <text x="580" y="672" text-anchor="middle" class="box-title">Quota Service</text>
-  <text x="580" y="712" text-anchor="middle" class="box-body">Reserve usage,</text>
+  <text x="580" y="712" text-anchor="middle" class="box-body">Consume events,</text>
   <text x="580" y="741" text-anchor="middle" class="box-body">storage API</text>
 
   <rect x="745" y="620" width="250" height="145" class="box" fill="#4A1F2A" stroke="#F87171" filter="url(#shadow)"/>
@@ -123,8 +123,6 @@
 
   <path class="soft-arrow" d="M705 432 L735 432" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M995 432 L1025 432" marker-end="url(#softArrow)"/>
-  <path class="arrow" d="M580 505 L580 610" marker-end="url(#arrow)"/>
-  <text x="602" y="565" class="label">reserve quota</text>
   <path class="soft-arrow" d="M870 505 L870 610" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1160 505 L1160 610" marker-end="url(#softArrow)"/>
 
