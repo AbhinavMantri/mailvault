@@ -64,6 +64,7 @@ Content-Type: application/json
 
 After storing the imported email, `quota-service` consumes `email.received` and updates logical storage usage asynchronously.
 
+Email import accepts attachment IDs that are already uploaded and not failed: `UPLOADED`, `PROCESSING`, or `READY`. This avoids a race where the Kafka-driven attachment worker marks an upload `READY` before the user sends the email.
 
 ## Get Email
 

@@ -1,0 +1,5 @@
+ALTER TABLE attachments
+    ALTER COLUMN sha256 TYPE VARCHAR(64);
+
+ALTER TABLE attachment_blobs
+    ALTER COLUMN sha256 TYPE VARCHAR(64);

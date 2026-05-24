@@ -13,5 +13,5 @@ public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 
     Optional<Attachment> findBySha256(String sha256);
 
-    List<Attachment> findByIdInAndUserIdAndStatus(Collection<UUID> ids, String userId, AttachmentStatus status);
+    List<Attachment> findByIdInAndUserIdAndStatusIn(Collection<UUID> ids, String userId, Collection<AttachmentStatus> statuses);
 }

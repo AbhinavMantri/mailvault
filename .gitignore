@@ -11,6 +11,7 @@ out/
 
 # Logs
 *.log
+.e2e/
 
 # Environment
 .env
@@ -19,4 +20,3 @@ out/
 # OS
 Thumbs.db
 .DS_Store
-

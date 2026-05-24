@@ -80,10 +80,10 @@ class EmailIngestionServiceTest {
                 null,
                 List.of(attachmentId)
         );
-        when(attachmentRepository.findByIdInAndUserIdAndStatus(
+        when(attachmentRepository.findByIdInAndUserIdAndStatusIn(
                 List.of(attachmentId),
                 "user-123",
-                AttachmentStatus.UPLOADED
+                List.of(AttachmentStatus.UPLOADED, AttachmentStatus.PROCESSING, AttachmentStatus.READY)
         )).thenReturn(List.of(attachment));
 
         var response = emailIngestionService.importEmail(request);
@@ -105,10 +105,10 @@ class EmailIngestionServiceTest {
                 null,
                 List.of(attachmentId)
         );
-        when(attachmentRepository.findByIdInAndUserIdAndStatus(
+        when(attachmentRepository.findByIdInAndUserIdAndStatusIn(
                 List.of(attachmentId),
                 "user-123",
-                AttachmentStatus.UPLOADED
+                List.of(AttachmentStatus.UPLOADED, AttachmentStatus.PROCESSING, AttachmentStatus.READY)
         )).thenReturn(List.of());
 
         assertThatThrownBy(() -> emailIngestionService.importEmail(request))

@@ -25,6 +25,12 @@ import java.util.UUID;
 @Service
 public class EmailIngestionService {
 
+    private static final List<AttachmentStatus> IMPORTABLE_ATTACHMENT_STATUSES = List.of(
+            AttachmentStatus.UPLOADED,
+            AttachmentStatus.PROCESSING,
+            AttachmentStatus.READY
+    );
+
     private final ObjectStorageService objectStorageService;
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
@@ -94,10 +100,10 @@ public class EmailIngestionService {
         if (request.attachmentIds() == null || request.attachmentIds().isEmpty()) {
             return List.of();
         }
-        List<Attachment> attachments = attachmentRepository.findByIdInAndUserIdAndStatus(
+        List<Attachment> attachments = attachmentRepository.findByIdInAndUserIdAndStatusIn(
                 request.attachmentIds(),
                 request.userId(),
-                AttachmentStatus.UPLOADED
+                IMPORTABLE_ATTACHMENT_STATUSES
         );
         if (attachments.size() != request.attachmentIds().size()) {
             throw new IllegalArgumentException("All attachments must be uploaded before email import");

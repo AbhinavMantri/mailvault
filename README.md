@@ -97,6 +97,20 @@ cd attachment-worker
 mvn spring-boot:run
 ```
 
+Run the MVP end-to-end smoke test:
+
+```powershell
+.\scripts\e2e-mvp.ps1
+```
+
+The script starts local infrastructure, runs the six Spring Boot services, imports an email with an uploaded attachment, then verifies mailbox reads, attachment processing, quota accounting, and OpenSearch search.
+
+To reuse an existing local Postgres instance:
+
+```powershell
+.\scripts\e2e-mvp.ps1 -SkipInfrastructure -DbUrl jdbc:postgresql://localhost:5432/postgres -DbUsername postgres -DbPassword postgres
+```
+
 Initiate an attachment upload:
 
 ```bash
@@ -203,7 +217,7 @@ Implemented so far:
 - Kafka consumer for `email.received` in `quota-service`
 - Kafka consumer for `attachment.uploaded` in `attachment-worker`
 - OpenSearch document upsert for indexed email fields
-- scheduled attachment worker for SHA-256 hash processing
+- Kafka-driven attachment worker for SHA-256 hash processing
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
 - MinIO object writes for raw email/body and direct attachment uploads
 - uploaded attachment references on email import

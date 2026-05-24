@@ -35,7 +35,7 @@ Creates an attachment record in `PENDING_UPLOAD` state and returns a presigned o
 POST /attachments/{attachmentId}/complete
 ```
 
-Marks an uploaded attachment as `UPLOADED` so it can be referenced by email import.
+Marks an uploaded attachment as `UPLOADED` and writes an `attachment.uploaded` outbox event for Kafka publication. Email import accepts attachments in `UPLOADED`, `PROCESSING`, or `READY` state because the worker may process the attachment before the user sends the email.
 
 ```http
 POST /emails/import
