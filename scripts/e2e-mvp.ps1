@@ -106,7 +106,20 @@ function Set-EnvOrRemove($Name, $Value) {
     }
 }
 
+function Normalize-ProcessPathEnv() {
+    $pathValue = [Environment]::GetEnvironmentVariable("Path", "Process")
+    if ([string]::IsNullOrWhiteSpace($pathValue)) {
+        $pathValue = [Environment]::GetEnvironmentVariable("PATH", "Process")
+    }
+    if (-not [string]::IsNullOrWhiteSpace($pathValue)) {
+        [Environment]::SetEnvironmentVariable("PATH", $null, "Process")
+        [Environment]::SetEnvironmentVariable("Path", $pathValue, "Process")
+    }
+}
+
 try {
+    Normalize-ProcessPathEnv
+
     $env:DB_URL = $DbUrl
     $env:DB_USERNAME = $DbUsername
     $env:DB_PASSWORD = $DbPassword
@@ -178,6 +191,8 @@ try {
     $runId = [guid]::NewGuid().ToString("N").Substring(0, 8)
     $userId = "e2e-user-$runId"
     $recipient = "$userId@mailvault.local"
+    $ccRecipient = "$userId-cc@mailvault.local"
+    $bccRecipient = "$userId-bcc@mailvault.local"
     $subject = "MailVault E2E $runId"
     $textBody = "This is an end-to-end email for $runId"
     $htmlBody = "<p>This is an end-to-end email for $runId</p>"
@@ -212,6 +227,8 @@ try {
         userId = $userId
         from = "billing@mailvault.local"
         to = @($recipient)
+        cc = @($ccRecipient)
+        bcc = @($bccRecipient)
         subject = $subject
         textBody = $textBody
         htmlBody = $htmlBody
@@ -239,6 +256,25 @@ try {
     Assert-True ($detail.subject -eq $subject) "email detail subject did not match"
     Assert-True ($detail.textBody -eq $textBody) "email detail text body did not match"
     Assert-True ($detail.htmlBody -eq $htmlBody) "email detail html body did not match"
+    $ccMatches = @(@($detail.recipients) | Where-Object { $_.address -eq $ccRecipient -and $_.type -eq "CC" })
+    $bccMatches = @(@($detail.recipients) | Where-Object { $_.address -eq $bccRecipient -and $_.type -eq "BCC" })
+    Assert-True ($ccMatches.Count -eq 1) "email detail CC recipient was not returned"
+    Assert-True ($bccMatches.Count -eq 1) "email detail BCC recipient was not returned"
+
+    Write-Step "checking thread mailbox view"
+    $thread = Wait-Until "thread list contains imported email" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=INBOX&limit=10"
+        @($threads) | Where-Object { $_.subject -eq $subject } | Select-Object -First 1
+    }
+    Assert-True ($thread.messageCount -eq 1) "thread message count was not 1"
+    Assert-True ($thread.unreadCount -eq 1) "thread unread count was not 1"
+
+    Write-Step "checking thread detail"
+    $threadDetail = Invoke-Json "GET" "http://localhost:8082/threads/$($thread.id)?userId=$userId"
+    $threadMessages = @($threadDetail.messages)
+    Assert-True ($threadMessages.Count -eq 1) "thread detail message count was not 1"
+    Assert-True ($threadMessages[0].emailId -eq $email.emailId) "thread detail email id did not match"
+    Assert-True ($threadMessages[0].textBody -eq $textBody) "thread detail text body did not match"
 
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {

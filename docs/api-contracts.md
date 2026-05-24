@@ -55,6 +55,8 @@ Content-Type: application/json
   "userId": "user-123",
   "from": "billing@example.com",
   "to": ["abhinav@example.com"],
+  "cc": ["manager@example.com"],
+  "bcc": ["audit@example.com"],
   "subject": "Invoice for May",
   "textBody": "Invoice attached.",
   "htmlBody": "<p>Invoice attached.</p>",
@@ -97,6 +99,33 @@ GET /emails/{emailId}
 ```http
 GET /mailboxes/{userId}/inbox
 ```
+
+## Threads
+
+```http
+GET /mailboxes/{userId}/threads?folder=INBOX
+```
+
+```json
+[
+  {
+    "id": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+    "subject": "Invoice for May",
+    "folder": "INBOX",
+    "lastSender": "billing@example.com",
+    "lastMessageAt": "2026-05-23T12:00:00Z",
+    "messageCount": 1,
+    "unreadCount": 1,
+    "attachmentCount": 1
+  }
+]
+```
+
+```http
+GET /threads/{threadId}?userId=user-123
+```
+
+Thread detail returns the ordered messages in the conversation. Attachments and recipients remain message-level data.
 
 ## Search
 

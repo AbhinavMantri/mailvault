@@ -5,49 +5,48 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "email_recipients")
-public class EmailRecipient {
+@Table(name = "thread_messages")
+public class ThreadMessage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "thread_id", nullable = false)
+    private UserThread thread;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email_id", nullable = false)
     private EmailMessage email;
 
-    @Column(nullable = false)
-    private String recipientAddress;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RecipientType recipientType;
+    private MessageDirection direction;
 
-    private String recipientUserId;
+    private Instant readAt;
 
     @Column(nullable = false)
-    private String deliveryStatus;
+    private Instant createdAt;
 
-    protected EmailRecipient() {
+    protected ThreadMessage() {
     }
 
-    public EmailRecipient(String recipientAddress, RecipientType recipientType) {
-        this.recipientAddress = recipientAddress;
-        this.recipientType = recipientType;
-        this.deliveryStatus = "DELIVERED";
-    }
-
-    void attachTo(EmailMessage email) {
+    public ThreadMessage(UUID id, UserThread thread, EmailMessage email, MessageDirection direction,
+                         Instant readAt, Instant createdAt) {
+        this.id = id;
+        this.thread = thread;
         this.email = email;
+        this.direction = direction;
+        this.readAt = readAt;
+        this.createdAt = createdAt;
     }
 }

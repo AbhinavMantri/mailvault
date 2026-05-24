@@ -5,6 +5,8 @@ import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
+import com.mailvault.mailbox.repository.ThreadMessageRow;
+import com.mailvault.mailbox.repository.ThreadSummaryRow;
 import com.mailvault.mailbox.storage.EmailBodyStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,6 +98,83 @@ class MailboxQueryServiceTest {
         assertThat(detail.htmlBody()).isEqualTo("<p>Plain status update</p>");
         assertThat(detail.recipients()).extracting("address").containsExactly("abhinav@example.com");
         assertThat(detail.attachments()).extracting("filename").containsExactly("report.pdf");
+    }
+
+    @Test
+    void getThreadsReturnsThreadSummaries() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.findThreads("user-123", "INBOX", 10))
+                .thenReturn(List.of(new ThreadSummaryRow(
+                        threadId,
+                        "Invoice",
+                        "INBOX",
+                        "billing@example.com",
+                        Instant.parse("2026-05-23T08:00:00Z"),
+                        2,
+                        1,
+                        1
+                )));
+
+        var threads = mailboxQueryService.getThreads("user-123", "INBOX", 10);
+
+        assertThat(threads).hasSize(1);
+        assertThat(threads.getFirst().id()).isEqualTo(threadId);
+        assertThat(threads.getFirst().folder()).isEqualTo("INBOX");
+        assertThat(threads.getFirst().messageCount()).isEqualTo(2);
+    }
+
+    @Test
+    void getThreadDetailReturnsMessagesWithBodiesRecipientsAndAttachments() {
+        UUID threadId = UUID.randomUUID();
+        UUID emailId = UUID.randomUUID();
+        UUID attachmentId = UUID.randomUUID();
+        when(emailMessageRepository.findThread(threadId, "user-123"))
+                .thenReturn(Optional.of(new ThreadSummaryRow(
+                        threadId,
+                        "Invoice",
+                        "INBOX",
+                        "billing@example.com",
+                        Instant.parse("2026-05-23T08:00:00Z"),
+                        1,
+                        1,
+                        1
+                )));
+        when(emailMessageRepository.findThreadMessages(threadId))
+                .thenReturn(List.of(new ThreadMessageRow(
+                        threadId,
+                        emailId,
+                        "INBOUND",
+                        "billing@example.com",
+                        "Invoice",
+                        "users/user-123/emails/%s/body.txt".formatted(emailId),
+                        null,
+                        Instant.parse("2026-05-23T08:00:00Z"),
+                        2048L
+                )));
+        when(emailMessageRepository.findRecipients(emailId))
+                .thenReturn(List.of(
+                        new RecipientRow("abhinav@example.com", "TO"),
+                        new RecipientRow("manager@example.com", "CC")
+                ));
+        when(emailMessageRepository.findAttachments(emailId))
+                .thenReturn(List.of(new AttachmentRow(
+                        attachmentId,
+                        "invoice.pdf",
+                        "application/pdf",
+                        1024L,
+                        "READY"
+                )));
+        when(emailBodyStorage.readText("users/user-123/emails/%s/body.txt".formatted(emailId)))
+                .thenReturn("Invoice attached");
+
+        var detail = mailboxQueryService.getThreadDetail("user-123", threadId);
+
+        assertThat(detail.id()).isEqualTo(threadId);
+        assertThat(detail.messages()).hasSize(1);
+        assertThat(detail.messages().getFirst().direction()).isEqualTo("INBOUND");
+        assertThat(detail.messages().getFirst().textBody()).isEqualTo("Invoice attached");
+        assertThat(detail.messages().getFirst().recipients()).extracting("type").containsExactly("TO", "CC");
+        assertThat(detail.messages().getFirst().attachments()).extracting("filename").containsExactly("invoice.pdf");
     }
 
     @Test

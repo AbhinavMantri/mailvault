@@ -31,6 +31,23 @@ public class MailboxController {
         return mailboxQueryService.getInbox(userId, limit);
     }
 
+    @GetMapping("/mailboxes/{userId}/threads")
+    List<ThreadSummaryResponse> threads(
+            @PathVariable @NotBlank String userId,
+            @RequestParam(defaultValue = "INBOX") @NotBlank String folder,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit
+    ) {
+        return mailboxQueryService.getThreads(userId, folder, limit);
+    }
+
+    @GetMapping("/threads/{threadId}")
+    ThreadDetailResponse threadDetail(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxQueryService.getThreadDetail(userId, threadId);
+    }
+
     @GetMapping("/emails/{emailId}")
     EmailDetailResponse emailDetail(
             @PathVariable UUID emailId,

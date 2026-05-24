@@ -8,6 +8,8 @@ import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
+import com.mailvault.ingestion.repository.ThreadMessageRepository;
+import com.mailvault.ingestion.repository.UserThreadRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +44,12 @@ class EmailIngestionServiceTest {
     @Mock
     private OutboxEventService outboxEventService;
 
+    @Mock
+    private UserThreadRepository userThreadRepository;
+
+    @Mock
+    private ThreadMessageRepository threadMessageRepository;
+
     @InjectMocks
     private EmailIngestionService emailIngestionService;
 
@@ -51,6 +59,8 @@ class EmailIngestionServiceTest {
                 "user-123",
                 "billing@example.com",
                 List.of("abhinav@example.com"),
+                List.of("manager@example.com"),
+                List.of("audit@example.com"),
                 "Invoice for May",
                 "Invoice attached.",
                 "<p>Invoice attached.</p>",
@@ -75,6 +85,8 @@ class EmailIngestionServiceTest {
                 "user-123",
                 "billing@example.com",
                 List.of("abhinav@example.com"),
+                List.of(),
+                List.of(),
                 "Invoice for May",
                 "Body",
                 null,
@@ -100,6 +112,8 @@ class EmailIngestionServiceTest {
                 "user-123",
                 "billing@example.com",
                 List.of("abhinav@example.com"),
+                List.of(),
+                List.of(),
                 "Invoice for May",
                 "Body",
                 null,

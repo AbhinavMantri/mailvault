@@ -11,6 +11,8 @@ public record EmailImportRequest(
         @NotBlank String userId,
         @Email @NotBlank String from,
         @NotEmpty List<@Email String> to,
+        List<@Email String> cc,
+        List<@Email String> bcc,
         @NotBlank String subject,
         String textBody,
         String htmlBody,

@@ -55,6 +55,134 @@ public class EmailMessageRepository {
         );
     }
 
+    public List<ThreadSummaryRow> findThreads(String userId, String folder, int limit) {
+        String sql = """
+                SELECT ut.id,
+                       latest.subject,
+                       ut.folder,
+                       ut.last_sender,
+                       ut.last_message_at,
+                       ut.message_count,
+                       ut.unread_count,
+                       COUNT(ear.id) AS attachment_count
+                  FROM user_threads ut
+                  JOIN LATERAL (
+                      SELECT e.subject
+                        FROM thread_messages tm
+                        JOIN emails e ON e.id = tm.email_id
+                       WHERE tm.thread_id = ut.id
+                       ORDER BY tm.created_at DESC
+                       LIMIT 1
+                  ) latest ON TRUE
+                  LEFT JOIN thread_messages tm_all ON tm_all.thread_id = ut.id
+                  LEFT JOIN email_attachment_refs ear ON ear.email_id = tm_all.email_id
+                 WHERE ut.user_id = :userId
+                   AND ut.folder = :folder
+                 GROUP BY ut.id, latest.subject, ut.folder, ut.last_sender, ut.last_message_at,
+                          ut.message_count, ut.unread_count
+                 ORDER BY ut.last_message_at DESC
+                 LIMIT :limit
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("userId", userId)
+                        .addValue("folder", folder)
+                        .addValue("limit", limit),
+                (rs, rowNum) -> new ThreadSummaryRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("subject"),
+                        rs.getString("folder"),
+                        rs.getString("last_sender"),
+                        toInstant(rs, "last_message_at"),
+                        rs.getInt("message_count"),
+                        rs.getInt("unread_count"),
+                        rs.getInt("attachment_count")
+                )
+        );
+    }
+
+    public Optional<ThreadSummaryRow> findThread(UUID threadId, String userId) {
+        String sql = """
+                SELECT ut.id,
+                       latest.subject,
+                       ut.folder,
+                       ut.last_sender,
+                       ut.last_message_at,
+                       ut.message_count,
+                       ut.unread_count,
+                       COUNT(ear.id) AS attachment_count
+                  FROM user_threads ut
+                  JOIN LATERAL (
+                      SELECT e.subject
+                        FROM thread_messages tm
+                        JOIN emails e ON e.id = tm.email_id
+                       WHERE tm.thread_id = ut.id
+                       ORDER BY tm.created_at DESC
+                       LIMIT 1
+                  ) latest ON TRUE
+                  LEFT JOIN thread_messages tm_all ON tm_all.thread_id = ut.id
+                  LEFT JOIN email_attachment_refs ear ON ear.email_id = tm_all.email_id
+                 WHERE ut.id = :threadId
+                   AND ut.user_id = :userId
+                 GROUP BY ut.id, latest.subject, ut.folder, ut.last_sender, ut.last_message_at,
+                          ut.message_count, ut.unread_count
+                """;
+
+        List<ThreadSummaryRow> rows = jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
+                (rs, rowNum) -> new ThreadSummaryRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("subject"),
+                        rs.getString("folder"),
+                        rs.getString("last_sender"),
+                        toInstant(rs, "last_message_at"),
+                        rs.getInt("message_count"),
+                        rs.getInt("unread_count"),
+                        rs.getInt("attachment_count")
+                )
+        );
+        return rows.stream().findFirst();
+    }
+
+    public List<ThreadMessageRow> findThreadMessages(UUID threadId) {
+        String sql = """
+                SELECT tm.thread_id,
+                       e.id AS email_id,
+                       tm.direction,
+                       e.sender,
+                       e.subject,
+                       e.text_object_key,
+                       e.html_object_key,
+                       e.received_at,
+                       e.logical_size_bytes
+                  FROM thread_messages tm
+                  JOIN emails e ON e.id = tm.email_id
+                 WHERE tm.thread_id = :threadId
+                 ORDER BY tm.created_at
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource("threadId", threadId),
+                (rs, rowNum) -> new ThreadMessageRow(
+                        rs.getObject("thread_id", UUID.class),
+                        rs.getObject("email_id", UUID.class),
+                        rs.getString("direction"),
+                        rs.getString("sender"),
+                        rs.getString("subject"),
+                        rs.getString("text_object_key"),
+                        rs.getString("html_object_key"),
+                        toInstant(rs, "received_at"),
+                        rs.getLong("logical_size_bytes")
+                )
+        );
+    }
+
     public Optional<EmailHeaderRow> findHeader(UUID emailId, String userId) {
         String sql = """
                 SELECT id,
@@ -97,7 +225,13 @@ public class EmailMessageRepository {
                        recipient_type
                   FROM email_recipients
                  WHERE email_id = :emailId
-                 ORDER BY recipient_type, recipient_address
+                 ORDER BY CASE recipient_type
+                            WHEN 'TO' THEN 1
+                            WHEN 'CC' THEN 2
+                            WHEN 'BCC' THEN 3
+                            ELSE 4
+                          END,
+                          recipient_address
                 """;
 
         return jdbcTemplate.query(

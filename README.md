@@ -28,6 +28,7 @@ Focused diagrams:
 - [Business Use Cases](docs/diagrams/business-use-cases.svg)
 - [Attachment Security Flow](docs/diagrams/attachment-security-flow.svg)
 - [Storage Lifecycle Flow](docs/diagrams/storage-lifecycle-flow.svg)
+- [Thread And Recipient Model](docs/diagrams/thread-recipient-model.svg)
 
 Architecture notes:
 
@@ -38,6 +39,7 @@ Architecture notes:
 
 - Import email through an API. _Implemented in `ingestion-service`._
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
+- Read mailbox threads and thread detail through APIs. _Initial thread model added._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
@@ -215,6 +217,8 @@ Implemented so far:
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
 - `GET /mailboxes/{userId}/inbox`
+- `GET /mailboxes/{userId}/threads?folder=INBOX`
+- `GET /threads/{threadId}?userId={userId}`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`
 - `GET /emails/search?userId={userId}&q={query}` from `search-service`
