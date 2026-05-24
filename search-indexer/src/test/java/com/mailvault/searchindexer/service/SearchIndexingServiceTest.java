@@ -1,6 +1,7 @@
 package com.mailvault.searchindexer.service;
 
 import com.mailvault.searchindexer.events.EmailReceivedEvent;
+import com.mailvault.searchindexer.idempotency.EventIdempotencyCache;
 import com.mailvault.searchindexer.search.EmailSearchDocument;
 import com.mailvault.searchindexer.search.OpenSearchEmailIndexer;
 import org.junit.jupiter.api.Test;
@@ -15,13 +16,19 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SearchIndexingServiceTest {
 
     @Mock
     private OpenSearchEmailIndexer emailIndexer;
+
+    @Mock
+    private EventIdempotencyCache idempotencyCache;
 
     @InjectMocks
     private SearchIndexingService searchIndexingService;
@@ -41,6 +48,7 @@ class SearchIndexingServiceTest {
                 2048L,
                 receivedAt
         );
+        when(idempotencyCache.wasRecentlyProcessed("search-indexer", "email.received", eventId)).thenReturn(false);
 
         searchIndexingService.indexEmail(event);
 
@@ -52,5 +60,27 @@ class SearchIndexingServiceTest {
         assertThat(captor.getValue().recipients()).containsExactly("abhinav@example.com");
         assertThat(captor.getValue().logicalSizeBytes()).isEqualTo(2048L);
         assertThat(captor.getValue().receivedAt()).isEqualTo(receivedAt);
+        verify(idempotencyCache).rememberProcessed("search-indexer", "email.received", eventId);
+    }
+
+    @Test
+    void indexEmailSkipsRecentlyProcessedEvent() {
+        UUID eventId = UUID.randomUUID();
+        EmailReceivedEvent event = new EmailReceivedEvent(
+                eventId,
+                UUID.randomUUID(),
+                "user-123",
+                "billing@example.com",
+                List.of("abhinav@example.com"),
+                "Invoice for May",
+                2048L,
+                Instant.parse("2026-05-23T12:00:00Z")
+        );
+        when(idempotencyCache.wasRecentlyProcessed("search-indexer", "email.received", eventId)).thenReturn(true);
+
+        searchIndexingService.indexEmail(event);
+
+        verify(emailIndexer, never()).upsert(any());
+        verify(idempotencyCache, never()).rememberProcessed(any(), any(), any());
     }
 }

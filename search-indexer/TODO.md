@@ -12,7 +12,7 @@ Hardening items before treating `search-indexer` as production-ready.
 
 - Add retry/backoff behavior for transient OpenSearch failures.
 - Add dead-letter topic handling for malformed events.
-- Make indexing idempotent by using `emailId` as the OpenSearch document ID.
+- Add metrics for Redis idempotency hits, misses, and unavailable fallback.
 - Add structured logs with `eventId`, `emailId`, and Kafka offset.
 
 ## Testing

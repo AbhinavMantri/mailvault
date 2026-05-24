@@ -11,6 +11,7 @@ Editable Draw.io source: [architecture.drawio](architecture.drawio)
 - [Attachment Security Flow](diagrams/attachment-security-flow.svg): attachment hashing, deduplication, antivirus scanning, and quarantine behavior.
 - [Storage Lifecycle Flow](diagrams/storage-lifecycle-flow.svg): hot storage, archival movement, search continuity, and restore behavior.
 - [Outbox and CDC Strategy](outbox-cdc.md): reliable event publication path and Debezium production direction.
+- [Consumer Idempotency Strategy](consumer-idempotency.md): Redis duplicate filter plus durable target-store fallback.
 
 ## Core Principle
 
@@ -44,6 +45,8 @@ Attachments are not considered downloadable until the security scan records a cl
 Email metadata is strongly persisted before the import request succeeds. Search is eventually consistent because indexing is asynchronous.
 
 `ingestion-service` writes `email.received` into `outbox_events` in the same database transaction as email metadata. The MVP publishes those rows with a scheduled outbox publisher. In a Kubernetes production deployment, the preferred evolution is Debezium CDC through Kafka Connect, where the connector reads committed outbox rows from the Postgres WAL and publishes them to Kafka.
+
+Consumers are idempotent by service-specific durable state, not by one global processed-events table. Redis is used only as a recent duplicate filter. If Redis misses or is unavailable, consumers fall back to safe writes such as OpenSearch upsert by `emailId`, conditional status transitions, or business ledgers with unique event IDs.
 
 ## Failure Modes
 

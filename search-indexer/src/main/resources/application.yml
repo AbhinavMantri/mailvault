@@ -14,6 +14,10 @@ spring:
         spring.json.trusted.packages: "*"
         spring.json.use.type.headers: false
         spring.json.value.default.type: com.mailvault.searchindexer.events.EmailReceivedEvent
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 mailvault:
   kafka:
@@ -22,6 +26,9 @@ mailvault:
   search:
     base-url: ${OPENSEARCH_BASE_URL:http://localhost:9200}
     email-index: ${EMAIL_SEARCH_INDEX:mailvault-emails}
+  idempotency:
+    redis-key-prefix: ${IDEMPOTENCY_REDIS_KEY_PREFIX:mailvault:idempotency}
+    ttl-days: ${IDEMPOTENCY_TTL_DAYS:7}
 
 management:
   endpoints:

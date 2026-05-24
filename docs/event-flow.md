@@ -37,6 +37,7 @@ POST /emails/import
 ```text
 email.received
   -> search-indexer indexes subject, sender, recipients, user, and timestamps
+  -> Redis filters recent duplicate events; OpenSearch upsert by emailId remains the durable fallback
   -> archival-worker evaluates lifecycle rules
 
 attachment-worker

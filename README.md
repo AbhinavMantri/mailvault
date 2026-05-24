@@ -32,6 +32,7 @@ Focused diagrams:
 Architecture notes:
 
 - [Outbox and CDC Strategy](docs/outbox-cdc.md)
+- [Consumer Idempotency Strategy](docs/consumer-idempotency.md)
 
 ## MVP Scope
 
@@ -145,6 +146,7 @@ Local endpoints:
 | OpenSearch | `http://localhost:9200` |
 | Postgres | `localhost:5432` |
 | Kafka | `localhost:9092` |
+| Redis | `localhost:6379` |
 
 ## Production Hardening Roadmap
 
