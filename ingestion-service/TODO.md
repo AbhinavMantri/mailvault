@@ -4,10 +4,10 @@ Hardening items to complete before treating ingestion-service as production-read
 
 ## Reliability
 
-- Implement transactional outbox publishing instead of direct Kafka publish from the request transaction.
 - Add idempotency keys for `POST /emails/import`.
 - Add idempotency behavior for `POST /attachments/{attachmentId}/complete`.
 - Add correlation IDs and structured request logs.
+- Add retry/backoff metrics and alerts for stuck unpublished outbox rows.
 
 ## Attachment Upload
 
@@ -26,7 +26,7 @@ Hardening items to complete before treating ingestion-service as production-read
 
 - Add controller tests for validation and response codes.
 - Add Testcontainers integration tests for Postgres, MinIO, and Kafka.
-- Add failure-path tests for object storage and Kafka publish failures.
+- Add failure-path tests for object storage.
 
 ## Security
 

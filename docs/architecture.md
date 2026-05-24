@@ -24,7 +24,7 @@ Client
   -> Reserve logical storage in Quota Service
   -> Store raw content and attachments in MinIO
   -> Save metadata in Postgres
-  -> Publish email.received event
+  -> Write email.received outbox event
   -> Return accepted response
 ```
 
@@ -45,7 +45,7 @@ Email metadata is strongly persisted before the import request succeeds. Search 
 ## Failure Modes
 
 - If OpenSearch is unavailable, email ingestion should continue.
-- If Kafka publish fails after metadata persistence, an outbox table can be used to recover event delivery.
+- If Kafka publish fails after metadata persistence, the outbox row remains unpublished and can be retried by the scheduled publisher.
 - If MinIO storage fails, ingestion should fail before metadata is committed.
 - If quota reservation fails, ingestion should reject the import before writing objects.
 - If quota reservation succeeds but later storage or metadata persistence fails, a compensation path should release the reserved bytes.

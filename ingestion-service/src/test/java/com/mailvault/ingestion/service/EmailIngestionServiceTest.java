@@ -4,8 +4,8 @@ import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
-import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
+import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
@@ -46,13 +46,13 @@ class EmailIngestionServiceTest {
     private QuotaClient quotaClient;
 
     @Mock
-    private EmailEventPublisher emailEventPublisher;
+    private OutboxEventService outboxEventService;
 
     @InjectMocks
     private EmailIngestionService emailIngestionService;
 
     @Test
-    void importEmailWithoutAttachmentsPersistsMetadataAndPublishesEvent() {
+    void importEmailWithoutAttachmentsPersistsMetadataAndWritesOutboxEvent() {
         EmailImportRequest request = new EmailImportRequest(
                 "user-123",
                 "billing@example.com",
@@ -71,11 +71,11 @@ class EmailIngestionServiceTest {
         verify(objectStorageService).putText(any(), eq("<p>Invoice attached.</p>"), eq("text/html"));
         verify(quotaClient).reserve(eq("user-123"), anyLong());
         verify(emailMessageRepository).save(any(EmailMessage.class));
-        verify(emailEventPublisher).publishEmailReceived(any(EmailReceivedEvent.class));
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
 
     @Test
-    void importEmailWithUploadedAttachmentLinksAttachmentAndCountsSize() {
+    void importEmailWithUploadedAttachmentLinksAttachmentCountsSizeAndWritesOutboxEvent() {
         UUID attachmentId = UUID.randomUUID();
         Attachment attachment = uploadedAttachment(attachmentId, 512);
         EmailImportRequest request = new EmailImportRequest(
@@ -98,7 +98,7 @@ class EmailIngestionServiceTest {
         assertThat(response.logicalSizeBytes()).isEqualTo("Body".length() + 512);
         verify(quotaClient).reserve("user-123", "Body".length() + 512);
         verify(emailMessageRepository).save(any(EmailMessage.class));
-        verify(emailEventPublisher).publishEmailReceived(any(EmailReceivedEvent.class));
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
 
     @Test
@@ -124,7 +124,7 @@ class EmailIngestionServiceTest {
                 .hasMessage("All attachments must be uploaded before email import");
         verify(quotaClient, never()).reserve(any(), anyLong());
         verify(emailMessageRepository, never()).save(any());
-        verify(emailEventPublisher, never()).publishEmailReceived(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 
     @Test
@@ -149,6 +149,7 @@ class EmailIngestionServiceTest {
 
         verify(objectStorageService, never()).putText(any(), any(), any());
         verify(emailMessageRepository, never()).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 
     private Attachment uploadedAttachment(UUID attachmentId, long sizeBytes) {

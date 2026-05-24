@@ -35,7 +35,7 @@ Focused diagrams:
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
-- Publish email events to Kafka. _Implemented for `email.received`._
+- Publish email events through a transactional outbox. _Implemented for `email.received`._
 - Index searchable fields in OpenSearch. _Initial async `search-indexer` added for event fields._
 - Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
 - Track per-user storage quota. _Initial quota reservation and storage usage APIs added in `quota-service`._
@@ -153,7 +153,7 @@ Local endpoints:
 
 | Service | Responsibility |
 | --- | --- |
-| `ingestion-service` | Accept email imports, persist metadata, store raw content, publish events |
+| `ingestion-service` | Accept email imports, persist metadata, store raw content, write outbox events |
 | `mailbox-service` | Serve inbox and message detail read APIs |
 | `quota-service` | Reserve quota, track logical storage usage, and serve storage usage APIs |
 | `search-indexer` | Consume email events and update OpenSearch |
@@ -200,5 +200,5 @@ Implemented so far:
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
 - MinIO object writes for raw email/body and direct attachment uploads
 - uploaded attachment references on email import
-- Kafka `email.received` event publication
+- Transactional outbox publication for Kafka `email.received` events
 - Actuator health endpoint

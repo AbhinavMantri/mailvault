@@ -9,8 +9,8 @@ import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.domain.EmailRecipient;
 import com.mailvault.ingestion.domain.EmailStatus;
 import com.mailvault.ingestion.domain.RecipientType;
-import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
+import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.quota.QuotaClient;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
@@ -30,18 +30,18 @@ public class EmailIngestionService {
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
     private final QuotaClient quotaClient;
-    private final EmailEventPublisher emailEventPublisher;
+    private final OutboxEventService outboxEventService;
 
     public EmailIngestionService(ObjectStorageService objectStorageService,
                                  EmailMessageRepository emailMessageRepository,
                                  AttachmentRepository attachmentRepository,
                                  QuotaClient quotaClient,
-                                 EmailEventPublisher emailEventPublisher) {
+                                 OutboxEventService outboxEventService) {
         this.objectStorageService = objectStorageService;
         this.emailMessageRepository = emailMessageRepository;
         this.attachmentRepository = attachmentRepository;
         this.quotaClient = quotaClient;
-        this.emailEventPublisher = emailEventPublisher;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -82,8 +82,7 @@ public class EmailIngestionService {
 
         emailMessageRepository.save(email);
 
-        // TODO: replace direct Kafka publish with transactional outbox and idempotency key support.
-        emailEventPublisher.publishEmailReceived(new EmailReceivedEvent(
+        outboxEventService.saveEmailReceived(new EmailReceivedEvent(
                 UUID.randomUUID(),
                 emailId,
                 request.userId(),
@@ -92,7 +91,7 @@ public class EmailIngestionService {
                 request.subject(),
                 logicalSizeBytes,
                 receivedAt
-        ));
+        ), receivedAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", logicalSizeBytes);
     }

@@ -1,6 +1,6 @@
 # Ingestion Service
 
-Accepts email imports, creates presigned upload URLs for attachments, stores raw email content in MinIO, persists mailbox metadata in Postgres, reserves logical storage through `quota-service`, and publishes an `email.received` Kafka event.
+Accepts email imports, creates presigned upload URLs for attachments, stores raw email content in MinIO, persists mailbox metadata in Postgres, reserves logical storage through `quota-service`, and writes an `email.received` outbox event for reliable Kafka publication.
 
 ## Run Locally
 
@@ -44,3 +44,7 @@ POST /emails/import
 ```
 
 The email import request accepts metadata, body content, and uploaded `attachmentIds`. Attachment bytes do not pass through the email import API. SMTP ingestion is intentionally deferred until the storage path is stable.
+
+## Outbox
+
+Email import persists mailbox metadata and the `email.received` outbox event in the same database transaction. A scheduled publisher reads unpublished outbox rows, sends them to Kafka, and marks each row published only after Kafka accepts the send.

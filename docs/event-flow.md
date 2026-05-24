@@ -19,8 +19,8 @@ POST /emails/import
   -> reserve quota through quota-service
   -> store objects
   -> persist metadata
-  -> write outbox event
-  -> publish email.received
+  -> write email.received outbox event in the same transaction
+  -> scheduled outbox publisher sends email.received to Kafka
 ```
 
 ## Worker Flow
