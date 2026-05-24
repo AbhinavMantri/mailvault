@@ -66,4 +66,14 @@ public class UserThread {
     public UUID getId() {
         return id;
     }
+
+    public void appendMessage(String sender, Instant messageAt, MessageDirection direction) {
+        this.lastSender = sender;
+        this.lastMessageAt = messageAt;
+        this.messageCount++;
+        if (direction == MessageDirection.INBOUND) {
+            this.unreadCount++;
+        }
+        this.updatedAt = messageAt;
+    }
 }

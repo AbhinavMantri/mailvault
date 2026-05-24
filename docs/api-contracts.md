@@ -129,14 +129,36 @@ GET /threads/{threadId}?userId=user-123
 
 Thread detail returns the ordered messages in the conversation. Attachments and recipients remain message-level data.
 
-Planned reply/send API:
+## Reply To Thread
 
 ```http
 POST /threads/{threadId}/messages
 Content-Type: application/json
 ```
 
-This API will append a new message to an existing thread after validating that the thread belongs to the user. External mailbox migration, if added later, should be a separate adapter that converts provider conversations into MailVault threads and messages before persistence.
+```json
+{
+  "userId": "user-123",
+  "from": "abhinav@example.com",
+  "to": ["billing@example.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": "Re: Invoice for May",
+  "textBody": "Thanks, received.",
+  "htmlBody": "<p>Thanks, received.</p>",
+  "attachmentIds": []
+}
+```
+
+```json
+{
+  "emailId": "9ad60756-67c4-4914-a27f-35956ddba7f9",
+  "status": "ACCEPTED",
+  "logicalSizeBytes": 42
+}
+```
+
+This API appends a new message to an existing thread after validating that the thread belongs to the user. External mailbox migration, if added later, should be a separate adapter that converts provider conversations into MailVault threads and messages before persistence.
 
 ## Search
 

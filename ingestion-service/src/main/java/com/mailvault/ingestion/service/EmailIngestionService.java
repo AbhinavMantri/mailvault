@@ -2,6 +2,7 @@ package com.mailvault.ingestion.service;
 
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
+import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailAttachmentRef;
@@ -60,48 +61,17 @@ public class EmailIngestionService {
 
     @Transactional
     public EmailImportResponse importEmail(EmailImportRequest request) {
+        MessageDraft draft = MessageDraft.from(request);
         UUID emailId = UUID.randomUUID();
         Instant receivedAt = Instant.now();
-        List<Attachment> attachments = findUploadedAttachments(request);
-        long logicalSizeBytes = calculateLogicalSize(request, attachments);
-
-        String rawObjectKey = "users/%s/emails/%s/raw.eml".formatted(request.userId(), emailId);
-        String textObjectKey = "users/%s/emails/%s/body.txt".formatted(request.userId(), emailId);
-        String htmlObjectKey = request.htmlBody() == null || request.htmlBody().isBlank()
-                ? null
-                : "users/%s/emails/%s/body.html".formatted(request.userId(), emailId);
-
-        objectStorageService.putText(rawObjectKey, buildRawMime(request), "message/rfc822");
-        objectStorageService.putText(textObjectKey, safeText(request.textBody()), "text/plain");
-        if (htmlObjectKey != null) {
-            objectStorageService.putText(htmlObjectKey, request.htmlBody(), "text/html");
-        }
-
-        EmailMessage email = new EmailMessage(
-                emailId,
-                request.userId(),
-                request.from(),
-                request.subject(),
-                rawObjectKey,
-                textObjectKey,
-                htmlObjectKey,
-                logicalSizeBytes,
-                EmailStatus.INDEX_PENDING,
-                receivedAt
-        );
-        safeList(request.to()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
-        safeList(request.cc()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.CC)));
-        safeList(request.bcc()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.BCC)));
-        attachments.forEach(attachment -> email.addAttachmentRef(new EmailAttachmentRef(attachment)));
-
-        emailMessageRepository.save(email);
+        PersistedEmail persistedEmail = persistMessage(draft, emailId, receivedAt);
         UserThread thread = new UserThread(
                 UUID.randomUUID(),
-                request.userId(),
-                normalizeSubject(request.subject()),
+                draft.userId(),
+                normalizeSubject(draft.subject()),
                 ThreadFolder.INBOX,
                 receivedAt,
-                request.from(),
+                draft.from(),
                 1,
                 1,
                 receivedAt,
@@ -111,51 +81,103 @@ public class EmailIngestionService {
         threadMessageRepository.save(new ThreadMessage(
                 UUID.randomUUID(),
                 thread,
-                email,
+                persistedEmail.email(),
                 MessageDirection.INBOUND,
                 null,
                 receivedAt
         ));
 
-        outboxEventService.saveEmailReceived(new EmailReceivedEvent(
-                UUID.randomUUID(),
-                emailId,
-                request.userId(),
-                request.from(),
-                visibleRecipients(request),
-                request.subject(),
-                logicalSizeBytes,
-                receivedAt
-        ), receivedAt);
+        saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), receivedAt);
 
-        return new EmailImportResponse(emailId, "ACCEPTED", logicalSizeBytes);
+        return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
 
-    private List<Attachment> findUploadedAttachments(EmailImportRequest request) {
-        if (request.attachmentIds() == null || request.attachmentIds().isEmpty()) {
+    @Transactional
+    public EmailImportResponse replyToThread(UUID threadId, EmailReplyRequest request) {
+        MessageDraft draft = MessageDraft.from(request);
+        UserThread thread = userThreadRepository.findByIdAndUserId(threadId, request.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
+
+        UUID emailId = UUID.randomUUID();
+        Instant sentAt = Instant.now();
+        PersistedEmail persistedEmail = persistMessage(draft, emailId, sentAt);
+        thread.appendMessage(draft.from(), sentAt, MessageDirection.OUTBOUND);
+        threadMessageRepository.save(new ThreadMessage(
+                UUID.randomUUID(),
+                thread,
+                persistedEmail.email(),
+                MessageDirection.OUTBOUND,
+                sentAt,
+                sentAt
+        ));
+
+        saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+
+        return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
+    }
+
+    private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt) {
+        List<Attachment> attachments = findUploadedAttachments(draft);
+        long logicalSizeBytes = calculateLogicalSize(draft, attachments);
+
+        String rawObjectKey = "users/%s/emails/%s/raw.eml".formatted(draft.userId(), emailId);
+        String textObjectKey = "users/%s/emails/%s/body.txt".formatted(draft.userId(), emailId);
+        String htmlObjectKey = draft.htmlBody() == null || draft.htmlBody().isBlank()
+                ? null
+                : "users/%s/emails/%s/body.html".formatted(draft.userId(), emailId);
+
+        objectStorageService.putText(rawObjectKey, buildRawMime(draft), "message/rfc822");
+        objectStorageService.putText(textObjectKey, safeText(draft.textBody()), "text/plain");
+        if (htmlObjectKey != null) {
+            objectStorageService.putText(htmlObjectKey, draft.htmlBody(), "text/html");
+        }
+
+        EmailMessage email = new EmailMessage(
+                emailId,
+                draft.userId(),
+                draft.from(),
+                draft.subject(),
+                rawObjectKey,
+                textObjectKey,
+                htmlObjectKey,
+                logicalSizeBytes,
+                EmailStatus.INDEX_PENDING,
+                receivedAt
+        );
+        safeList(draft.to()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
+        safeList(draft.cc()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.CC)));
+        safeList(draft.bcc()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.BCC)));
+        attachments.forEach(attachment -> email.addAttachmentRef(new EmailAttachmentRef(attachment)));
+
+        emailMessageRepository.save(email);
+        return new PersistedEmail(email, logicalSizeBytes);
+    }
+
+    private List<Attachment> findUploadedAttachments(MessageDraft draft) {
+        if (draft.attachmentIds() == null || draft.attachmentIds().isEmpty()) {
             return List.of();
         }
         List<Attachment> attachments = attachmentRepository.findByIdInAndUserIdAndStatusIn(
-                request.attachmentIds(),
-                request.userId(),
+                draft.attachmentIds(),
+                draft.userId(),
                 IMPORTABLE_ATTACHMENT_STATUSES
         );
-        if (attachments.size() != request.attachmentIds().size()) {
+        if (attachments.size() != draft.attachmentIds().size()) {
             throw new IllegalArgumentException("All attachments must be uploaded before email import");
         }
         return attachments;
     }
 
-    private long calculateLogicalSize(EmailImportRequest request, List<Attachment> attachments) {
-        long bodySize = safeText(request.textBody()).getBytes(StandardCharsets.UTF_8).length;
-        long htmlSize = safeText(request.htmlBody()).getBytes(StandardCharsets.UTF_8).length;
+    private long calculateLogicalSize(MessageDraft draft, List<Attachment> attachments) {
+        long bodySize = safeText(draft.textBody()).getBytes(StandardCharsets.UTF_8).length;
+        long htmlSize = safeText(draft.htmlBody()).getBytes(StandardCharsets.UTF_8).length;
         long attachmentSize = attachments.stream()
                 .mapToLong(Attachment::getSizeBytes)
                 .sum();
         return bodySize + htmlSize + attachmentSize;
     }
 
-    private String buildRawMime(EmailImportRequest request) {
+    private String buildRawMime(MessageDraft draft) {
         return """
                 From: %s
                 To: %s
@@ -165,11 +187,11 @@ public class EmailIngestionService {
 
                 %s
                 """.formatted(
-                request.from(),
-                String.join(",", safeList(request.to())),
-                String.join(",", safeList(request.cc())),
-                request.subject(),
-                safeText(request.textBody())
+                draft.from(),
+                String.join(",", safeList(draft.to())),
+                String.join(",", safeList(draft.cc())),
+                draft.subject(),
+                safeText(draft.textBody())
         );
     }
 
@@ -181,9 +203,22 @@ public class EmailIngestionService {
         return value == null ? List.of() : value;
     }
 
-    private List<String> visibleRecipients(EmailImportRequest request) {
-        return java.util.stream.Stream.concat(safeList(request.to()).stream(), safeList(request.cc()).stream())
+    private List<String> visibleRecipients(MessageDraft draft) {
+        return java.util.stream.Stream.concat(safeList(draft.to()).stream(), safeList(draft.cc()).stream())
                 .toList();
+    }
+
+    private void saveEmailReceivedEvent(MessageDraft draft, UUID emailId, long logicalSizeBytes, Instant receivedAt) {
+        outboxEventService.saveEmailReceived(new EmailReceivedEvent(
+                UUID.randomUUID(),
+                emailId,
+                draft.userId(),
+                draft.from(),
+                visibleRecipients(draft),
+                draft.subject(),
+                logicalSizeBytes,
+                receivedAt
+        ), receivedAt);
     }
 
     private String normalizeSubject(String subject) {
@@ -192,6 +227,49 @@ public class EmailIngestionService {
             normalized = normalized.substring(normalized.indexOf(':') + 1).trim();
         }
         return normalized;
+    }
+
+    private record PersistedEmail(EmailMessage email, long logicalSizeBytes) {
+    }
+
+    private record MessageDraft(
+            String userId,
+            String from,
+            List<String> to,
+            List<String> cc,
+            List<String> bcc,
+            String subject,
+            String textBody,
+            String htmlBody,
+            List<UUID> attachmentIds
+    ) {
+        static MessageDraft from(EmailImportRequest request) {
+            return new MessageDraft(
+                    request.userId(),
+                    request.from(),
+                    request.to(),
+                    request.cc(),
+                    request.bcc(),
+                    request.subject(),
+                    request.textBody(),
+                    request.htmlBody(),
+                    request.attachmentIds()
+            );
+        }
+
+        static MessageDraft from(EmailReplyRequest request) {
+            return new MessageDraft(
+                    request.userId(),
+                    request.from(),
+                    request.to(),
+                    request.cc(),
+                    request.bcc(),
+                    request.subject(),
+                    request.textBody(),
+                    request.htmlBody(),
+                    request.attachmentIds()
+            );
+        }
     }
 
 }

@@ -45,7 +45,7 @@ An email is the immutable message/content unit. A thread is the user-visible con
 
 For the first imported message, ingestion creates the message and a first `user_threads` row for that user. The `thread_messages` row links the message to the thread with a direction such as `INBOUND`. Later reply/send APIs can append more `thread_messages` rows to the same thread.
 
-`POST /emails/import` is intentionally treated as a new conversation boundary in the core API. It should not carry complex thread-resolution heuristics. The planned reply/send API will receive an explicit `threadId`, validate ownership, create a new `emails` row, and append a `thread_messages` row to the existing thread.
+`POST /emails/import` is intentionally treated as a new conversation boundary in the core API. It should not carry complex thread-resolution heuristics. `POST /threads/{threadId}/messages` receives an explicit `threadId`, validates ownership, creates a new `emails` row, and appends a `thread_messages` row to the existing thread.
 
 If MailVault later supports Gmail, Outlook, or `.eml` migration, that should be handled by a separate migration adapter. The adapter can parse external conversation signals such as provider thread IDs, `Message-ID`, `In-Reply-To`, and `References`, then convert the imported history into MailVault's native `user_threads`, `emails`, `thread_messages`, recipients, and attachment refs. That keeps the normal import path simple and keeps external-provider rules outside core ingestion.
 

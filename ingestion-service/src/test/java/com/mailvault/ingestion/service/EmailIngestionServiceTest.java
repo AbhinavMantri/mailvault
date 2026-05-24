@@ -1,9 +1,12 @@
 package com.mailvault.ingestion.service;
 
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
+import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
+import com.mailvault.ingestion.domain.ThreadFolder;
+import com.mailvault.ingestion.domain.UserThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
@@ -128,6 +131,66 @@ class EmailIngestionServiceTest {
         assertThatThrownBy(() -> emailIngestionService.importEmail(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("All attachments must be uploaded before email import");
+        verify(emailMessageRepository, never()).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
+    @Test
+    void replyToThreadPersistsMessageLinksExistingThreadAndWritesOutboxEvent() {
+        UUID threadId = UUID.randomUUID();
+        UserThread thread = new UserThread(
+                threadId,
+                "user-123",
+                "invoice for may",
+                ThreadFolder.INBOX,
+                Instant.now(),
+                "billing@example.com",
+                1,
+                1,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailReplyRequest request = new EmailReplyRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("billing@example.com"),
+                List.of(),
+                List.of(),
+                "Re: Invoice for May",
+                "Thanks, received.",
+                null,
+                List.of()
+        );
+        when(userThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.of(thread));
+
+        var response = emailIngestionService.replyToThread(threadId, request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        assertThat(response.logicalSizeBytes()).isEqualTo("Thanks, received.".length());
+        verify(emailMessageRepository).save(any(EmailMessage.class));
+        verify(threadMessageRepository).save(any());
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void replyToThreadRejectsThreadThatDoesNotBelongToUser() {
+        UUID threadId = UUID.randomUUID();
+        EmailReplyRequest request = new EmailReplyRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("billing@example.com"),
+                List.of(),
+                List.of(),
+                "Re: Invoice for May",
+                "Thanks, received.",
+                null,
+                List.of()
+        );
+        when(userThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> emailIngestionService.replyToThread(threadId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Thread not found");
         verify(emailMessageRepository, never()).save(any());
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }

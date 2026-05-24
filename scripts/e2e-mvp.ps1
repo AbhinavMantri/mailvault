@@ -196,6 +196,7 @@ try {
     $subject = "MailVault E2E $runId"
     $textBody = "This is an end-to-end email for $runId"
     $htmlBody = "<p>This is an end-to-end email for $runId</p>"
+    $replyBody = "Replying inside the same MailVault thread for $runId"
     $attachmentText = "hello from MailVault e2e $runId"
     $attachmentBytes = [System.Text.Encoding]::UTF8.GetBytes($attachmentText)
 
@@ -276,10 +277,43 @@ try {
     Assert-True ($threadMessages[0].emailId -eq $email.emailId) "thread detail email id did not match"
     Assert-True ($threadMessages[0].textBody -eq $textBody) "thread detail text body did not match"
 
+    Write-Step "replying to existing thread"
+    $reply = Invoke-Json "POST" "http://localhost:8081/threads/$($thread.id)/messages" @{
+        userId = $userId
+        from = $recipient
+        to = @("billing@mailvault.local")
+        cc = @()
+        bcc = @()
+        subject = "Re: $subject"
+        textBody = $replyBody
+        htmlBody = "<p>$replyBody</p>"
+        attachmentIds = @()
+    }
+    Assert-True $reply.emailId "reply emailId was not returned"
+    Assert-True ($reply.status -eq "ACCEPTED") "thread reply did not return ACCEPTED"
+
+    Write-Step "checking thread includes reply"
+    $updatedThread = Wait-Until "thread message count includes reply" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=INBOX&limit=10"
+        $candidate = @($threads) | Where-Object { $_.id -eq $thread.id } | Select-Object -First 1
+        if ($candidate -and $candidate.messageCount -eq 2) {
+            return $candidate
+        }
+        return $null
+    }
+    Assert-True ($updatedThread.unreadCount -eq 1) "outbound reply should not increment unread count"
+
+    $updatedThreadDetail = Invoke-Json "GET" "http://localhost:8082/threads/$($thread.id)?userId=$userId"
+    $updatedThreadMessages = @($updatedThreadDetail.messages)
+    Assert-True ($updatedThreadMessages.Count -eq 2) "thread detail did not include reply"
+    Assert-True ($updatedThreadMessages[1].emailId -eq $reply.emailId) "reply message was not second in thread"
+    Assert-True ($updatedThreadMessages[1].direction -eq "OUTBOUND") "reply direction was not OUTBOUND"
+    Assert-True ($updatedThreadMessages[1].textBody -eq $replyBody) "reply text body did not match"
+
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {
         $current = Invoke-Json "GET" "http://localhost:8083/users/$userId/storage"
-        if ($current.usedBytes -ge $email.logicalSizeBytes) {
+        if ($current.usedBytes -ge ($email.logicalSizeBytes + $reply.logicalSizeBytes)) {
             return $current
         }
         return $null

@@ -40,7 +40,7 @@ Architecture notes:
 - Import email through an API. _Implemented in `ingestion-service`._
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
 - Read mailbox threads and thread detail through APIs. _Initial thread model added._
-- Append replies to existing threads through a dedicated reply API. _Planned next; import intentionally starts a new thread._
+- Append replies to existing threads through a dedicated reply API. _Implemented in `ingestion-service`; import intentionally starts a new thread._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
@@ -220,7 +220,7 @@ Implemented so far:
 - `GET /mailboxes/{userId}/inbox`
 - `GET /mailboxes/{userId}/threads?folder=INBOX`
 - `GET /threads/{threadId}?userId={userId}`
-- Planned: `POST /threads/{threadId}/messages`
+- `POST /threads/{threadId}/messages`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`
 - `GET /emails/search?userId={userId}&q={query}` from `search-service`
