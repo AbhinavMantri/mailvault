@@ -68,6 +68,8 @@ After storing the imported email, `quota-service` consumes `email.received` and 
 
 Email import accepts attachment IDs that are already uploaded and not failed: `UPLOADED`, `PROCESSING`, or `READY`. This avoids a race where the Kafka-driven attachment worker marks an upload `READY` before the user sends the email.
 
+Import starts a new MailVault thread. It does not try to merge the message into an existing conversation by subject or external mail headers.
+
 ## Get Email
 
 ```http
@@ -126,6 +128,15 @@ GET /threads/{threadId}?userId=user-123
 ```
 
 Thread detail returns the ordered messages in the conversation. Attachments and recipients remain message-level data.
+
+Planned reply/send API:
+
+```http
+POST /threads/{threadId}/messages
+Content-Type: application/json
+```
+
+This API will append a new message to an existing thread after validating that the thread belongs to the user. External mailbox migration, if added later, should be a separate adapter that converts provider conversations into MailVault threads and messages before persistence.
 
 ## Search
 
