@@ -130,7 +130,7 @@
 
   <path class="soft-arrow" d="M1285 404 L1330 320" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1285 455 L1330 480" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M705 715 L725 715 L725 840 L1320 840 L1320 320 L1330 320" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M705 715 L725 715 L725 840 L1320 840 L1320 360 L1330 360" marker-end="url(#softArrow)"/>
   <text x="1035" y="825" class="label">usage ledger</text>
   <path class="soft-arrow" d="M1285 660 L1330 640" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1285 715 L1330 800" marker-end="url(#softArrow)"/>
