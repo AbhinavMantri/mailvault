@@ -39,7 +39,20 @@ archive/users/{userId}/emails/{emailId}/raw.eml
 
 ## Deduplication
 
-Attachments are hashed using SHA-256. The physical object is stored once and referenced by many emails when the content hash matches.
+Attachments are hashed using SHA-256 by `attachment-worker` after upload completion. The current foundation stores the hash on the `attachments` row.
+
+True physical deduplication is planned with a canonical blob model:
+
+```text
+attachment_blobs
+- id
+- sha256
+- object_key
+- size_bytes
+- ref_count
+```
+
+Once this exists, many logical attachments can reference one physical object when the content hash matches.
 
 Quota accounting can be configured in two ways:
 

@@ -28,7 +28,7 @@
         <mxCell id="quota" value="Quota Service&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;reserve usage,&lt;br&gt;storage API&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F4ECF7;strokeColor=#7D3C98;fontSize=14;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="980" y="410" width="170" height="70" as="geometry"/>
         </mxCell>
-        <mxCell id="archival" value="Attachment + Archival Worker&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;hash, dedupe, lifecycle&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F4ECF7;strokeColor=#7D3C98;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+        <mxCell id="archival" value="Attachment + Archival Worker&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;hash attachments,&lt;br&gt;lifecycle&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#F4ECF7;strokeColor=#7D3C98;fontSize=14;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="980" y="510" width="170" height="70" as="geometry"/>
         </mxCell>
         <mxCell id="opensearch" value="OpenSearch&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;derived search index&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#EAECEE;strokeColor=#566573;fontSize=14;fontStyle=1;" vertex="1" parent="1">
@@ -84,7 +84,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="e10" value="dedupe + move old content" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B7950B;fontSize=11;" edge="1" parent="1" source="archival" target="archive-store">
+        <mxCell id="e10" value="move old content" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#B7950B;fontSize=11;" edge="1" parent="1" source="archival" target="archive-store">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="e11" value="mailbox reads" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#148F77;fontSize=11;" edge="1" parent="1" source="mailbox" target="postgres">

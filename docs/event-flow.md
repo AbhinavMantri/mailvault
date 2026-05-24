@@ -28,8 +28,12 @@ POST /emails/import
 ```text
 email.received
   -> search-indexer indexes subject, sender, recipients, user, and timestamps
-  -> attachment-worker extracts metadata and computes content hashes
   -> archival-worker evaluates lifecycle rules
+
+attachment-worker
+  -> polls UPLOADED attachments
+  -> computes SHA-256 from object storage bytes
+  -> marks attachments READY or FAILED
 
 quota-service
   -> records quota reservation during import

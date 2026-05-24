@@ -41,6 +41,8 @@ POST /attachments/{attachmentId}/complete
 }
 ```
 
+`attachment-worker` later picks up `UPLOADED` rows, computes SHA-256 from object bytes, and marks each attachment `READY` or `FAILED`.
+
 ## Import Email
 
 ```http

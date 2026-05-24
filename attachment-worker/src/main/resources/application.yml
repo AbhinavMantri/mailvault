@@ -1,0 +1,25 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: attachment-worker
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/mailvault}
+    username: ${DB_USERNAME:mailvault}
+    password: ${DB_PASSWORD:mailvault}
+
+mailvault:
+  storage:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:mailvault}
+    secret-key: ${MINIO_SECRET_KEY:mailvault-secret}
+    bucket: ${MINIO_BUCKET:mailvault-emails}
+  worker:
+    poll-delay-ms: ${ATTACHMENT_WORKER_POLL_DELAY_MS:1000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

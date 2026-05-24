@@ -34,7 +34,7 @@ The write path blocks only on work required to safely accept the email: validati
 
 Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
 
-Attachment metadata extraction and hash-based deduplication run asynchronously. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content.
+Attachment metadata extraction and SHA-256 hash calculation run asynchronously in `attachment-worker`. Postgres keeps attachment references and content hashes, while MinIO stores the physical object content. True physical deduplication should later move shared content into a canonical blob table.
 
 Attachments are not considered downloadable until the security scan records a clean verdict. Unsafe attachments are marked quarantined and excluded from download paths.
 
