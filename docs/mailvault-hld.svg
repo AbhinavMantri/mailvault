@@ -111,10 +111,10 @@
   <text x="1435" y="504" text-anchor="middle" class="small">raw MIME,</text>
   <text x="1435" y="528" text-anchor="middle" class="small">attachments</text>
 
-  <rect x="1340" y="580" width="170" height="118" rx="22" fill="#252A55" stroke="#818CF8" stroke-width="3" filter="url(#shadow)"/>
-  <text x="1425" y="621" text-anchor="middle" class="box-title-xs">Open</text>
-  <text x="1425" y="649" text-anchor="middle" class="box-title-xs">Search</text>
-  <text x="1425" y="679" text-anchor="middle" class="small">derived index</text>
+  <rect x="1360" y="580" width="150" height="118" rx="22" fill="#252A55" stroke="#818CF8" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1435" y="621" text-anchor="middle" class="box-title-xs">Open</text>
+  <text x="1435" y="649" text-anchor="middle" class="box-title-xs">Search</text>
+  <text x="1435" y="679" text-anchor="middle" class="small">derived index</text>
 
   <rect x="1360" y="740" width="150" height="118" rx="22" fill="#4A3415" stroke="#FBBF24" stroke-width="3" filter="url(#shadow)"/>
   <text x="1435" y="786" text-anchor="middle" class="box-title">Archive</text>
@@ -132,7 +132,7 @@
   <path class="soft-arrow" d="M1285 455 L1350 480" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M705 715 L725 715 L725 840 L1320 840 L1320 320 L1350 320" marker-end="url(#softArrow)"/>
   <text x="1035" y="825" class="label">usage ledger</text>
-  <path class="soft-arrow" d="M1285 660 L1330 640" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1285 660 L1350 640" marker-end="url(#softArrow)"/>
   <path class="soft-arrow" d="M1285 715 L1350 800" marker-end="url(#softArrow)"/>
 
   <rect x="455" y="905" width="850" height="122" rx="30" fill="url(#kafkaBg)" filter="url(#shadow)"/>
