@@ -9,6 +9,13 @@ spring:
     username: ${DB_USERNAME:mailvault}
     password: ${DB_PASSWORD:mailvault}
 
+mailvault:
+  storage:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:mailvault}
+    secret-key: ${MINIO_SECRET_KEY:mailvault-secret}
+    bucket: ${MINIO_BUCKET:mailvault-emails}
+
 management:
   endpoints:
     web:

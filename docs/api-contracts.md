@@ -72,6 +72,26 @@ Email import accepts attachment IDs that are already uploaded and not failed: `U
 GET /emails/{emailId}
 ```
 
+```json
+{
+  "id": "28c13478-95df-4c11-a7f5-3695f63202f7",
+  "userId": "user-123",
+  "sender": "billing@example.com",
+  "subject": "Invoice for May",
+  "textBody": "Invoice attached.",
+  "htmlBody": "<p>Invoice attached.</p>",
+  "status": "INDEX_PENDING",
+  "logicalSizeBytes": 2048,
+  "recipients": [
+    {
+      "address": "abhinav@example.com",
+      "type": "TO"
+    }
+  ],
+  "attachments": []
+}
+```
+
 ## Inbox
 
 ```http

@@ -9,6 +9,7 @@ import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
+import com.mailvault.mailbox.storage.EmailBodyStorage;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +23,11 @@ import java.util.UUID;
 public class MailboxQueryService {
 
     private final EmailMessageRepository emailMessageRepository;
+    private final EmailBodyStorage emailBodyStorage;
 
-    public MailboxQueryService(EmailMessageRepository emailMessageRepository) {
+    public MailboxQueryService(EmailMessageRepository emailMessageRepository, EmailBodyStorage emailBodyStorage) {
         this.emailMessageRepository = emailMessageRepository;
+        this.emailBodyStorage = emailBodyStorage;
     }
 
     public List<InboxItemResponse> getInbox(String userId, int limit) {
@@ -45,12 +48,16 @@ public class MailboxQueryService {
         List<AttachmentResponse> attachments = emailMessageRepository.findAttachments(emailId).stream()
                 .map(this::toAttachment)
                 .toList();
+        String textBody = emailBodyStorage.readText(email.textObjectKey());
+        String htmlBody = emailBodyStorage.readText(email.htmlObjectKey());
 
         return new EmailDetailResponse(
                 email.id(),
                 email.userId(),
                 email.sender(),
                 email.subject(),
+                textBody,
+                htmlBody,
                 email.status(),
                 email.receivedAt(),
                 email.logicalSizeBytes(),

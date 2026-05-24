@@ -8,6 +8,8 @@ public record EmailHeaderRow(
         String userId,
         String sender,
         String subject,
+        String textObjectKey,
+        String htmlObjectKey,
         String status,
         Instant receivedAt,
         long logicalSizeBytes

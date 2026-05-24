@@ -5,6 +5,7 @@ import com.mailvault.mailbox.repository.EmailHeaderRow;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
+import com.mailvault.mailbox.storage.EmailBodyStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +27,9 @@ class MailboxQueryServiceTest {
 
     @Mock
     private EmailMessageRepository emailMessageRepository;
+
+    @Mock
+    private EmailBodyStorage emailBodyStorage;
 
     @InjectMocks
     private MailboxQueryService mailboxQueryService;
@@ -63,6 +67,8 @@ class MailboxQueryServiceTest {
                         "user-123",
                         "sender@example.com",
                         "Status update",
+                        "users/user-123/emails/%s/body.txt".formatted(emailId),
+                        "users/user-123/emails/%s/body.html".formatted(emailId),
                         "RECEIVED",
                         Instant.parse("2026-05-23T08:00:00Z"),
                         2048L
@@ -77,11 +83,17 @@ class MailboxQueryServiceTest {
                         1024L,
                         "READY"
                 )));
+        when(emailBodyStorage.readText("users/user-123/emails/%s/body.txt".formatted(emailId)))
+                .thenReturn("Plain status update");
+        when(emailBodyStorage.readText("users/user-123/emails/%s/body.html".formatted(emailId)))
+                .thenReturn("<p>Plain status update</p>");
 
         var detail = mailboxQueryService.getEmailDetail("user-123", emailId);
 
         assertThat(detail.id()).isEqualTo(emailId);
         assertThat(detail.status()).isEqualTo("RECEIVED");
+        assertThat(detail.textBody()).isEqualTo("Plain status update");
+        assertThat(detail.htmlBody()).isEqualTo("<p>Plain status update</p>");
         assertThat(detail.recipients()).extracting("address").containsExactly("abhinav@example.com");
         assertThat(detail.attachments()).extracting("filename").containsExactly("report.pdf");
     }

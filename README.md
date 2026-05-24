@@ -210,7 +210,7 @@ Implemented so far:
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
 - `GET /mailboxes/{userId}/inbox`
-- `GET /emails/{emailId}?userId={userId}`
+- `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`
 - `GET /emails/search?userId={userId}&q={query}` from `search-service`
 - Kafka consumer for `email.received` in `search-indexer`

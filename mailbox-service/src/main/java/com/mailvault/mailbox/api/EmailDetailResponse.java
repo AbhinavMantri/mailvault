@@ -9,6 +9,8 @@ public record EmailDetailResponse(
         String userId,
         String sender,
         String subject,
+        String textBody,
+        String htmlBody,
         String status,
         Instant receivedAt,
         long logicalSizeBytes,

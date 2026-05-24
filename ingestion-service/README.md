@@ -43,6 +43,8 @@ POST /emails/import
 
 The email import request accepts metadata, body content, and uploaded `attachmentIds`. Attachment bytes do not pass through the email import API. SMTP ingestion is intentionally deferred until the storage path is stable.
 
+Email body content is stored in MinIO and returned by `mailbox-service` from the email detail API.
+
 ## Outbox
 
 Email import persists mailbox metadata and the `email.received` outbox event in the same database transaction. A scheduled publisher reads unpublished outbox rows, sends them to Kafka, and marks each row published only after Kafka accepts the send.

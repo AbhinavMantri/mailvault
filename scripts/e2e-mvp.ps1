@@ -10,6 +10,7 @@ param(
     [string]$MinioEndpoint = "http://localhost:9000",
     [string]$MinioAccessKey = "mailvault",
     [string]$MinioSecretKey = "mailvault-secret",
+    [string]$MinioBucket = "mailvault-emails",
     [string]$OpenSearchBaseUrl = "http://localhost:9200",
     [string]$RedisHost = "localhost",
     [string]$RedisPort = "6379"
@@ -91,6 +92,7 @@ $previousEnv = @{
     MINIO_ENDPOINT = $env:MINIO_ENDPOINT
     MINIO_ACCESS_KEY = $env:MINIO_ACCESS_KEY
     MINIO_SECRET_KEY = $env:MINIO_SECRET_KEY
+    MINIO_BUCKET = $env:MINIO_BUCKET
     OPENSEARCH_BASE_URL = $env:OPENSEARCH_BASE_URL
     REDIS_HOST = $env:REDIS_HOST
     REDIS_PORT = $env:REDIS_PORT
@@ -112,6 +114,7 @@ try {
     $env:MINIO_ENDPOINT = $MinioEndpoint
     $env:MINIO_ACCESS_KEY = $MinioAccessKey
     $env:MINIO_SECRET_KEY = $MinioSecretKey
+    $env:MINIO_BUCKET = $MinioBucket
     $env:OPENSEARCH_BASE_URL = $OpenSearchBaseUrl
     $env:REDIS_HOST = $RedisHost
     $env:REDIS_PORT = $RedisPort
@@ -155,6 +158,7 @@ try {
             "--mailvault.storage.endpoint=$MinioEndpoint",
             "--mailvault.storage.access-key=$MinioAccessKey",
             "--mailvault.storage.secret-key=$MinioSecretKey",
+            "--mailvault.storage.bucket=$MinioBucket",
             "--mailvault.search.base-url=$OpenSearchBaseUrl",
             "--spring.data.redis.host=$RedisHost",
             "--spring.data.redis.port=$RedisPort"
@@ -175,6 +179,8 @@ try {
     $userId = "e2e-user-$runId"
     $recipient = "$userId@mailvault.local"
     $subject = "MailVault E2E $runId"
+    $textBody = "This is an end-to-end email for $runId"
+    $htmlBody = "<p>This is an end-to-end email for $runId</p>"
     $attachmentText = "hello from MailVault e2e $runId"
     $attachmentBytes = [System.Text.Encoding]::UTF8.GetBytes($attachmentText)
 
@@ -207,8 +213,8 @@ try {
         from = "billing@mailvault.local"
         to = @($recipient)
         subject = $subject
-        textBody = "This is an end-to-end email for $runId"
-        htmlBody = "<p>This is an end-to-end email for $runId</p>"
+        textBody = $textBody
+        htmlBody = $htmlBody
         attachmentIds = @($initiate.attachmentId)
     }
     Assert-True $email.emailId "emailId was not returned"
@@ -231,6 +237,8 @@ try {
         return $null
     }
     Assert-True ($detail.subject -eq $subject) "email detail subject did not match"
+    Assert-True ($detail.textBody -eq $textBody) "email detail text body did not match"
+    Assert-True ($detail.htmlBody -eq $htmlBody) "email detail html body did not match"
 
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {

@@ -61,6 +61,8 @@ public class EmailMessageRepository {
                        user_id,
                        sender,
                        subject,
+                       text_object_key,
+                       html_object_key,
                        status,
                        received_at,
                        logical_size_bytes
@@ -79,6 +81,8 @@ public class EmailMessageRepository {
                         rs.getString("user_id"),
                         rs.getString("sender"),
                         rs.getString("subject"),
+                        rs.getString("text_object_key"),
+                        rs.getString("html_object_key"),
                         rs.getString("status"),
                         toInstant(rs, "received_at"),
                         rs.getLong("logical_size_bytes")
