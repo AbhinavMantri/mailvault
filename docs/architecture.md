@@ -43,15 +43,15 @@ Attachments are not considered downloadable until the security scan records a cl
 
 An email is the immutable message/content unit. A thread is the user-visible conversation container. Attachments and recipients belong to individual emails, not directly to the thread.
 
-For the first imported message, ingestion creates the message and a first `user_threads` row for that user. The `thread_messages` row links the message to the thread with a direction such as `INBOUND`. Later reply/send APIs can append more `thread_messages` rows to the same thread.
+For the first imported message, ingestion creates the message and a first `mailbox_threads` row for that user. The `thread_messages` row links the message to the thread with a direction such as `INBOUND`. Later reply/send APIs can append more `thread_messages` rows to the same thread.
 
 `POST /emails/import` is intentionally treated as a new conversation boundary in the core API. It should not carry complex thread-resolution heuristics. `POST /threads/{threadId}/messages` receives an explicit `threadId`, validates ownership, creates a new `emails` row, and appends a `thread_messages` row to the existing thread.
 
-If MailVault later supports Gmail, Outlook, or `.eml` migration, that should be handled by a separate migration adapter. The adapter can parse external conversation signals such as provider thread IDs, `Message-ID`, `In-Reply-To`, and `References`, then convert the imported history into MailVault's native `user_threads`, `emails`, `thread_messages`, recipients, and attachment refs. That keeps the normal import path simple and keeps external-provider rules outside core ingestion.
+If MailVault later supports Gmail, Outlook, or `.eml` migration, that should be handled by a separate migration adapter. The adapter can parse external conversation signals such as provider thread IDs, `Message-ID`, `In-Reply-To`, and `References`, then convert the imported history into MailVault's native `mailbox_threads`, `emails`, `thread_messages`, recipients, and attachment refs. That keeps the normal import path simple and keeps external-provider rules outside core ingestion.
 
 `TO`, `CC`, and `BCC` are stored in `email_recipients.recipient_type`. Response shaping for BCC visibility is a later authorization concern: the sender can see all BCC recipients, normal TO/CC recipients should not see BCC recipients, and a BCC recipient should only see their own BCC participation.
 
-Current folder placement is held on `user_threads.folder` for mailbox views such as `INBOX`, `SPAM`, `TRASH`, and `ARCHIVE`. `SENT` is better treated as a message-level view filtered by `thread_messages.direction = OUTBOUND`.
+Current folder placement is held on `mailbox_threads.folder` for mailbox views such as `INBOX`, `SPAM`, `TRASH`, and `ARCHIVE`. `SENT` is better treated as a message-level view filtered by `thread_messages.direction = OUTBOUND`.
 
 ## Mailbox Safety
 

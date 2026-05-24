@@ -13,13 +13,13 @@ import com.mailvault.ingestion.domain.MessageDirection;
 import com.mailvault.ingestion.domain.RecipientType;
 import com.mailvault.ingestion.domain.ThreadFolder;
 import com.mailvault.ingestion.domain.ThreadMessage;
-import com.mailvault.ingestion.domain.UserThread;
+import com.mailvault.ingestion.domain.MailboxThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.repository.ThreadMessageRepository;
-import com.mailvault.ingestion.repository.UserThreadRepository;
+import com.mailvault.ingestion.repository.MailboxThreadRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,20 +42,20 @@ public class EmailIngestionService {
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
     private final OutboxEventService outboxEventService;
-    private final UserThreadRepository userThreadRepository;
+    private final MailboxThreadRepository mailboxThreadRepository;
     private final ThreadMessageRepository threadMessageRepository;
 
     public EmailIngestionService(ObjectStorageService objectStorageService,
                                  EmailMessageRepository emailMessageRepository,
                                  AttachmentRepository attachmentRepository,
                                  OutboxEventService outboxEventService,
-                                 UserThreadRepository userThreadRepository,
+                                 MailboxThreadRepository mailboxThreadRepository,
                                  ThreadMessageRepository threadMessageRepository) {
         this.objectStorageService = objectStorageService;
         this.emailMessageRepository = emailMessageRepository;
         this.attachmentRepository = attachmentRepository;
         this.outboxEventService = outboxEventService;
-        this.userThreadRepository = userThreadRepository;
+        this.mailboxThreadRepository = mailboxThreadRepository;
         this.threadMessageRepository = threadMessageRepository;
     }
 
@@ -65,7 +65,7 @@ public class EmailIngestionService {
         UUID emailId = UUID.randomUUID();
         Instant receivedAt = Instant.now();
         PersistedEmail persistedEmail = persistMessage(draft, emailId, receivedAt);
-        UserThread thread = new UserThread(
+        MailboxThread thread = new MailboxThread(
                 UUID.randomUUID(),
                 draft.userId(),
                 normalizeSubject(draft.subject()),
@@ -77,7 +77,7 @@ public class EmailIngestionService {
                 receivedAt,
                 receivedAt
         );
-        userThreadRepository.save(thread);
+        mailboxThreadRepository.save(thread);
         threadMessageRepository.save(new ThreadMessage(
                 UUID.randomUUID(),
                 thread,
@@ -95,7 +95,7 @@ public class EmailIngestionService {
     @Transactional
     public EmailImportResponse replyToThread(UUID threadId, EmailReplyRequest request) {
         MessageDraft draft = MessageDraft.from(request);
-        UserThread thread = userThreadRepository.findByIdAndUserId(threadId, request.userId())
+        MailboxThread thread = mailboxThreadRepository.findByIdAndUserId(threadId, request.userId())
                 .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
 
         UUID emailId = UUID.randomUUID();

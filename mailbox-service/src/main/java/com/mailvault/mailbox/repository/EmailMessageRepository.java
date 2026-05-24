@@ -65,7 +65,7 @@ public class EmailMessageRepository {
                        ut.message_count,
                        ut.unread_count,
                        COUNT(ear.id) AS attachment_count
-                  FROM user_threads ut
+                  FROM mailbox_threads ut
                   JOIN LATERAL (
                       SELECT e.subject
                         FROM thread_messages tm
@@ -113,7 +113,7 @@ public class EmailMessageRepository {
                        ut.message_count,
                        ut.unread_count,
                        COUNT(ear.id) AS attachment_count
-                  FROM user_threads ut
+                  FROM mailbox_threads ut
                   JOIN LATERAL (
                       SELECT e.subject
                         FROM thread_messages tm

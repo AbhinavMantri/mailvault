@@ -22,7 +22,7 @@ public class ThreadMessage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "thread_id", nullable = false)
-    private UserThread thread;
+    private MailboxThread thread;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email_id", nullable = false)
@@ -40,7 +40,7 @@ public class ThreadMessage {
     protected ThreadMessage() {
     }
 
-    public ThreadMessage(UUID id, UserThread thread, EmailMessage email, MessageDirection direction,
+    public ThreadMessage(UUID id, MailboxThread thread, EmailMessage email, MessageDirection direction,
                          Instant readAt, Instant createdAt) {
         this.id = id;
         this.thread = thread;

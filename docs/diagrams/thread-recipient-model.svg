@@ -56,7 +56,7 @@
   <text class="label" x="947" y="158">Mailbox Conversation View</text>
 
   <rect class="box thread" x="755" y="190" width="385" height="125"/>
-  <text class="boxTitle" x="947" y="225">user_threads</text>
+  <text class="boxTitle" x="947" y="225">mailbox_threads</text>
   <text class="boxText" x="947" y="254">folder, last message time</text>
   <text class="boxText" x="947" y="278">message count, unread count</text>
 

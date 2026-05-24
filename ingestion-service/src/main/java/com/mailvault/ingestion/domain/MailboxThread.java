@@ -11,8 +11,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "user_threads")
-public class UserThread {
+@Table(name = "mailbox_threads")
+public class MailboxThread {
 
     @Id
     private UUID id;
@@ -45,12 +45,12 @@ public class UserThread {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    protected UserThread() {
+    protected MailboxThread() {
     }
 
-    public UserThread(UUID id, String userId, String subjectNormalized, ThreadFolder folder,
-                      Instant lastMessageAt, String lastSender, int messageCount, int unreadCount,
-                      Instant createdAt, Instant updatedAt) {
+    public MailboxThread(UUID id, String userId, String subjectNormalized, ThreadFolder folder,
+                         Instant lastMessageAt, String lastSender, int messageCount, int unreadCount,
+                         Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.userId = userId;
         this.subjectNormalized = subjectNormalized;

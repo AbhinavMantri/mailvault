@@ -6,13 +6,13 @@ import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.domain.ThreadFolder;
-import com.mailvault.ingestion.domain.UserThread;
+import com.mailvault.ingestion.domain.MailboxThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.repository.ThreadMessageRepository;
-import com.mailvault.ingestion.repository.UserThreadRepository;
+import com.mailvault.ingestion.repository.MailboxThreadRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class EmailIngestionServiceTest {
     private OutboxEventService outboxEventService;
 
     @Mock
-    private UserThreadRepository userThreadRepository;
+    private MailboxThreadRepository mailboxThreadRepository;
 
     @Mock
     private ThreadMessageRepository threadMessageRepository;
@@ -138,7 +138,7 @@ class EmailIngestionServiceTest {
     @Test
     void replyToThreadPersistsMessageLinksExistingThreadAndWritesOutboxEvent() {
         UUID threadId = UUID.randomUUID();
-        UserThread thread = new UserThread(
+        MailboxThread thread = new MailboxThread(
                 threadId,
                 "user-123",
                 "invoice for may",
@@ -161,7 +161,7 @@ class EmailIngestionServiceTest {
                 null,
                 List.of()
         );
-        when(userThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.of(thread));
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.of(thread));
 
         var response = emailIngestionService.replyToThread(threadId, request);
 
@@ -186,7 +186,7 @@ class EmailIngestionServiceTest {
                 null,
                 List.of()
         );
-        when(userThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.empty());
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.empty());
 
         assertThatThrownBy(() -> emailIngestionService.replyToThread(threadId, request))
                 .isInstanceOf(IllegalArgumentException.class)
