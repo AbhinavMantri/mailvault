@@ -45,6 +45,7 @@ Architecture notes:
 - Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
 - Track per-user storage quota. _Async usage accounting and storage usage API added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Initial canonical blob dedupe is implemented in `attachment-worker`._
+- Attachment compression is intentionally deferred. _The MVP prioritizes deduplication and archival; selective compression can be added later for text-like content._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
 
 ## Local Development
