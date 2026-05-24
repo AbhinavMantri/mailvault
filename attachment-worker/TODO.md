@@ -4,9 +4,9 @@ Hardening items before treating `attachment-worker` as production-ready.
 
 ## Deduplication
 
-- Add `attachment_blobs` table for canonical physical objects.
-- Move duplicate attachments to reference canonical blob rows.
 - Decide how physical dedupe interacts with logical quota accounting.
+- Add a reconciliation job for blob `ref_count` drift.
+- Add cleanup for orphaned canonical blobs after deletes.
 
 ## Reliability
 

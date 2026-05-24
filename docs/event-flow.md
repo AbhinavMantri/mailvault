@@ -33,6 +33,8 @@ email.received
 attachment-worker
   -> polls UPLOADED attachments
   -> computes SHA-256 from object storage bytes
+  -> creates or reuses canonical attachment_blobs row
+  -> deletes temporary pending object
   -> marks attachments READY or FAILED
 
 quota-service

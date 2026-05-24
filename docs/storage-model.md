@@ -34,14 +34,15 @@ Suggested object keys:
 users/{userId}/emails/{emailId}/raw.eml
 users/{userId}/emails/{emailId}/body.txt
 users/{userId}/pending-attachments/{attachmentId}/{filename}
+attachments/blobs/sha256/{first2}/{sha256}
 archive/users/{userId}/emails/{emailId}/raw.eml
 ```
 
 ## Deduplication
 
-Attachments are hashed using SHA-256 by `attachment-worker` after upload completion. The current foundation stores the hash on the `attachments` row.
+Attachments are hashed using SHA-256 by `attachment-worker` after upload completion. The worker stores the hash on the `attachments` row, creates or reuses an `attachment_blobs` row, and points duplicate logical attachments at the same canonical blob.
 
-True physical deduplication is planned with a canonical blob model:
+Physical deduplication uses a canonical blob model:
 
 ```text
 attachment_blobs
@@ -52,7 +53,7 @@ attachment_blobs
 - ref_count
 ```
 
-Once this exists, many logical attachments can reference one physical object when the content hash matches.
+Many logical attachments can reference one physical object when the content hash matches.
 
 Quota accounting can be configured in two ways:
 

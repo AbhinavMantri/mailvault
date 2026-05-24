@@ -8,10 +8,12 @@ Processes uploaded attachments after the upload API marks them `UPLOADED`.
 - Claim attachments for processing.
 - Read attachment bytes from MinIO.
 - Compute SHA-256 content hash.
+- Copy first-seen content into the canonical SHA-256 blob path.
+- Reuse existing blob rows for duplicate content.
 - Mark attachments `READY` after hash calculation.
 - Mark attachments `FAILED` when processing cannot complete.
 
-The current foundation stores the hash on the `attachments` row. True physical deduplication should later introduce a canonical `attachment_blobs` table with `sha256`, canonical object key, size, and reference count.
+The current foundation stores the hash on the `attachments` row and links each attachment to an `attachment_blobs` row. Pending upload objects are deleted after the attachment points at the canonical blob object.
 
 ## Run Locally
 

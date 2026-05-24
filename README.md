@@ -39,7 +39,7 @@ Focused diagrams:
 - Index searchable fields in OpenSearch. _Initial async `search-indexer` added for event fields._
 - Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
 - Track per-user storage quota. _Initial quota reservation and storage usage APIs added in `quota-service`._
-- Deduplicate attachments using SHA-256 hashes. _Initial `attachment-worker` computes hashes; canonical blob dedupe is planned._
+- Deduplicate attachments using SHA-256 hashes. _Initial canonical blob dedupe is implemented in `attachment-worker`._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
 
 ## Local Development
