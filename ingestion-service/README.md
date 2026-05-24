@@ -48,3 +48,5 @@ The email import request accepts metadata, body content, and uploaded `attachmen
 ## Outbox
 
 Email import persists mailbox metadata and the `email.received` outbox event in the same database transaction. A scheduled publisher reads unpublished outbox rows, sends them to Kafka, and marks each row published only after Kafka accepts the send.
+
+For Kubernetes production deployment, the preferred evolution is Debezium CDC with Kafka Connect reading committed `outbox_events` rows from Postgres WAL. The scheduled publisher keeps the MVP runnable locally without requiring Kafka Connect.

@@ -10,6 +10,7 @@ Editable Draw.io source: [architecture.drawio](architecture.drawio)
 - [Business Use Cases](diagrams/business-use-cases.svg): user, system, and operations scenarios that explain why the platform exists.
 - [Attachment Security Flow](diagrams/attachment-security-flow.svg): attachment hashing, deduplication, antivirus scanning, and quarantine behavior.
 - [Storage Lifecycle Flow](diagrams/storage-lifecycle-flow.svg): hot storage, archival movement, search continuity, and restore behavior.
+- [Outbox and CDC Strategy](outbox-cdc.md): reliable event publication path and Debezium production direction.
 
 ## Core Principle
 
@@ -42,10 +43,12 @@ Attachments are not considered downloadable until the security scan records a cl
 
 Email metadata is strongly persisted before the import request succeeds. Search is eventually consistent because indexing is asynchronous.
 
+`ingestion-service` writes `email.received` into `outbox_events` in the same database transaction as email metadata. The MVP publishes those rows with a scheduled outbox publisher. In a Kubernetes production deployment, the preferred evolution is Debezium CDC through Kafka Connect, where the connector reads committed outbox rows from the Postgres WAL and publishes them to Kafka.
+
 ## Failure Modes
 
 - If OpenSearch is unavailable, email ingestion should continue.
-- If Kafka publish fails after metadata persistence, the outbox row remains unpublished and can be retried by the scheduled publisher.
+- If Kafka publish fails after metadata persistence, the outbox row remains durable. The MVP scheduled publisher can retry it; the production CDC path would rely on Debezium/Kafka Connect offsets and retries.
 - If MinIO storage fails, ingestion should fail before metadata is committed.
 - If quota reservation fails, ingestion should reject the import before writing objects.
 - If quota reservation succeeds but later storage or metadata persistence fails, a compensation path should release the reserved bytes.

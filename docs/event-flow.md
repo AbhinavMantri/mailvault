@@ -23,6 +23,15 @@ POST /emails/import
   -> scheduled outbox publisher sends email.received to Kafka
 ```
 
+Production Kubernetes direction:
+
+```text
+POST /emails/import
+  -> persist metadata and outbox_events in Postgres
+  -> Debezium reads committed outbox rows from Postgres WAL
+  -> Kafka Connect publishes email.received to Kafka
+```
+
 ## Worker Flow
 
 ```text

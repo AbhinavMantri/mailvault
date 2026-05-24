@@ -29,6 +29,10 @@ Focused diagrams:
 - [Attachment Security Flow](docs/diagrams/attachment-security-flow.svg)
 - [Storage Lifecycle Flow](docs/diagrams/storage-lifecycle-flow.svg)
 
+Architecture notes:
+
+- [Outbox and CDC Strategy](docs/outbox-cdc.md)
+
 ## MVP Scope
 
 - Import email through an API. _Implemented in `ingestion-service`._

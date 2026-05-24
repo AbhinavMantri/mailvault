@@ -8,6 +8,7 @@ Hardening items to complete before treating ingestion-service as production-read
 - Add idempotency behavior for `POST /attachments/{attachmentId}/complete`.
 - Add correlation IDs and structured request logs.
 - Add retry/backoff metrics and alerts for stuck unpublished outbox rows.
+- Add Debezium/Kafka Connect outbox connector configuration for Kubernetes production deployment.
 
 ## Attachment Upload
 
