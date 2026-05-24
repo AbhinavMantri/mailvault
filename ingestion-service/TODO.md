@@ -16,7 +16,6 @@ Hardening items to complete before treating ingestion-service as production-read
 - Enforce max attachments per email.
 - Validate allowed/blocked content types.
 - Verify object existence and expected size before marking an attachment `UPLOADED`.
-- Publish `attachment.uploaded` after upload completion.
 
 ## Quota
 

@@ -201,10 +201,12 @@ Implemented so far:
 - `GET /emails/search?userId={userId}&q={query}` from `search-service`
 - Kafka consumer for `email.received` in `search-indexer`
 - Kafka consumer for `email.received` in `quota-service`
+- Kafka consumer for `attachment.uploaded` in `attachment-worker`
 - OpenSearch document upsert for indexed email fields
 - scheduled attachment worker for SHA-256 hash processing
 - Flyway schema for emails, recipients, attachments, attachment references, storage usage, and outbox events
 - MinIO object writes for raw email/body and direct attachment uploads
 - uploaded attachment references on email import
 - Transactional outbox publication for Kafka `email.received` events
+- Transactional outbox publication for Kafka `attachment.uploaded` events
 - Actuator health endpoint

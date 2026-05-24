@@ -121,4 +121,20 @@ class AttachmentProcessingServiceTest {
                 org.mockito.ArgumentMatchers.any()
         );
     }
+
+    @Test
+    void processByIdLoadsAttachmentAndProcessesIt() {
+        UUID attachmentId = UUID.randomUUID();
+        String sha256 = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
+        AttachmentRow attachment = new AttachmentRow(attachmentId, "user-123", "invoice.txt", "pending-key", 5);
+        AttachmentBlobRow blob = new AttachmentBlobRow(UUID.randomUUID(), sha256, "attachments/blobs/sha256/2c/%s".formatted(sha256), 5, 1);
+        when(attachmentRepository.findById(attachmentId)).thenReturn(Optional.of(attachment));
+        when(attachmentRepository.markProcessing(attachmentId)).thenReturn(true);
+        when(objectStorage.readBytes(attachment.objectKey())).thenReturn("hello".getBytes(StandardCharsets.UTF_8));
+        when(attachmentRepository.findBlobBySha256(sha256)).thenReturn(Optional.of(blob));
+
+        attachmentProcessingService.process(attachmentId);
+
+        verify(attachmentRepository).markReady(attachmentId, sha256, blob.id(), blob.objectKey());
+    }
 }

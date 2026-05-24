@@ -44,6 +44,10 @@ public class AttachmentProcessingService {
         deletePendingObject(attachment.objectKey());
     }
 
+    public void process(UUID attachmentId) {
+        attachmentRepository.findById(attachmentId).ifPresent(this::process);
+    }
+
     private AttachmentBlobRow resolveBlob(AttachmentRow attachment, String sha256) {
         return attachmentRepository.findBlobBySha256(sha256)
                 .orElseGet(() -> createBlob(attachment, sha256));

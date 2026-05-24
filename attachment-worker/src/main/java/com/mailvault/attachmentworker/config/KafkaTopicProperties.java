@@ -1,10 +1,10 @@
-package com.mailvault.ingestion.config;
+package com.mailvault.attachmentworker.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "mailvault.kafka")
 public record KafkaTopicProperties(
-        String emailReceivedTopic,
-        String attachmentUploadedTopic
+        String attachmentUploadedTopic,
+        String consumerGroupId
 ) {
 }

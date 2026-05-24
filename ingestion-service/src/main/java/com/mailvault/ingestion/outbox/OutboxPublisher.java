@@ -2,6 +2,7 @@ package com.mailvault.ingestion.outbox;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mailvault.ingestion.events.AttachmentUploadedEvent;
 import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,17 +33,21 @@ public class OutboxPublisher {
     }
 
     private void publish(OutboxEvent event) {
-        if (!OutboxEventService.EMAIL_RECEIVED.equals(event.eventType())) {
-            throw new IllegalArgumentException("Unsupported outbox event type: " + event.eventType());
+        switch (event.eventType()) {
+            case OutboxEventService.EMAIL_RECEIVED -> emailEventPublisher
+                    .publishEmailReceived(readEvent(event.payload(), EmailReceivedEvent.class))
+                    .join();
+            case OutboxEventService.ATTACHMENT_UPLOADED -> emailEventPublisher
+                    .publishAttachmentUploaded(readEvent(event.payload(), AttachmentUploadedEvent.class))
+                    .join();
+            default -> throw new IllegalArgumentException("Unsupported outbox event type: " + event.eventType());
         }
-        EmailReceivedEvent emailReceivedEvent = readEmailReceived(event.payload());
-        emailEventPublisher.publishEmailReceived(emailReceivedEvent).join();
         outboxEventRepository.markPublished(event.id());
     }
 
-    private EmailReceivedEvent readEmailReceived(String payload) {
+    private <T> T readEvent(String payload, Class<T> eventType) {
         try {
-            return objectMapper.readValue(payload, EmailReceivedEvent.class);
+            return objectMapper.readValue(payload, eventType);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Failed to deserialize outbox event", exception);
         }

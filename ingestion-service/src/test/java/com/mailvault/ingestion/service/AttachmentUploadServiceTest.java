@@ -3,6 +3,8 @@ package com.mailvault.ingestion.service;
 import com.mailvault.ingestion.api.dto.AttachmentInitiateRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
+import com.mailvault.ingestion.events.AttachmentUploadedEvent;
+import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,9 @@ class AttachmentUploadServiceTest {
 
     @Mock
     private ObjectStorageService objectStorageService;
+
+    @Mock
+    private OutboxEventService outboxEventService;
 
     @InjectMocks
     private AttachmentUploadService attachmentUploadService;
@@ -83,6 +88,7 @@ class AttachmentUploadServiceTest {
         assertThat(response.status()).isEqualTo(AttachmentStatus.UPLOADED.name());
         assertThat(attachment.getStatus()).isEqualTo(AttachmentStatus.UPLOADED);
         verify(attachmentRepository).save(attachment);
+        verify(outboxEventService).saveAttachmentUploaded(any(AttachmentUploadedEvent.class), any(Instant.class));
     }
 
     @Test
@@ -105,4 +111,3 @@ class AttachmentUploadServiceTest {
                 .hasMessage("Attachment is not pending upload");
     }
 }
-

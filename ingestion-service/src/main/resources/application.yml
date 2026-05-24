@@ -32,6 +32,7 @@ mailvault:
     bucket: ${MINIO_BUCKET:mailvault-emails}
   kafka:
     email-received-topic: ${EMAIL_RECEIVED_TOPIC:email.received}
+    attachment-uploaded-topic: ${ATTACHMENT_UPLOADED_TOPIC:attachment.uploaded}
 management:
   endpoints:
     web:

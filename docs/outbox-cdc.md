@@ -8,6 +8,7 @@ MailVault uses the transactional outbox pattern so email persistence and event i
 ingestion-service
   -> saves email metadata
   -> saves email.received row in outbox_events
+  -> saves attachment.uploaded row in outbox_events after upload completion
 
 scheduled outbox publisher
   -> reads unpublished rows
@@ -27,9 +28,9 @@ ingestion-service
 
 Debezium Postgres connector
   -> reads committed outbox_events changes from the Postgres WAL
-  -> publishes email.received to Kafka
+  -> publishes email.received / attachment.uploaded to Kafka
 
-search-indexer / archival-worker / quota projections
+search-indexer / attachment-worker / archival-worker / quota projections
   -> consume Kafka events
 ```
 

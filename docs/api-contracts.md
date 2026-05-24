@@ -41,7 +41,7 @@ POST /attachments/{attachmentId}/complete
 }
 ```
 
-`attachment-worker` later picks up `UPLOADED` rows, computes SHA-256 from object bytes, links each attachment to a canonical blob, deletes the temporary pending object, and marks each attachment `READY` or `FAILED`.
+Completing the upload writes an `attachment.uploaded` outbox event. `attachment-worker` consumes the event, computes SHA-256 from object bytes, links each attachment to a canonical blob, deletes the temporary pending object, and marks each attachment `READY` or `FAILED`.
 
 ## Import Email
 

@@ -5,6 +5,8 @@ import com.mailvault.ingestion.api.dto.AttachmentInitiateRequest;
 import com.mailvault.ingestion.api.dto.AttachmentInitiateResponse;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
+import com.mailvault.ingestion.events.AttachmentUploadedEvent;
+import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.springframework.stereotype.Service;
@@ -21,11 +23,14 @@ public class AttachmentUploadService {
 
     private final AttachmentRepository attachmentRepository;
     private final ObjectStorageService objectStorageService;
+    private final OutboxEventService outboxEventService;
 
     public AttachmentUploadService(AttachmentRepository attachmentRepository,
-                                   ObjectStorageService objectStorageService) {
+                                   ObjectStorageService objectStorageService,
+                                   OutboxEventService outboxEventService) {
         this.attachmentRepository = attachmentRepository;
         this.objectStorageService = objectStorageService;
+        this.outboxEventService = outboxEventService;
     }
 
     @Transactional
@@ -66,6 +71,17 @@ public class AttachmentUploadService {
         // TODO: verify object existence and expected size in object storage before marking uploaded.
         attachment.markUploaded();
         attachmentRepository.save(attachment);
+        Instant uploadedAt = Instant.now();
+        outboxEventService.saveAttachmentUploaded(new AttachmentUploadedEvent(
+                UUID.randomUUID(),
+                attachment.getId(),
+                attachment.getUserId(),
+                attachment.getFilename(),
+                attachment.getObjectKey(),
+                attachment.getContentType(),
+                attachment.getSizeBytes(),
+                uploadedAt
+        ), uploadedAt);
         return new AttachmentCompleteResponse(attachmentId, attachment.getStatus().name());
     }
 

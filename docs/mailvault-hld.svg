@@ -135,7 +135,7 @@
 
   <rect x="455" y="905" width="850" height="122" rx="30" fill="url(#kafkaBg)" filter="url(#shadow)"/>
   <text x="880" y="958" text-anchor="middle" class="white-title">Kafka Event Bus</text>
-  <text x="880" y="997" text-anchor="middle" class="white-small">email.received • index.requested • attachment.processed • quota.updated • archival.requested</text>
+  <text x="880" y="997" text-anchor="middle" class="white-small">email.received • attachment.uploaded • quota.updated • archival.requested</text>
 
   <path class="event-arrow" d="M580 765 L580 895" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M870 765 L870 895" marker-end="url(#eventArrow)"/>

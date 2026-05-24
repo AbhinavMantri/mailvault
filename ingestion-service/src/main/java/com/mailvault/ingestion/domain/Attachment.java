@@ -77,6 +77,10 @@ public class Attachment {
         return objectKey;
     }
 
+    public String getContentType() {
+        return contentType;
+    }
+
     public long getSizeBytes() {
         return sizeBytes;
     }

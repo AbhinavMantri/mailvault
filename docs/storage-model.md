@@ -41,7 +41,7 @@ archive/users/{userId}/emails/{emailId}/raw.eml
 
 ## Deduplication
 
-Attachments are hashed using SHA-256 by `attachment-worker` after upload completion. The worker stores the hash on the `attachments` row, creates or reuses an `attachment_blobs` row, and points duplicate logical attachments at the same canonical blob.
+Attachments are hashed using SHA-256 by `attachment-worker` after it consumes `attachment.uploaded`. The worker stores the hash on the `attachments` row, creates or reuses an `attachment_blobs` row, and points duplicate logical attachments at the same canonical blob.
 
 Physical deduplication uses a canonical blob model:
 

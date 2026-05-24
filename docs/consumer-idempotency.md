@@ -38,6 +38,7 @@ search-indexer
 
 attachment-worker
   -> conditional status transitions on attachments
+  -> consumes attachment.uploaded events
   -> attachment_blobs has unique sha256
 
 archival-worker

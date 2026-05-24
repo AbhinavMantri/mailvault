@@ -10,7 +10,6 @@ Hardening items before treating `attachment-worker` as production-ready.
 
 ## Reliability
 
-- Replace polling with `attachment.uploaded` events after the outbox is complete.
 - Add retry/backoff and max-attempt handling for transient MinIO failures.
 - Add dead-letter handling for permanently failed attachments.
 - Verify object size against the expected `size_bytes` before marking `READY`.

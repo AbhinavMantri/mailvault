@@ -2,6 +2,7 @@ package com.mailvault.ingestion.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.mailvault.ingestion.events.AttachmentUploadedEvent;
 import com.mailvault.ingestion.events.EmailEventPublisher;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,27 @@ class OutboxPublisherTest {
     }
 
     @Test
+    void publishBatchPublishesAttachmentUploadedAndMarksOutboxEventPublished() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        AttachmentUploadedEvent attachmentUploadedEvent = attachmentUploadedEvent();
+        OutboxEvent outboxEvent = new OutboxEvent(
+                attachmentUploadedEvent.eventId(),
+                attachmentUploadedEvent.attachmentId(),
+                OutboxEventService.ATTACHMENT_UPLOADED,
+                objectMapper.writeValueAsString(attachmentUploadedEvent),
+                attachmentUploadedEvent.uploadedAt()
+        );
+        when(outboxEventRepository.findUnpublished(100)).thenReturn(List.of(outboxEvent));
+        when(emailEventPublisher.publishAttachmentUploaded(any(AttachmentUploadedEvent.class)))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        new OutboxPublisher(objectMapper, outboxEventRepository, emailEventPublisher).publishBatch();
+
+        verify(emailEventPublisher).publishAttachmentUploaded(any(AttachmentUploadedEvent.class));
+        verify(outboxEventRepository).markPublished(outboxEvent.id());
+    }
+
+    @Test
     void publishBatchDoesNotMarkPublishedWhenKafkaPublishFails() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         EmailReceivedEvent emailReceivedEvent = emailReceivedEvent();
@@ -62,7 +84,7 @@ class OutboxPublisherTest {
                 objectMapper.writeValueAsString(emailReceivedEvent),
                 emailReceivedEvent.receivedAt()
         );
-        CompletableFuture<SendResult<String, EmailReceivedEvent>> kafkaFailure = new CompletableFuture<>();
+        CompletableFuture<SendResult<String, Object>> kafkaFailure = new CompletableFuture<>();
         kafkaFailure.completeExceptionally(new RuntimeException("kafka unavailable"));
         when(outboxEventRepository.findUnpublished(100)).thenReturn(List.of(outboxEvent));
         when(emailEventPublisher.publishEmailReceived(any(EmailReceivedEvent.class))).thenReturn(kafkaFailure);
@@ -81,6 +103,20 @@ class OutboxPublisherTest {
                 "billing@example.com",
                 List.of("abhinav@example.com"),
                 "Invoice for May",
+                512,
+                Instant.parse("2026-05-23T12:00:00Z")
+        );
+    }
+
+    private AttachmentUploadedEvent attachmentUploadedEvent() {
+        UUID attachmentId = UUID.randomUUID();
+        return new AttachmentUploadedEvent(
+                UUID.randomUUID(),
+                attachmentId,
+                "user-123",
+                "invoice.txt",
+                "users/user-123/pending-attachments/%s/invoice.txt".formatted(attachmentId),
+                "text/plain",
                 512,
                 Instant.parse("2026-05-23T12:00:00Z")
         );

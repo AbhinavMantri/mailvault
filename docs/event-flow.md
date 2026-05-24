@@ -39,12 +39,16 @@ email.received
   -> Redis filters recent duplicate events; OpenSearch upsert by emailId remains the durable fallback
   -> archival-worker evaluates lifecycle rules
 
-attachment-worker
-  -> polls UPLOADED attachments
+attachment.uploaded
+  -> attachment-worker consumes event
+  -> claims attachment with UPLOADED -> PROCESSING transition
   -> computes SHA-256 from object storage bytes
   -> creates or reuses canonical attachment_blobs row
   -> deletes temporary pending object
   -> marks attachments READY or FAILED
+
+attachment-worker
+  -> uses database status transitions for durable idempotency
 
 quota-service
   -> consumes email.received

@@ -21,18 +21,16 @@ public class AttachmentRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<AttachmentRow> findUploaded(int limit) {
+    public Optional<AttachmentRow> findById(UUID attachmentId) {
         String sql = """
                 SELECT id, user_id, filename, object_key, size_bytes
                   FROM attachments
-                 WHERE status = 'UPLOADED'
-                 ORDER BY created_at
-                 LIMIT :limit
+                 WHERE id = :attachmentId
                 """;
 
-        return jdbcTemplate.query(
+        List<AttachmentRow> rows = jdbcTemplate.query(
                 sql,
-                new MapSqlParameterSource("limit", limit),
+                new MapSqlParameterSource("attachmentId", attachmentId),
                 (rs, rowNum) -> new AttachmentRow(
                         rs.getObject("id", UUID.class),
                         rs.getString("user_id"),
@@ -41,6 +39,7 @@ public class AttachmentRepository {
                         rs.getLong("size_bytes")
                 )
         );
+        return rows.stream().findFirst();
     }
 
     public boolean markProcessing(UUID attachmentId) {

@@ -10,16 +10,20 @@ import java.util.concurrent.CompletableFuture;
 @Component
 public class EmailEventPublisher {
 
-    private final KafkaTemplate<String, EmailReceivedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final KafkaTopicProperties topicProperties;
 
-    public EmailEventPublisher(KafkaTemplate<String, EmailReceivedEvent> kafkaTemplate,
+    public EmailEventPublisher(KafkaTemplate<String, Object> kafkaTemplate,
                                KafkaTopicProperties topicProperties) {
         this.kafkaTemplate = kafkaTemplate;
         this.topicProperties = topicProperties;
     }
 
-    public CompletableFuture<SendResult<String, EmailReceivedEvent>> publishEmailReceived(EmailReceivedEvent event) {
+    public CompletableFuture<SendResult<String, Object>> publishEmailReceived(EmailReceivedEvent event) {
         return kafkaTemplate.send(topicProperties.emailReceivedTopic(), event.emailId().toString(), event);
+    }
+
+    public CompletableFuture<SendResult<String, Object>> publishAttachmentUploaded(AttachmentUploadedEvent event) {
+        return kafkaTemplate.send(topicProperties.attachmentUploadedTopic(), event.attachmentId().toString(), event);
     }
 }
