@@ -39,6 +39,26 @@ Attachment metadata extraction and SHA-256 hash calculation run asynchronously i
 
 Attachments are not considered downloadable until the security scan records a clean verdict. Unsafe attachments are marked quarantined and excluded from download paths.
 
+## Mailbox Safety
+
+Spam filtering and abuse reporting are separate workflows. Spam filtering is system-driven classification. Abuse reporting is a user-triggered complaint that should be recorded durably for audit, repeated-sender analysis, and possible moderation action.
+
+Planned mailbox safety model:
+
+```text
+email_reports
+- id
+- email_id
+- reporter_user_id
+- reported_sender
+- reason: SPAM | PHISHING | ABUSE | HARASSMENT | IMPERSONATION | OTHER
+- description
+- status: OPEN | REVIEWED | ACTIONED | REJECTED
+- created_at
+```
+
+Reporting an email can apply a per-user `REPORTED` or `SPAM` label immediately, while moderation remains asynchronous. Repeated reports can later update sender/domain risk scoring without blocking normal mailbox reads.
+
 ## Consistency Model
 
 Email metadata is strongly persisted before the import request succeeds. Search is eventually consistent because indexing is asynchronous.

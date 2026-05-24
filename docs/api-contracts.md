@@ -134,3 +134,33 @@ GET /users/{userId}/storage
   "updatedAt": "2026-05-23T15:00:00Z"
 }
 ```
+
+## Report Email Abuse
+
+Planned post-MVP API for user-triggered abuse, spam, phishing, or impersonation reports.
+
+```http
+POST /emails/{emailId}/report
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123",
+  "reason": "ABUSE",
+  "description": "Message contains threatening language"
+}
+```
+
+Suggested reasons:
+
+```text
+SPAM
+PHISHING
+ABUSE
+HARASSMENT
+IMPERSONATION
+OTHER
+```
+
+The API should record a durable report, apply a per-user `REPORTED` or `SPAM` label, and feed a moderation workflow. It should not delete the underlying email immediately because moderation actions need auditability and repeated reports may influence sender/domain risk scoring.

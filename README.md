@@ -168,6 +168,8 @@ Local endpoints:
 - Add asynchronous antivirus scanning for attachments.
 - Block attachment downloads until a clean scan verdict exists.
 - Quarantine infected attachments and exclude them from download paths.
+- Add user-triggered abuse reporting for spam, phishing, harassment, impersonation, and abusive language.
+- Feed repeated abuse reports into sender/domain risk scoring and moderation queues.
 - Add retry, timeout, and alerting behavior for scan failures.
 
 ## Planned Services
@@ -181,6 +183,7 @@ Local endpoints:
 | `search-service` | Serve user search queries from OpenSearch |
 | `attachment-worker` | Compute attachment hashes and prepare dedupe metadata |
 | `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
+| `moderation-service` | Review abuse reports, sender risk signals, and user safety actions |
 | `archival-worker` | Move old email content to archival object-storage prefixes |
 
 ## Engineering Themes
@@ -191,6 +194,7 @@ Local endpoints:
 - Attachment deduplication
 - Search-index consistency
 - Quota enforcement
+- Abuse reporting and moderation readiness
 - Lifecycle and archival policies
 - Operational observability
 
