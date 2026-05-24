@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="840" viewBox="0 0 1280 840" role="img" aria-labelledby="title desc">
   <title id="title">MailVault Thread And Recipient Model</title>
-  <desc id="desc">A dark mode architecture diagram showing how imported emails, recipients, attachments, threads, and search documents relate.</desc>
+  <desc id="desc">A dark mode architecture diagram showing how emails, recipients, attachments, threads, thread messages, and search documents relate.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/>
@@ -15,63 +15,72 @@
       .thread { stroke: #22c55e; }
       .relation { stroke: #f59e0b; }
       .derived { stroke: #a78bfa; }
+      .rule { fill: #111827; stroke: #475569; stroke-width: 1.6; rx: 12; }
       .boxTitle { fill: #f8fafc; font: 700 19px Arial, sans-serif; text-anchor: middle; }
+      .smallTitle { fill: #f8fafc; font: 700 17px Arial, sans-serif; text-anchor: middle; }
       .boxText { fill: #cbd5e1; font: 14px Arial, sans-serif; text-anchor: middle; }
       .label { fill: #e2e8f0; font: 700 14px Arial, sans-serif; text-anchor: middle; }
-      .note { fill: #cbd5e1; font: 13px Arial, sans-serif; }
+      .note { fill: #cbd5e1; font: 13px Arial, sans-serif; text-anchor: middle; }
       .line { stroke: #7dd3fc; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
       .softLine { stroke: #64748b; stroke-width: 2; fill: none; stroke-dasharray: 7 6; marker-end: url(#arrow); }
     </style>
   </defs>
 
-  <rect class="bg" width="1180" height="760"/>
+  <rect class="bg" width="1280" height="840"/>
   <text class="title" x="70" y="62">MailVault Thread And Recipient Model</text>
   <text class="subtitle" x="70" y="92">Emails are message/content units. Threads are per-user conversation views. Recipients and attachments stay message-level.</text>
 
-  <rect class="section" x="60" y="125" width="500" height="485"/>
-  <text class="label" x="310" y="158">Message Source Of Truth</text>
+  <rect class="section" x="70" y="125" width="525" height="485"/>
+  <text class="label" x="332" y="158">Message Source Of Truth</text>
 
-  <rect class="box message" x="115" y="190" width="390" height="115"/>
-  <text class="boxTitle" x="310" y="225">emails</text>
-  <text class="boxText" x="310" y="254">sender, subject, body object keys</text>
-  <text class="boxText" x="310" y="278">raw MIME, logical size, status</text>
+  <rect class="box message" x="140" y="190" width="385" height="115"/>
+  <text class="boxTitle" x="332" y="225">emails</text>
+  <text class="boxText" x="332" y="254">sender, subject, body object keys</text>
+  <text class="boxText" x="332" y="278">raw MIME, logical size, status</text>
 
-  <rect class="box relation" x="115" y="355" width="180" height="120"/>
-  <text class="boxTitle" x="205" y="392">email_recipients</text>
-  <text class="boxText" x="205" y="421">TO, CC, BCC</text>
-  <text class="boxText" x="205" y="445">delivery status</text>
+  <rect class="box relation" x="105" y="355" width="220" height="124"/>
+  <text class="smallTitle" x="215" y="390">email_recipients</text>
+  <text class="boxText" x="215" y="420">TO, CC, BCC</text>
+  <text class="boxText" x="215" y="444">delivery status</text>
 
-  <rect class="box relation" x="325" y="355" width="180" height="120"/>
-  <text class="boxTitle" x="415" y="392">email_attachment_refs</text>
-  <text class="boxText" x="415" y="421">message to</text>
-  <text class="boxText" x="415" y="445">attachment links</text>
+  <rect class="box relation" x="370" y="355" width="220" height="124"/>
+  <text class="smallTitle" x="480" y="384">email_attachment</text>
+  <text class="smallTitle" x="480" y="406">refs</text>
+  <text class="boxText" x="480" y="436">message to</text>
+  <text class="boxText" x="480" y="460">attachment links</text>
 
-  <path class="line" d="M 245 305 C 235 325, 220 335, 210 355"/>
-  <path class="line" d="M 375 305 C 385 325, 400 335, 410 355"/>
+  <path class="line" d="M 270 305 C 250 330, 235 340, 222 355"/>
+  <path class="line" d="M 395 305 C 425 328, 455 338, 472 355"/>
 
-  <rect class="section" x="620" y="125" width="500" height="485"/>
-  <text class="label" x="870" y="158">Mailbox Conversation View</text>
+  <rect class="section" x="685" y="125" width="525" height="485"/>
+  <text class="label" x="947" y="158">Mailbox Conversation View</text>
 
-  <rect class="box thread" x="685" y="190" width="370" height="125"/>
-  <text class="boxTitle" x="870" y="225">user_threads</text>
-  <text class="boxText" x="870" y="254">folder, last message time</text>
-  <text class="boxText" x="870" y="278">message count, unread count</text>
+  <rect class="box thread" x="755" y="190" width="385" height="125"/>
+  <text class="boxTitle" x="947" y="225">user_threads</text>
+  <text class="boxText" x="947" y="254">folder, last message time</text>
+  <text class="boxText" x="947" y="278">message count, unread count</text>
 
-  <rect class="box thread" x="685" y="365" width="370" height="125"/>
-  <text class="boxTitle" x="870" y="400">thread_messages</text>
-  <text class="boxText" x="870" y="429">thread to email mapping</text>
-  <text class="boxText" x="870" y="453">direction: INBOUND or OUTBOUND</text>
+  <rect class="box thread" x="755" y="365" width="385" height="125"/>
+  <text class="boxTitle" x="947" y="400">thread_messages</text>
+  <text class="boxText" x="947" y="429">connector row: thread to email</text>
+  <text class="boxText" x="947" y="453">direction: INBOUND or OUTBOUND</text>
 
-  <path class="line" d="M 870 315 L 870 365"/>
-  <path class="line" d="M 685 428 C 600 428, 580 250, 505 250"/>
-  <text class="note" x="565" y="388">links to message</text>
+  <path class="line" d="M 947 315 L 947 365"/>
+  <path class="line" d="M 755 428 C 650 428, 635 250, 525 250"/>
+  <text class="note" x="650" y="395">links to message</text>
 
-  <rect class="box derived" x="225" y="650" width="730" height="58"/>
-  <text class="boxTitle" x="590" y="685">Search indexes message documents and can group results by threadId</text>
+  <rect class="rule" x="90" y="635" width="520" height="58"/>
+  <text class="note" x="350" y="660">Rule: attachments belong to messages.</text>
+  <text class="note" x="350" y="681">Thread summaries expose attachment counts as derived fields.</text>
 
-  <path class="softLine" d="M 310 305 C 330 575, 430 640, 510 650"/>
-  <path class="softLine" d="M 870 490 C 845 575, 760 625, 690 650"/>
+  <rect class="rule" x="670" y="635" width="520" height="58"/>
+  <text class="note" x="930" y="660">Rule: INBOX, SPAM, TRASH, and ARCHIVE are thread folders.</text>
+  <text class="note" x="930" y="681">SENT is a message-level OUTBOUND view.</text>
 
-  <text class="note" x="80" y="632">Rule: attachments belong to messages. Thread summaries may show hasAttachments or attachmentCount only as derived fields.</text>
-  <text class="note" x="80" y="660">Rule: INBOX/SPAM/TRASH/ARCHIVE are thread-level folders. SENT is a message-level OUTBOUND view.</text>
+  <rect class="box derived" x="325" y="735" width="630" height="70"/>
+  <text class="boxTitle" x="640" y="765">Search Index</text>
+  <text class="boxText" x="640" y="790">indexes message documents and can group results by threadId</text>
+
+  <path class="softLine" d="M 332 305 C 355 610, 465 715, 535 735"/>
+  <path class="softLine" d="M 947 490 C 910 630, 790 700, 720 735"/>
 </svg>
