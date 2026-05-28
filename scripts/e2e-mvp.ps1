@@ -310,6 +310,13 @@ try {
     Assert-True ($updatedThreadMessages[1].direction -eq "OUTBOUND") "reply direction was not OUTBOUND"
     Assert-True ($updatedThreadMessages[1].textBody -eq $replyBody) "reply text body did not match"
 
+    Write-Step "checking sent mailbox view"
+    $sentThread = Wait-Until "sent mailbox contains outbound reply" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=SENT&limit=10"
+        @($threads) | Where-Object { $_.id -eq $thread.id -and $_.folder -eq "SENT" } | Select-Object -First 1
+    }
+    Assert-True ($sentThread.messageCount -eq 2) "sent thread message count did not include conversation"
+
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {
         $current = Invoke-Json "GET" "http://localhost:8083/users/$userId/storage"
@@ -318,6 +325,28 @@ try {
         }
         return $null
     }
+
+    Write-Step "creating draft email"
+    $draft = Invoke-Json "POST" "http://localhost:8081/drafts" @{
+        userId = $userId
+        from = $recipient
+        to = @("billing@mailvault.local")
+        cc = @()
+        bcc = @()
+        subject = "Draft $subject"
+        textBody = "Draft body for $runId"
+        htmlBody = $null
+        attachmentIds = @()
+    }
+    Assert-True $draft.emailId "draft emailId was not returned"
+    Assert-True ($draft.status -eq "DRAFT") "draft creation did not return DRAFT"
+
+    Write-Step "checking draft mailbox view"
+    $draftThread = Wait-Until "draft mailbox contains draft" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=DRAFT&limit=10"
+        @($threads) | Where-Object { $_.subject -eq "Draft $subject" -and $_.folder -eq "DRAFT" } | Select-Object -First 1
+    }
+    Assert-True ($draftThread.messageCount -eq 1) "draft thread message count was not 1"
 
     Write-Step "checking OpenSearch read model"
     $searchResult = Wait-Until "search returns imported email" 90 {

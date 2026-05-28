@@ -51,7 +51,9 @@ If MailVault later supports Gmail, Outlook, or `.eml` migration, that should be 
 
 `TO`, `CC`, and `BCC` are stored in `email_recipients.recipient_type`. Response shaping for BCC visibility is a later authorization concern: the sender can see all BCC recipients, normal TO/CC recipients should not see BCC recipients, and a BCC recipient should only see their own BCC participation.
 
-Current folder placement is held on `mailbox_threads.folder` for mailbox views such as `INBOX`, `SPAM`, `TRASH`, and `ARCHIVE`. `SENT` is better treated as a message-level view filtered by `thread_messages.direction = OUTBOUND`.
+Current folder placement is held on `mailbox_threads.folder` for mailbox views such as `INBOX`, `DRAFT`, `SPAM`, `TRASH`, and `ARCHIVE`. `SENT` is a message-level view filtered by `thread_messages.direction = OUTBOUND`, because a thread can contain both inbound and outbound messages.
+
+Drafts are stored as normal `emails` rows with `EmailStatus.DRAFT`, linked to a `mailbox_threads.folder = DRAFT` row through `thread_messages.direction = DRAFT`. Creating a draft does not publish `email.received`; sending an existing draft should be implemented as an explicit transition that updates the message/thread state and publishes the send/search/quota events.
 
 ## Mailbox Safety
 

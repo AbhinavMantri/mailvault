@@ -39,8 +39,9 @@ Architecture notes:
 
 - Import email through an API. _Implemented in `ingestion-service`._
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
-- Read mailbox threads and thread detail through APIs. _Initial thread model added._
+- Read mailbox threads and thread detail through APIs. _INBOX, SENT, and DRAFT views are supported._
 - Append replies to existing threads through a dedicated reply API. _Implemented in `ingestion-service`; import intentionally starts a new thread._
+- Create draft messages. _Implemented as DRAFT mailbox threads; sending an existing draft is planned._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
@@ -217,8 +218,9 @@ Implemented so far:
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
+- `POST /drafts`
 - `GET /mailboxes/{userId}/inbox`
-- `GET /mailboxes/{userId}/threads?folder=INBOX`
+- `GET /mailboxes/{userId}/threads?folder=INBOX|SENT|DRAFT`
 - `GET /threads/{threadId}?userId={userId}`
 - `POST /threads/{threadId}/messages`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content

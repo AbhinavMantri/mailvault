@@ -74,7 +74,7 @@
   <text class="note" x="350" y="681">Thread summaries expose attachment counts as derived fields.</text>
 
   <rect class="rule" x="670" y="635" width="520" height="58"/>
-  <text class="note" x="930" y="660">Rule: INBOX, SPAM, TRASH, and ARCHIVE are thread folders.</text>
+  <text class="note" x="930" y="660">Rule: INBOX, DRAFT, SPAM, TRASH, and ARCHIVE are thread folders.</text>
   <text class="note" x="930" y="681">SENT is a message-level OUTBOUND view.</text>
 
   <rect class="box derived" x="325" y="735" width="630" height="70"/>

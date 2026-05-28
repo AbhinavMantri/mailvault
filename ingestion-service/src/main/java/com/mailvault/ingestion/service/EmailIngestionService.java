@@ -1,5 +1,6 @@
 package com.mailvault.ingestion.service;
 
+import com.mailvault.ingestion.api.dto.EmailDraftRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
@@ -64,7 +65,7 @@ public class EmailIngestionService {
         MessageDraft draft = MessageDraft.from(request);
         UUID emailId = UUID.randomUUID();
         Instant receivedAt = Instant.now();
-        PersistedEmail persistedEmail = persistMessage(draft, emailId, receivedAt);
+        PersistedEmail persistedEmail = persistMessage(draft, emailId, receivedAt, EmailStatus.INDEX_PENDING);
         MailboxThread thread = new MailboxThread(
                 UUID.randomUUID(),
                 draft.userId(),
@@ -100,7 +101,7 @@ public class EmailIngestionService {
 
         UUID emailId = UUID.randomUUID();
         Instant sentAt = Instant.now();
-        PersistedEmail persistedEmail = persistMessage(draft, emailId, sentAt);
+        PersistedEmail persistedEmail = persistMessage(draft, emailId, sentAt, EmailStatus.INDEX_PENDING);
         thread.appendMessage(draft.from(), sentAt, MessageDirection.OUTBOUND);
         threadMessageRepository.save(new ThreadMessage(
                 UUID.randomUUID(),
@@ -116,7 +117,38 @@ public class EmailIngestionService {
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
 
-    private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt) {
+    @Transactional
+    public EmailImportResponse createDraft(EmailDraftRequest request) {
+        MessageDraft draft = MessageDraft.from(request);
+        UUID emailId = UUID.randomUUID();
+        Instant createdAt = Instant.now();
+        PersistedEmail persistedEmail = persistMessage(draft, emailId, createdAt, EmailStatus.DRAFT);
+        MailboxThread thread = new MailboxThread(
+                UUID.randomUUID(),
+                draft.userId(),
+                normalizeSubject(draft.subject()),
+                ThreadFolder.DRAFT,
+                createdAt,
+                draft.from(),
+                1,
+                0,
+                createdAt,
+                createdAt
+        );
+        mailboxThreadRepository.save(thread);
+        threadMessageRepository.save(new ThreadMessage(
+                UUID.randomUUID(),
+                thread,
+                persistedEmail.email(),
+                MessageDirection.DRAFT,
+                createdAt,
+                createdAt
+        ));
+
+        return new EmailImportResponse(emailId, "DRAFT", persistedEmail.logicalSizeBytes());
+    }
+
+    private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt, EmailStatus status) {
         List<Attachment> attachments = findUploadedAttachments(draft);
         long logicalSizeBytes = calculateLogicalSize(draft, attachments);
 
@@ -136,12 +168,12 @@ public class EmailIngestionService {
                 emailId,
                 draft.userId(),
                 draft.from(),
-                draft.subject(),
+                subjectOrDefault(draft.subject()),
                 rawObjectKey,
                 textObjectKey,
                 htmlObjectKey,
                 logicalSizeBytes,
-                EmailStatus.INDEX_PENDING,
+                status,
                 receivedAt
         );
         safeList(draft.to()).forEach(recipient -> email.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
@@ -190,7 +222,7 @@ public class EmailIngestionService {
                 draft.from(),
                 String.join(",", safeList(draft.to())),
                 String.join(",", safeList(draft.cc())),
-                draft.subject(),
+                subjectOrDefault(draft.subject()),
                 safeText(draft.textBody())
         );
     }
@@ -201,6 +233,10 @@ public class EmailIngestionService {
 
     private List<String> safeList(List<String> value) {
         return value == null ? List.of() : value;
+    }
+
+    private String subjectOrDefault(String subject) {
+        return subject == null || subject.isBlank() ? "(no subject)" : subject;
     }
 
     private List<String> visibleRecipients(MessageDraft draft) {
@@ -222,7 +258,7 @@ public class EmailIngestionService {
     }
 
     private String normalizeSubject(String subject) {
-        String normalized = safeText(subject).trim().toLowerCase();
+        String normalized = subjectOrDefault(subject).trim().toLowerCase();
         while (normalized.startsWith("re:") || normalized.startsWith("fw:") || normalized.startsWith("fwd:")) {
             normalized = normalized.substring(normalized.indexOf(':') + 1).trim();
         }
@@ -258,6 +294,20 @@ public class EmailIngestionService {
         }
 
         static MessageDraft from(EmailReplyRequest request) {
+            return new MessageDraft(
+                    request.userId(),
+                    request.from(),
+                    request.to(),
+                    request.cc(),
+                    request.bcc(),
+                    request.subject(),
+                    request.textBody(),
+                    request.htmlBody(),
+                    request.attachmentIds()
+            );
+        }
+
+        static MessageDraft from(EmailDraftRequest request) {
             return new MessageDraft(
                     request.userId(),
                     request.from(),

@@ -70,6 +70,37 @@ Email import accepts attachment IDs that are already uploaded and not failed: `U
 
 Import starts a new MailVault thread. It does not try to merge the message into an existing conversation by subject or external mail headers.
 
+## Create Draft
+
+```http
+POST /drafts
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123",
+  "from": "abhinav@example.com",
+  "to": ["billing@example.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": "Draft invoice reply",
+  "textBody": "I will review this.",
+  "htmlBody": null,
+  "attachmentIds": []
+}
+```
+
+```json
+{
+  "emailId": "7907d0dc-0a2b-4687-a717-e2d522c6789d",
+  "status": "DRAFT",
+  "logicalSizeBytes": 19
+}
+```
+
+Draft creation stores the message body and metadata, creates a `DRAFT` mailbox thread, and links the draft through `thread_messages.direction = DRAFT`. It does not publish `email.received`; sending an existing draft is a separate state transition planned for later.
+
 ## Get Email
 
 ```http
@@ -106,6 +137,14 @@ GET /mailboxes/{userId}/inbox
 
 ```http
 GET /mailboxes/{userId}/threads?folder=INBOX
+```
+
+Supported folders/views:
+
+```text
+INBOX - inbound mailbox threads
+SENT  - threads containing outbound messages
+DRAFT - unsent draft threads
 ```
 
 ```json

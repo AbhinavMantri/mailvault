@@ -1,5 +1,6 @@
 package com.mailvault.ingestion.service;
 
+import com.mailvault.ingestion.api.dto.EmailDraftRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.domain.Attachment;
@@ -192,6 +193,30 @@ class EmailIngestionServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Thread not found");
         verify(emailMessageRepository, never()).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
+    @Test
+    void createDraftPersistsDraftThreadWithoutOutboxEvent() {
+        EmailDraftRequest request = new EmailDraftRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("billing@example.com"),
+                List.of(),
+                List.of(),
+                "",
+                "Draft body",
+                null,
+                List.of()
+        );
+
+        var response = emailIngestionService.createDraft(request);
+
+        assertThat(response.status()).isEqualTo("DRAFT");
+        assertThat(response.logicalSizeBytes()).isEqualTo("Draft body".length());
+        verify(emailMessageRepository).save(any(EmailMessage.class));
+        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        verify(threadMessageRepository).save(any());
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 

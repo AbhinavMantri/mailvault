@@ -29,8 +29,13 @@ public class EmailMessageRepository {
                        e.status,
                        e.received_at,
                        e.logical_size_bytes,
-                       COUNT(ear.id) AS attachment_count
+                       COUNT(DISTINCT ear.id) AS attachment_count
                   FROM emails e
+                  JOIN thread_messages tm ON tm.email_id = e.id
+                                        AND tm.direction = 'INBOUND'
+                  JOIN mailbox_threads mt ON mt.id = tm.thread_id
+                                         AND mt.user_id = :userId
+                                         AND mt.folder = 'INBOX'
                   LEFT JOIN email_attachment_refs ear ON ear.email_id = e.id
                  WHERE e.user_id = :userId
                  GROUP BY e.id, e.sender, e.subject, e.status, e.received_at, e.logical_size_bytes
@@ -56,6 +61,9 @@ public class EmailMessageRepository {
     }
 
     public List<ThreadSummaryRow> findThreads(String userId, String folder, int limit) {
+        if ("SENT".equalsIgnoreCase(folder)) {
+            return findSentThreads(userId, limit);
+        }
         String sql = """
                 SELECT ut.id,
                        latest.subject,
@@ -64,7 +72,7 @@ public class EmailMessageRepository {
                        ut.last_message_at,
                        ut.message_count,
                        ut.unread_count,
-                       COUNT(ear.id) AS attachment_count
+                       COUNT(DISTINCT ear.id) AS attachment_count
                   FROM mailbox_threads ut
                   JOIN LATERAL (
                       SELECT e.subject
@@ -89,6 +97,54 @@ public class EmailMessageRepository {
                 new MapSqlParameterSource()
                         .addValue("userId", userId)
                         .addValue("folder", folder)
+                        .addValue("limit", limit),
+                (rs, rowNum) -> new ThreadSummaryRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("subject"),
+                        rs.getString("folder"),
+                        rs.getString("last_sender"),
+                        toInstant(rs, "last_message_at"),
+                        rs.getInt("message_count"),
+                        rs.getInt("unread_count"),
+                        rs.getInt("attachment_count")
+                )
+        );
+    }
+
+    private List<ThreadSummaryRow> findSentThreads(String userId, int limit) {
+        String sql = """
+                SELECT ut.id,
+                       latest.subject,
+                       'SENT' AS folder,
+                       ut.last_sender,
+                       ut.last_message_at,
+                       ut.message_count,
+                       ut.unread_count,
+                       COUNT(DISTINCT ear.id) AS attachment_count
+                  FROM mailbox_threads ut
+                  JOIN LATERAL (
+                      SELECT e.subject
+                        FROM thread_messages tm
+                        JOIN emails e ON e.id = tm.email_id
+                       WHERE tm.thread_id = ut.id
+                       ORDER BY tm.created_at DESC
+                       LIMIT 1
+                  ) latest ON TRUE
+                  JOIN thread_messages sent_tm ON sent_tm.thread_id = ut.id
+                                              AND sent_tm.direction = 'OUTBOUND'
+                  LEFT JOIN thread_messages tm_all ON tm_all.thread_id = ut.id
+                  LEFT JOIN email_attachment_refs ear ON ear.email_id = tm_all.email_id
+                 WHERE ut.user_id = :userId
+                 GROUP BY ut.id, latest.subject, ut.last_sender, ut.last_message_at,
+                          ut.message_count, ut.unread_count
+                 ORDER BY MAX(sent_tm.created_at) DESC
+                 LIMIT :limit
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("userId", userId)
                         .addValue("limit", limit),
                 (rs, rowNum) -> new ThreadSummaryRow(
                         rs.getObject("id", UUID.class),
