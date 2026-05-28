@@ -191,6 +191,38 @@ GET /threads/{threadId}?userId=user-123
 
 Thread detail returns the ordered messages in the conversation. Attachments and recipients remain message-level data.
 
+## Mark Thread Read
+
+```http
+POST /threads/{threadId}/read?userId=user-123
+```
+
+```json
+{
+  "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+  "status": "READ",
+  "unreadCount": 0
+}
+```
+
+Marks all unread `INBOUND` messages in the thread as read by setting `thread_messages.read_at`, then updates `mailbox_threads.unread_count`.
+
+## Mark Thread Unread
+
+```http
+POST /threads/{threadId}/unread?userId=user-123
+```
+
+```json
+{
+  "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+  "status": "UNREAD",
+  "unreadCount": 1
+}
+```
+
+Marks the latest `INBOUND` message as unread by clearing its `read_at`. If the thread has no inbound messages, the response is `NO_INBOUND_MESSAGE` with `unreadCount = 0`.
+
 ## Reply To Thread
 
 ```http

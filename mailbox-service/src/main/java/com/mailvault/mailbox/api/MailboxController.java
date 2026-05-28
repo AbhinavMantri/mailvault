@@ -1,12 +1,14 @@
 package com.mailvault.mailbox.api;
 
 import com.mailvault.mailbox.service.MailboxQueryService;
+import com.mailvault.mailbox.service.MailboxCommandService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,9 +20,11 @@ import java.util.UUID;
 public class MailboxController {
 
     private final MailboxQueryService mailboxQueryService;
+    private final MailboxCommandService mailboxCommandService;
 
-    public MailboxController(MailboxQueryService mailboxQueryService) {
+    public MailboxController(MailboxQueryService mailboxQueryService, MailboxCommandService mailboxCommandService) {
         this.mailboxQueryService = mailboxQueryService;
+        this.mailboxCommandService = mailboxCommandService;
     }
 
     @GetMapping("/mailboxes/{userId}/inbox")
@@ -46,6 +50,22 @@ public class MailboxController {
             @RequestParam @NotBlank String userId
     ) {
         return mailboxQueryService.getThreadDetail(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/read")
+    ThreadActionResponse markThreadRead(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.markThreadRead(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/unread")
+    ThreadActionResponse markThreadUnread(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.markThreadUnread(userId, threadId);
     }
 
     @GetMapping("/emails/{emailId}")

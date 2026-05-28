@@ -205,6 +205,68 @@ public class EmailMessageRepository {
         return rows.stream().findFirst();
     }
 
+    public boolean threadExists(UUID threadId, String userId) {
+        String sql = """
+                SELECT COUNT(*)
+                  FROM mailbox_threads
+                 WHERE id = :threadId
+                   AND user_id = :userId
+                """;
+
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
+                Integer.class
+        );
+        return count != null && count > 0;
+    }
+
+    public int markInboundMessagesRead(UUID threadId) {
+        String sql = """
+                UPDATE thread_messages
+                   SET read_at = now()
+                 WHERE thread_id = :threadId
+                   AND direction = 'INBOUND'
+                   AND read_at IS NULL
+                """;
+        return jdbcTemplate.update(sql, new MapSqlParameterSource("threadId", threadId));
+    }
+
+    public boolean markLatestInboundMessageUnread(UUID threadId) {
+        String sql = """
+                UPDATE thread_messages
+                   SET read_at = NULL
+                 WHERE id = (
+                       SELECT id
+                         FROM thread_messages
+                        WHERE thread_id = :threadId
+                          AND direction = 'INBOUND'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                 )
+                """;
+        return jdbcTemplate.update(sql, new MapSqlParameterSource("threadId", threadId)) > 0;
+    }
+
+    public int updateThreadUnreadCount(UUID threadId, String userId, int unreadCount) {
+        String sql = """
+                UPDATE mailbox_threads
+                   SET unread_count = :unreadCount,
+                       updated_at = now()
+                 WHERE id = :threadId
+                   AND user_id = :userId
+                """;
+        return jdbcTemplate.update(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId)
+                        .addValue("unreadCount", unreadCount)
+        );
+    }
+
     public List<ThreadMessageRow> findThreadMessages(UUID threadId) {
         String sql = """
                 SELECT tm.thread_id,

@@ -277,6 +277,34 @@ try {
     Assert-True ($threadMessages[0].emailId -eq $email.emailId) "thread detail email id did not match"
     Assert-True ($threadMessages[0].textBody -eq $textBody) "thread detail text body did not match"
 
+    Write-Step "marking thread read"
+    $readResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/read?userId=$userId"
+    Assert-True ($readResponse.status -eq "READ") "mark read did not return READ"
+    Assert-True ($readResponse.unreadCount -eq 0) "mark read unread count was not 0"
+
+    Wait-Until "thread unread count cleared" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=INBOX&limit=10"
+        $candidate = @($threads) | Where-Object { $_.id -eq $thread.id } | Select-Object -First 1
+        if ($candidate -and $candidate.unreadCount -eq 0) {
+            return $candidate
+        }
+        return $null
+    } | Out-Null
+
+    Write-Step "marking thread unread"
+    $unreadResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/unread?userId=$userId"
+    Assert-True ($unreadResponse.status -eq "UNREAD") "mark unread did not return UNREAD"
+    Assert-True ($unreadResponse.unreadCount -eq 1) "mark unread count was not 1"
+
+    Wait-Until "thread unread count restored" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=INBOX&limit=10"
+        $candidate = @($threads) | Where-Object { $_.id -eq $thread.id } | Select-Object -First 1
+        if ($candidate -and $candidate.unreadCount -eq 1) {
+            return $candidate
+        }
+        return $null
+    } | Out-Null
+
     Write-Step "replying to existing thread"
     $reply = Invoke-Json "POST" "http://localhost:8081/threads/$($thread.id)/messages" @{
         userId = $userId

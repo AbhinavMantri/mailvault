@@ -55,6 +55,8 @@ Current folder placement is held on `mailbox_threads.folder` for mailbox views s
 
 Drafts are stored as normal `emails` rows with `EmailStatus.DRAFT`, linked to a `mailbox_threads.folder = DRAFT` row through `thread_messages.direction = DRAFT`. Creating a draft does not publish `email.received`. Sending an existing draft is an explicit transition: the same email row moves to `INDEX_PENDING`, the connector row moves to `OUTBOUND`, the thread moves out of `DRAFT`, and the event is published for downstream quota/search processing.
 
+Read state is stored on `thread_messages.read_at`. `INBOUND` messages with `read_at IS NULL` are unread. Thread list reads use `mailbox_threads.unread_count` as a denormalized counter; mark-read updates all unread inbound rows and clears the counter, while mark-unread clears the latest inbound row and sets the counter to one.
+
 ## Mailbox Safety
 
 Spam filtering and abuse reporting are separate workflows. Spam filtering is system-driven classification. Abuse reporting is a user-triggered complaint that should be recorded durably for audit, repeated-sender analysis, and possible moderation action.
