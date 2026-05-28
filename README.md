@@ -223,6 +223,8 @@ Implemented so far:
 - `GET /mailboxes/{userId}/inbox`
 - `GET /mailboxes/{userId}/threads?folder=INBOX|SENT|DRAFT`
 - `GET /threads/{threadId}?userId={userId}`
+- `POST /threads/{threadId}/read?userId={userId}`
+- `POST /threads/{threadId}/unread?userId={userId}`
 - `POST /threads/{threadId}/messages`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`
