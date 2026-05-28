@@ -348,6 +348,29 @@ try {
     }
     Assert-True ($draftThread.messageCount -eq 1) "draft thread message count was not 1"
 
+    Write-Step "sending draft email"
+    $sentDraft = Invoke-Json "POST" "http://localhost:8081/drafts/$($draft.emailId)/send" @{
+        userId = $userId
+    }
+    Assert-True ($sentDraft.status -eq "ACCEPTED") "draft send did not return ACCEPTED"
+
+    Write-Step "checking sent draft leaves draft view"
+    Wait-Until "draft mailbox no longer contains sent draft" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=DRAFT&limit=10"
+        $candidate = @($threads) | Where-Object { $_.id -eq $draftThread.id } | Select-Object -First 1
+        if (-not $candidate) {
+            return $true
+        }
+        return $null
+    } | Out-Null
+
+    Write-Step "checking sent mailbox contains sent draft"
+    $sentDraftThread = Wait-Until "sent mailbox contains sent draft" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=SENT&limit=10"
+        @($threads) | Where-Object { $_.id -eq $draftThread.id -and $_.folder -eq "SENT" } | Select-Object -First 1
+    }
+    Assert-True ($sentDraftThread.messageCount -eq 1) "sent draft thread message count was not 1"
+
     Write-Step "checking OpenSearch read model"
     $searchResult = Wait-Until "search returns imported email" 90 {
         $results = Invoke-Json "GET" "http://localhost:8085/emails/search?userId=$userId&q=$runId&limit=10"

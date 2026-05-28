@@ -4,6 +4,7 @@ import com.mailvault.ingestion.api.dto.EmailDraftRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
+import com.mailvault.ingestion.api.dto.SendDraftRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailAttachmentRef;
@@ -148,6 +149,22 @@ public class EmailIngestionService {
         return new EmailImportResponse(emailId, "DRAFT", persistedEmail.logicalSizeBytes());
     }
 
+    @Transactional
+    public EmailImportResponse sendDraft(UUID emailId, SendDraftRequest request) {
+        ThreadMessage threadMessage = threadMessageRepository.findByEmailIdAndEmailUserId(emailId, request.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Draft not found"));
+        EmailMessage email = threadMessage.getEmail();
+        email.submitDraft();
+
+        Instant sentAt = Instant.now();
+        threadMessage.sendDraft(sentAt);
+        threadMessage.getThread().activateFromDraft(email.getSender(), sentAt);
+
+        saveEmailReceivedEvent(email, sentAt);
+
+        return new EmailImportResponse(emailId, "ACCEPTED", email.getLogicalSizeBytes());
+    }
+
     private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt, EmailStatus status) {
         List<Attachment> attachments = findUploadedAttachments(draft);
         long logicalSizeBytes = calculateLogicalSize(draft, attachments);
@@ -255,6 +272,26 @@ public class EmailIngestionService {
                 logicalSizeBytes,
                 receivedAt
         ), receivedAt);
+    }
+
+    private void saveEmailReceivedEvent(EmailMessage email, Instant receivedAt) {
+        outboxEventService.saveEmailReceived(new EmailReceivedEvent(
+                UUID.randomUUID(),
+                email.getId(),
+                email.getUserId(),
+                email.getSender(),
+                visibleRecipients(email),
+                email.getSubject(),
+                email.getLogicalSizeBytes(),
+                receivedAt
+        ), receivedAt);
+    }
+
+    private List<String> visibleRecipients(EmailMessage email) {
+        return email.getRecipients().stream()
+                .filter(recipient -> recipient.getRecipientType() != RecipientType.BCC)
+                .map(EmailRecipient::getRecipientAddress)
+                .toList();
     }
 
     private String normalizeSubject(String subject) {
