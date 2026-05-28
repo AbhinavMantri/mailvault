@@ -49,4 +49,21 @@ public class ThreadMessage {
         this.readAt = readAt;
         this.createdAt = createdAt;
     }
+
+    public MailboxThread getThread() {
+        return thread;
+    }
+
+    public EmailMessage getEmail() {
+        return email;
+    }
+
+    public void sendDraft(Instant sentAt) {
+        if (direction != MessageDirection.DRAFT) {
+            throw new IllegalArgumentException("Thread message is not a draft");
+        }
+        this.direction = MessageDirection.OUTBOUND;
+        this.readAt = sentAt;
+        this.createdAt = sentAt;
+    }
 }

@@ -67,6 +67,14 @@ public class MailboxThread {
         return id;
     }
 
+    public void activateFromDraft(String sender, Instant messageAt) {
+        this.folder = ThreadFolder.ACTIVE;
+        this.lastSender = sender;
+        this.lastMessageAt = messageAt;
+        this.unreadCount = 0;
+        this.updatedAt = messageAt;
+    }
+
     public void appendMessage(String sender, Instant messageAt, MessageDirection direction) {
         this.lastSender = sender;
         this.lastMessageAt = messageAt;

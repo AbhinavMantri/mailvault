@@ -3,10 +3,16 @@ package com.mailvault.ingestion.service;
 import com.mailvault.ingestion.api.dto.EmailDraftRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
+import com.mailvault.ingestion.api.dto.SendDraftRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
+import com.mailvault.ingestion.domain.EmailRecipient;
+import com.mailvault.ingestion.domain.EmailStatus;
+import com.mailvault.ingestion.domain.MessageDirection;
+import com.mailvault.ingestion.domain.RecipientType;
 import com.mailvault.ingestion.domain.ThreadFolder;
+import com.mailvault.ingestion.domain.ThreadMessage;
 import com.mailvault.ingestion.domain.MailboxThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
@@ -217,6 +223,65 @@ class EmailIngestionServiceTest {
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(mailboxThreadRepository).save(any(MailboxThread.class));
         verify(threadMessageRepository).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
+    @Test
+    void sendDraftTransitionsExistingDraftToOutboundAndWritesOutboxEvent() {
+        UUID emailId = UUID.randomUUID();
+        MailboxThread thread = new MailboxThread(
+                UUID.randomUUID(),
+                "user-123",
+                "invoice draft",
+                ThreadFolder.DRAFT,
+                Instant.now(),
+                "abhinav@example.com",
+                1,
+                0,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailMessage email = new EmailMessage(
+                emailId,
+                "user-123",
+                "abhinav@example.com",
+                "Invoice draft",
+                "raw-key",
+                "text-key",
+                null,
+                128L,
+                EmailStatus.DRAFT,
+                Instant.now()
+        );
+        email.addRecipient(new EmailRecipient("billing@example.com", RecipientType.TO));
+        ThreadMessage threadMessage = new ThreadMessage(
+                UUID.randomUUID(),
+                thread,
+                email,
+                MessageDirection.DRAFT,
+                Instant.now(),
+                Instant.now()
+        );
+        when(threadMessageRepository.findByEmailIdAndEmailUserId(emailId, "user-123"))
+                .thenReturn(java.util.Optional.of(threadMessage));
+
+        var response = emailIngestionService.sendDraft(emailId, new SendDraftRequest("user-123"));
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        assertThat(response.logicalSizeBytes()).isEqualTo(128L);
+        assertThat(email.getStatus()).isEqualTo(EmailStatus.INDEX_PENDING);
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void sendDraftRejectsMissingDraft() {
+        UUID emailId = UUID.randomUUID();
+        when(threadMessageRepository.findByEmailIdAndEmailUserId(emailId, "user-123"))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> emailIngestionService.sendDraft(emailId, new SendDraftRequest("user-123")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Draft not found");
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 

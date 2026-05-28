@@ -77,12 +77,35 @@ public class EmailMessage {
         return id;
     }
 
+    public long getLogicalSizeBytes() {
+        return logicalSizeBytes;
+    }
+
     public String getUserId() {
         return userId;
     }
 
-    public long getLogicalSizeBytes() {
-        return logicalSizeBytes;
+    public String getSender() {
+        return sender;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public EmailStatus getStatus() {
+        return status;
+    }
+
+    public List<EmailRecipient> getRecipients() {
+        return List.copyOf(recipients);
+    }
+
+    public void submitDraft() {
+        if (status != EmailStatus.DRAFT) {
+            throw new IllegalArgumentException("Email is not a draft");
+        }
+        this.status = EmailStatus.INDEX_PENDING;
     }
 
     public void addRecipient(EmailRecipient recipient) {
@@ -95,4 +118,3 @@ public class EmailMessage {
         attachmentRef.attachTo(this);
     }
 }
-

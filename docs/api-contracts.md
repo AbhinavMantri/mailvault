@@ -99,7 +99,30 @@ Content-Type: application/json
 }
 ```
 
-Draft creation stores the message body and metadata, creates a `DRAFT` mailbox thread, and links the draft through `thread_messages.direction = DRAFT`. It does not publish `email.received`; sending an existing draft is a separate state transition planned for later.
+Draft creation stores the message body and metadata, creates a `DRAFT` mailbox thread, and links the draft through `thread_messages.direction = DRAFT`. It does not publish `email.received`.
+
+## Send Draft
+
+```http
+POST /drafts/{emailId}/send
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123"
+}
+```
+
+```json
+{
+  "emailId": "7907d0dc-0a2b-4687-a717-e2d522c6789d",
+  "status": "ACCEPTED",
+  "logicalSizeBytes": 19
+}
+```
+
+Sending a draft transitions the existing message from `EmailStatus.DRAFT` to `INDEX_PENDING`, changes the linked `thread_messages.direction` from `DRAFT` to `OUTBOUND`, removes the thread from the `DRAFT` view, and publishes `email.received` for downstream quota and search processing.
 
 ## Get Email
 

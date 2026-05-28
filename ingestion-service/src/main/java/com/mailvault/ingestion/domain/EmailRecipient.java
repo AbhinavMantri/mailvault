@@ -47,6 +47,14 @@ public class EmailRecipient {
         this.deliveryStatus = "DELIVERED";
     }
 
+    public String getRecipientAddress() {
+        return recipientAddress;
+    }
+
+    public RecipientType getRecipientType() {
+        return recipientType;
+    }
+
     void attachTo(EmailMessage email) {
         this.email = email;
     }

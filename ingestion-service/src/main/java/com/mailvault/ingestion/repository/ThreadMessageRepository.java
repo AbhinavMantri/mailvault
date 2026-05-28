@@ -3,7 +3,10 @@ package com.mailvault.ingestion.repository;
 import com.mailvault.ingestion.domain.ThreadMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ThreadMessageRepository extends JpaRepository<ThreadMessage, UUID> {
+
+    Optional<ThreadMessage> findByEmailIdAndEmailUserId(UUID emailId, String userId);
 }
