@@ -29,11 +29,13 @@ class MailboxCommandServiceTest {
     void markThreadReadMarksInboundMessagesAndClearsUnreadCount() {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.findThreadFolder(threadId, "user-123")).thenReturn("INBOX");
 
         var response = mailboxCommandService.markThreadRead("user-123", threadId);
 
         assertThat(response.status()).isEqualTo("READ");
         assertThat(response.unreadCount()).isZero();
+        assertThat(response.folder()).isEqualTo("INBOX");
         verify(emailMessageRepository).markInboundMessagesRead(threadId);
         verify(emailMessageRepository).updateThreadUnreadCount(threadId, "user-123", 0);
     }
@@ -43,11 +45,13 @@ class MailboxCommandServiceTest {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
         when(emailMessageRepository.markLatestInboundMessageUnread(threadId)).thenReturn(true);
+        when(emailMessageRepository.findThreadFolder(threadId, "user-123")).thenReturn("INBOX");
 
         var response = mailboxCommandService.markThreadUnread("user-123", threadId);
 
         assertThat(response.status()).isEqualTo("UNREAD");
         assertThat(response.unreadCount()).isEqualTo(1);
+        assertThat(response.folder()).isEqualTo("INBOX");
         verify(emailMessageRepository).updateThreadUnreadCount(threadId, "user-123", 1);
     }
 
@@ -56,11 +60,13 @@ class MailboxCommandServiceTest {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
         when(emailMessageRepository.markLatestInboundMessageUnread(threadId)).thenReturn(false);
+        when(emailMessageRepository.findThreadFolder(threadId, "user-123")).thenReturn("ACTIVE");
 
         var response = mailboxCommandService.markThreadUnread("user-123", threadId);
 
         assertThat(response.status()).isEqualTo("NO_INBOUND_MESSAGE");
         assertThat(response.unreadCount()).isZero();
+        assertThat(response.folder()).isEqualTo("ACTIVE");
         verify(emailMessageRepository).updateThreadUnreadCount(threadId, "user-123", 0);
     }
 
@@ -73,5 +79,62 @@ class MailboxCommandServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("404 NOT_FOUND");
         verify(emailMessageRepository, never()).markInboundMessagesRead(threadId);
+    }
+
+    @Test
+    void archiveThreadMovesThreadToArchive() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.recalculateUnreadCount(threadId)).thenReturn(2);
+
+        var response = mailboxCommandService.archiveThread("user-123", threadId);
+
+        assertThat(response.status()).isEqualTo("ARCHIVED");
+        assertThat(response.folder()).isEqualTo("ARCHIVE");
+        assertThat(response.unreadCount()).isEqualTo(2);
+        verify(emailMessageRepository).updateThreadFolder(threadId, "user-123", "ARCHIVE");
+    }
+
+    @Test
+    void trashThreadMovesThreadToTrash() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.recalculateUnreadCount(threadId)).thenReturn(1);
+
+        var response = mailboxCommandService.trashThread("user-123", threadId);
+
+        assertThat(response.status()).isEqualTo("TRASHED");
+        assertThat(response.folder()).isEqualTo("TRASH");
+        assertThat(response.unreadCount()).isEqualTo(1);
+        verify(emailMessageRepository).updateThreadFolder(threadId, "user-123", "TRASH");
+    }
+
+    @Test
+    void spamThreadMovesThreadToSpam() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.recalculateUnreadCount(threadId)).thenReturn(1);
+
+        var response = mailboxCommandService.spamThread("user-123", threadId);
+
+        assertThat(response.status()).isEqualTo("SPAMMED");
+        assertThat(response.folder()).isEqualTo("SPAM");
+        assertThat(response.unreadCount()).isEqualTo(1);
+        verify(emailMessageRepository).updateThreadFolder(threadId, "user-123", "SPAM");
+    }
+
+    @Test
+    void restoreThreadRestoresToRepositoryResolvedFolder() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.restoreThread(threadId, "user-123")).thenReturn("INBOX");
+        when(emailMessageRepository.recalculateUnreadCount(threadId)).thenReturn(1);
+
+        var response = mailboxCommandService.restoreThread("user-123", threadId);
+
+        assertThat(response.status()).isEqualTo("RESTORED");
+        assertThat(response.folder()).isEqualTo("INBOX");
+        assertThat(response.unreadCount()).isEqualTo(1);
+        verify(emailMessageRepository).updateThreadUnreadCount(threadId, "user-123", 1);
     }
 }

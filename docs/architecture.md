@@ -57,6 +57,8 @@ Drafts are stored as normal `emails` rows with `EmailStatus.DRAFT`, linked to a 
 
 Read state is stored on `thread_messages.read_at`. `INBOUND` messages with `read_at IS NULL` are unread. Thread list reads use `mailbox_threads.unread_count` as a denormalized counter; mark-read updates all unread inbound rows and clears the counter, while mark-unread clears the latest inbound row and sets the counter to one.
 
+Mailbox actions such as archive, trash, spam, and restore operate at thread level by updating `mailbox_threads.folder`. Restore returns threads with inbound messages to `INBOX`; sent-only conversations restore to `ACTIVE`.
+
 ## Mailbox Safety
 
 Spam filtering and abuse reporting are separate workflows. Spam filtering is system-driven classification. Abuse reporting is a user-triggered complaint that should be recorded durably for audit, repeated-sender analysis, and possible moderation action.

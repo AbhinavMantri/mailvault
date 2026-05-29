@@ -23,7 +23,8 @@ public class MailboxCommandService {
         ensureThreadExists(userId, threadId);
         emailMessageRepository.markInboundMessagesRead(threadId);
         emailMessageRepository.updateThreadUnreadCount(threadId, userId, 0);
-        return new ThreadActionResponse(threadId, "READ", 0);
+        String folder = emailMessageRepository.findThreadFolder(threadId, userId);
+        return new ThreadActionResponse(threadId, "READ", 0, folder);
     }
 
     @Transactional
@@ -32,12 +33,44 @@ public class MailboxCommandService {
         boolean updated = emailMessageRepository.markLatestInboundMessageUnread(threadId);
         int unreadCount = updated ? 1 : 0;
         emailMessageRepository.updateThreadUnreadCount(threadId, userId, unreadCount);
-        return new ThreadActionResponse(threadId, updated ? "UNREAD" : "NO_INBOUND_MESSAGE", unreadCount);
+        String folder = emailMessageRepository.findThreadFolder(threadId, userId);
+        return new ThreadActionResponse(threadId, updated ? "UNREAD" : "NO_INBOUND_MESSAGE", unreadCount, folder);
+    }
+
+    @Transactional
+    public ThreadActionResponse archiveThread(String userId, UUID threadId) {
+        return moveThread(userId, threadId, "ARCHIVE", "ARCHIVED");
+    }
+
+    @Transactional
+    public ThreadActionResponse trashThread(String userId, UUID threadId) {
+        return moveThread(userId, threadId, "TRASH", "TRASHED");
+    }
+
+    @Transactional
+    public ThreadActionResponse spamThread(String userId, UUID threadId) {
+        return moveThread(userId, threadId, "SPAM", "SPAMMED");
+    }
+
+    @Transactional
+    public ThreadActionResponse restoreThread(String userId, UUID threadId) {
+        ensureThreadExists(userId, threadId);
+        String restoredFolder = emailMessageRepository.restoreThread(threadId, userId);
+        int unreadCount = emailMessageRepository.recalculateUnreadCount(threadId);
+        emailMessageRepository.updateThreadUnreadCount(threadId, userId, unreadCount);
+        return new ThreadActionResponse(threadId, "RESTORED", unreadCount, restoredFolder);
     }
 
     private void ensureThreadExists(String userId, UUID threadId) {
         if (!emailMessageRepository.threadExists(threadId, userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "thread not found");
         }
+    }
+
+    private ThreadActionResponse moveThread(String userId, UUID threadId, String folder, String status) {
+        ensureThreadExists(userId, threadId);
+        emailMessageRepository.updateThreadFolder(threadId, userId, folder);
+        int unreadCount = emailMessageRepository.recalculateUnreadCount(threadId);
+        return new ThreadActionResponse(threadId, status, unreadCount, folder);
     }
 }

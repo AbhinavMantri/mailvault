@@ -68,6 +68,38 @@ public class MailboxController {
         return mailboxCommandService.markThreadUnread(userId, threadId);
     }
 
+    @PostMapping("/threads/{threadId}/archive")
+    ThreadActionResponse archiveThread(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.archiveThread(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/trash")
+    ThreadActionResponse trashThread(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.trashThread(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/spam")
+    ThreadActionResponse spamThread(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.spamThread(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/restore")
+    ThreadActionResponse restoreThread(
+            @PathVariable UUID threadId,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.restoreThread(userId, threadId);
+    }
+
     @GetMapping("/emails/{emailId}")
     EmailDetailResponse emailDetail(
             @PathVariable UUID emailId,
