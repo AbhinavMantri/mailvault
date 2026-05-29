@@ -201,7 +201,8 @@ POST /threads/{threadId}/read?userId=user-123
 {
   "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
   "status": "READ",
-  "unreadCount": 0
+  "unreadCount": 0,
+  "folder": "INBOX"
 }
 ```
 
@@ -217,11 +218,32 @@ POST /threads/{threadId}/unread?userId=user-123
 {
   "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
   "status": "UNREAD",
-  "unreadCount": 1
+  "unreadCount": 1,
+  "folder": "INBOX"
 }
 ```
 
 Marks the latest `INBOUND` message as unread by clearing its `read_at`. If the thread has no inbound messages, the response is `NO_INBOUND_MESSAGE` with `unreadCount = 0`.
+
+## Mailbox Thread Actions
+
+```http
+POST /threads/{threadId}/archive?userId=user-123
+POST /threads/{threadId}/trash?userId=user-123
+POST /threads/{threadId}/spam?userId=user-123
+POST /threads/{threadId}/restore?userId=user-123
+```
+
+Archive, trash, and spam update `mailbox_threads.folder` to `ARCHIVE`, `TRASH`, or `SPAM`. Restore moves the thread back to `INBOX` if it has inbound messages; otherwise it moves to `ACTIVE`.
+
+```json
+{
+  "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+  "status": "ARCHIVED",
+  "unreadCount": 1,
+  "folder": "ARCHIVE"
+}
+```
 
 ## Reply To Thread
 

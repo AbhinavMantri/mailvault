@@ -225,6 +225,10 @@ Implemented so far:
 - `GET /threads/{threadId}?userId={userId}`
 - `POST /threads/{threadId}/read?userId={userId}`
 - `POST /threads/{threadId}/unread?userId={userId}`
+- `POST /threads/{threadId}/archive?userId={userId}`
+- `POST /threads/{threadId}/trash?userId={userId}`
+- `POST /threads/{threadId}/spam?userId={userId}`
+- `POST /threads/{threadId}/restore?userId={userId}`
 - `POST /threads/{threadId}/messages`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`

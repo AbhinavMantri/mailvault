@@ -130,11 +130,12 @@ public class EmailMessageRepository {
                        ORDER BY tm.created_at DESC
                        LIMIT 1
                   ) latest ON TRUE
-                  JOIN thread_messages sent_tm ON sent_tm.thread_id = ut.id
+                 JOIN thread_messages sent_tm ON sent_tm.thread_id = ut.id
                                               AND sent_tm.direction = 'OUTBOUND'
                   LEFT JOIN thread_messages tm_all ON tm_all.thread_id = ut.id
                   LEFT JOIN email_attachment_refs ear ON ear.email_id = tm_all.email_id
                  WHERE ut.user_id = :userId
+                   AND ut.folder NOT IN ('TRASH', 'SPAM')
                  GROUP BY ut.id, latest.subject, ut.last_sender, ut.last_message_at,
                           ut.message_count, ut.unread_count
                  ORDER BY MAX(sent_tm.created_at) DESC
@@ -223,6 +224,22 @@ public class EmailMessageRepository {
         return count != null && count > 0;
     }
 
+    public String findThreadFolder(UUID threadId, String userId) {
+        String sql = """
+                SELECT folder
+                  FROM mailbox_threads
+                 WHERE id = :threadId
+                   AND user_id = :userId
+                """;
+        return jdbcTemplate.queryForObject(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
+                String.class
+        );
+    }
+
     public int markInboundMessagesRead(UUID threadId) {
         String sql = """
                 UPDATE thread_messages
@@ -265,6 +282,66 @@ public class EmailMessageRepository {
                         .addValue("userId", userId)
                         .addValue("unreadCount", unreadCount)
         );
+    }
+
+    public int updateThreadFolder(UUID threadId, String userId, String folder) {
+        String sql = """
+                UPDATE mailbox_threads
+                   SET folder = :folder,
+                       updated_at = now()
+                 WHERE id = :threadId
+                   AND user_id = :userId
+                """;
+        return jdbcTemplate.update(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId)
+                        .addValue("folder", folder)
+        );
+    }
+
+    public String restoreThread(UUID threadId, String userId) {
+        String sql = """
+                UPDATE mailbox_threads
+                   SET folder = CASE
+                                WHEN EXISTS (
+                                    SELECT 1
+                                      FROM thread_messages
+                                     WHERE thread_id = :threadId
+                                       AND direction = 'INBOUND'
+                                )
+                                THEN 'INBOX'
+                                ELSE 'ACTIVE'
+                                END,
+                       updated_at = now()
+                 WHERE id = :threadId
+                   AND user_id = :userId
+             RETURNING folder
+                """;
+        return jdbcTemplate.queryForObject(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
+                String.class
+        );
+    }
+
+    public int recalculateUnreadCount(UUID threadId) {
+        String sql = """
+                SELECT COUNT(*)
+                  FROM thread_messages
+                 WHERE thread_id = :threadId
+                   AND direction = 'INBOUND'
+                   AND read_at IS NULL
+                """;
+        Integer count = jdbcTemplate.queryForObject(
+                sql,
+                new MapSqlParameterSource("threadId", threadId),
+                Integer.class
+        );
+        return count == null ? 0 : count;
     }
 
     public List<ThreadMessageRow> findThreadMessages(UUID threadId) {

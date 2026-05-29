@@ -305,6 +305,16 @@ try {
         return $null
     } | Out-Null
 
+    Write-Step "archiving and restoring thread"
+    $archiveResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/archive?userId=$userId"
+    Assert-True ($archiveResponse.folder -eq "ARCHIVE") "archive did not move thread to ARCHIVE"
+    Wait-Until "archive mailbox contains thread" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=ARCHIVE&limit=10"
+        @($threads) | Where-Object { $_.id -eq $thread.id -and $_.folder -eq "ARCHIVE" } | Select-Object -First 1
+    } | Out-Null
+    $restoreFromArchive = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/restore?userId=$userId"
+    Assert-True ($restoreFromArchive.folder -eq "INBOX") "restore from archive did not move thread to INBOX"
+
     Write-Step "replying to existing thread"
     $reply = Invoke-Json "POST" "http://localhost:8081/threads/$($thread.id)/messages" @{
         userId = $userId
@@ -344,6 +354,26 @@ try {
         @($threads) | Where-Object { $_.id -eq $thread.id -and $_.folder -eq "SENT" } | Select-Object -First 1
     }
     Assert-True ($sentThread.messageCount -eq 2) "sent thread message count did not include conversation"
+
+    Write-Step "moving thread to trash and restoring"
+    $trashResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/trash?userId=$userId"
+    Assert-True ($trashResponse.folder -eq "TRASH") "trash did not move thread to TRASH"
+    Wait-Until "trash mailbox contains thread" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=TRASH&limit=10"
+        @($threads) | Where-Object { $_.id -eq $thread.id -and $_.folder -eq "TRASH" } | Select-Object -First 1
+    } | Out-Null
+    $restoreFromTrash = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/restore?userId=$userId"
+    Assert-True ($restoreFromTrash.folder -eq "INBOX") "restore from trash did not move thread to INBOX"
+
+    Write-Step "moving thread to spam and restoring"
+    $spamResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/spam?userId=$userId"
+    Assert-True ($spamResponse.folder -eq "SPAM") "spam did not move thread to SPAM"
+    Wait-Until "spam mailbox contains thread" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=SPAM&limit=10"
+        @($threads) | Where-Object { $_.id -eq $thread.id -and $_.folder -eq "SPAM" } | Select-Object -First 1
+    } | Out-Null
+    $restoreFromSpam = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/restore?userId=$userId"
+    Assert-True ($restoreFromSpam.folder -eq "INBOX") "restore from spam did not move thread to INBOX"
 
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {

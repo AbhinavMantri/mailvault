@@ -5,6 +5,7 @@ import java.util.UUID;
 public record ThreadActionResponse(
         UUID threadId,
         String status,
-        int unreadCount
+        int unreadCount,
+        String folder
 ) {
 }
