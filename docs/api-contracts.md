@@ -124,6 +124,8 @@ Content-Type: application/json
 
 Sending a draft transitions the existing message from `EmailStatus.DRAFT` to `INDEX_PENDING`, changes the linked `thread_messages.direction` from `DRAFT` to `OUTBOUND`, removes the thread from the `DRAFT` view, and publishes `email.received` for downstream quota and search processing.
 
+If any recipient address ends in `@mailvault.local`, the MVP also creates a recipient-owned `INBOX` thread. The local part becomes the recipient `userId`; for example `finance@mailvault.local` is delivered to user `finance`.
+
 ## Get Email
 
 ```http
@@ -331,6 +333,8 @@ Content-Type: application/json
 
 This API appends a new message to an existing thread after validating that the thread belongs to the user. External mailbox migration, if added later, should be a separate adapter that converts provider conversations into MailVault threads and messages before persistence.
 
+For local MailVault recipients, reply delivery creates a separate `INBOUND` thread in the recipient mailbox. The sender still sees the reply as `OUTBOUND` in the original thread.
+
 ## Forward Email
 
 ```http
@@ -363,6 +367,8 @@ Content-Type: application/json
 
 Forwarding validates that the source email belongs to the user, creates a new outbound message, and places it in a new sent conversation. If `subject` is omitted, MailVault prefixes the original subject with `Fwd:`. The new body includes the user's message plus a forwarded-message block containing the original sender, subject, and body content. If `includeOriginalAttachments` is true, the forwarded email reuses the original logical attachment references. `attachmentIds` can add newly uploaded attachments to the forwarded email.
 
+For local MailVault recipients, the forwarded message is also delivered into the recipient's `INBOX` as a new thread. Attachment references and body object keys are reused instead of copying object bytes.
+
 ## Forward Thread
 
 ```http
@@ -386,6 +392,8 @@ Content-Type: application/json
 ```
 
 Thread forwarding validates that the source thread belongs to the user, reads the ordered conversation messages, and creates a new outbound message in a new sent conversation. The forwarded body contains the user's message plus a forwarded-conversation block containing each message's sender, subject, and body. `includeOriginalAttachments` reuses attachments from all messages in the source thread; `attachmentIds` adds newly uploaded attachments.
+
+For local MailVault recipients, the generated thread-forward email is delivered into the recipient's `INBOX` as one inbound message containing the bounded forwarded-conversation body.
 
 The MVP rejects full-thread forwards with more than 25 messages or with a generated text/HTML body larger than 1 MB. This keeps forwarding bounded until selected-message forwarding or export/share workflows are added.
 

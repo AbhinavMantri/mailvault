@@ -29,12 +29,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class EmailIngestionService {
 
+    private static final String LOCAL_MAIL_DOMAIN = "@mailvault.local";
     private static final int MAX_THREAD_FORWARD_MESSAGES = 25;
     private static final int MAX_THREAD_FORWARD_BODY_BYTES = 1_048_576;
 
@@ -118,6 +122,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -165,6 +170,7 @@ public class EmailIngestionService {
         threadMessage.getThread().activateFromDraft(email.getSender(), sentAt);
 
         saveEmailReceivedEvent(email, sentAt);
+        deliverToLocalRecipients(MessageDraft.from(email), email, sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", email.getLogicalSizeBytes());
     }
@@ -217,6 +223,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -281,6 +288,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -325,6 +333,84 @@ public class EmailIngestionService {
 
         emailMessageRepository.save(email);
         return new PersistedEmail(email, logicalSizeBytes);
+    }
+
+    private void deliverToLocalRecipients(MessageDraft draft, EmailMessage sourceEmail, Instant deliveredAt) {
+        localRecipientDeliveries(draft).forEach(delivery -> {
+            UUID deliveredEmailId = UUID.randomUUID();
+            EmailMessage deliveredEmail = new EmailMessage(
+                    deliveredEmailId,
+                    delivery.userId(),
+                    sourceEmail.getSender(),
+                    sourceEmail.getSubject(),
+                    sourceEmail.getRawObjectKey(),
+                    sourceEmail.getTextObjectKey(),
+                    sourceEmail.getHtmlObjectKey(),
+                    sourceEmail.getLogicalSizeBytes(),
+                    EmailStatus.INDEX_PENDING,
+                    deliveredAt
+            );
+            safeList(draft.to()).forEach(recipient -> deliveredEmail.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
+            safeList(draft.cc()).forEach(recipient -> deliveredEmail.addRecipient(new EmailRecipient(recipient, RecipientType.CC)));
+            if (delivery.type() == RecipientType.BCC) {
+                deliveredEmail.addRecipient(new EmailRecipient(delivery.address(), RecipientType.BCC));
+            }
+            sourceEmail.getAttachmentRefs().stream()
+                    .map(EmailAttachmentRef::getAttachment)
+                    .forEach(attachment -> deliveredEmail.addAttachmentRef(new EmailAttachmentRef(attachment)));
+
+            MailboxThread thread = new MailboxThread(
+                    UUID.randomUUID(),
+                    delivery.userId(),
+                    normalizeSubject(sourceEmail.getSubject()),
+                    ThreadFolder.INBOX,
+                    deliveredAt,
+                    sourceEmail.getSender(),
+                    1,
+                    1,
+                    deliveredAt,
+                    deliveredAt
+            );
+            emailMessageRepository.save(deliveredEmail);
+            mailboxThreadRepository.save(thread);
+            threadMessageRepository.save(new ThreadMessage(
+                    UUID.randomUUID(),
+                    thread,
+                    deliveredEmail,
+                    MessageDirection.INBOUND,
+                    null,
+                    deliveredAt
+            ));
+            saveEmailReceivedEvent(deliveredEmail, deliveredAt);
+        });
+    }
+
+    private List<LocalRecipientDelivery> localRecipientDeliveries(MessageDraft draft) {
+        Map<String, LocalRecipientDelivery> deliveriesByUser = new LinkedHashMap<>();
+        java.util.stream.Stream.of(
+                        safeList(draft.to()).stream().map(address -> localRecipient(address, RecipientType.TO)),
+                        safeList(draft.cc()).stream().map(address -> localRecipient(address, RecipientType.CC)),
+                        safeList(draft.bcc()).stream().map(address -> localRecipient(address, RecipientType.BCC))
+                )
+                .flatMap(stream -> stream)
+                .flatMap(Optional::stream)
+                .forEach(delivery -> deliveriesByUser.putIfAbsent(delivery.userId(), delivery));
+        return List.copyOf(deliveriesByUser.values());
+    }
+
+    private Optional<LocalRecipientDelivery> localRecipient(String address, RecipientType type) {
+        if (address == null) {
+            return Optional.empty();
+        }
+        String normalized = address.trim().toLowerCase();
+        if (!normalized.endsWith(LOCAL_MAIL_DOMAIN)) {
+            return Optional.empty();
+        }
+        String userId = normalized.substring(0, normalized.length() - LOCAL_MAIL_DOMAIN.length());
+        if (userId.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(new LocalRecipientDelivery(userId, normalized, type));
     }
 
     private List<Attachment> findUploadedAttachments(MessageDraft draft) {
@@ -543,6 +629,9 @@ public class EmailIngestionService {
     private record PersistedEmail(EmailMessage email, long logicalSizeBytes) {
     }
 
+    private record LocalRecipientDelivery(String userId, String address, RecipientType type) {
+    }
+
     private record MessageDraft(
             String userId,
             String from,
@@ -593,6 +682,29 @@ public class EmailIngestionService {
                     request.textBody(),
                     request.htmlBody(),
                     request.attachmentIds()
+            );
+        }
+
+        static MessageDraft from(EmailMessage email) {
+            return new MessageDraft(
+                    email.getUserId(),
+                    email.getSender(),
+                    email.getRecipients().stream()
+                            .filter(recipient -> recipient.getRecipientType() == RecipientType.TO)
+                            .map(EmailRecipient::getRecipientAddress)
+                            .toList(),
+                    email.getRecipients().stream()
+                            .filter(recipient -> recipient.getRecipientType() == RecipientType.CC)
+                            .map(EmailRecipient::getRecipientAddress)
+                            .toList(),
+                    email.getRecipients().stream()
+                            .filter(recipient -> recipient.getRecipientType() == RecipientType.BCC)
+                            .map(EmailRecipient::getRecipientAddress)
+                            .toList(),
+                    email.getSubject(),
+                    "",
+                    null,
+                    List.of()
             );
         }
 

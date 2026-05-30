@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -178,6 +179,102 @@ class EmailIngestionServiceTest {
         assertThat(response.logicalSizeBytes()).isEqualTo("Thanks, received.".length());
         verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(threadMessageRepository).save(any());
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void replyToThreadDeliversLocalRecipientIntoInbox() {
+        UUID threadId = UUID.randomUUID();
+        MailboxThread thread = new MailboxThread(
+                threadId,
+                "user-123",
+                "invoice for may",
+                ThreadFolder.INBOX,
+                Instant.now(),
+                "billing@example.com",
+                1,
+                1,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailReplyRequest request = new EmailReplyRequest(
+                "user-123",
+                "abhinav@mailvault.local",
+                List.of("finance@mailvault.local"),
+                List.of(),
+                List.of(),
+                "Re: Invoice for May",
+                "Please review this.",
+                null,
+                List.of()
+        );
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.of(thread));
+
+        var response = emailIngestionService.replyToThread(threadId, request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(emailMessageRepository, times(2)).save(any(EmailMessage.class));
+        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        verify(threadMessageRepository, times(2)).save(any(ThreadMessage.class));
+        verify(outboxEventService, times(2)).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void replyToThreadDeliversOnlyOneCopyWhenLocalRecipientIsDuplicated() {
+        UUID threadId = UUID.randomUUID();
+        MailboxThread thread = new MailboxThread(
+                threadId,
+                "user-123",
+                "invoice for may",
+                ThreadFolder.INBOX,
+                Instant.now(),
+                "billing@example.com",
+                1,
+                1,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailReplyRequest request = new EmailReplyRequest(
+                "user-123",
+                "abhinav@mailvault.local",
+                List.of("finance@mailvault.local"),
+                List.of("finance@mailvault.local"),
+                List.of(),
+                "Re: Invoice for May",
+                "Please review this.",
+                null,
+                List.of()
+        );
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123")).thenReturn(java.util.Optional.of(thread));
+
+        var response = emailIngestionService.replyToThread(threadId, request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(emailMessageRepository, times(2)).save(any(EmailMessage.class));
+        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        verify(threadMessageRepository, times(2)).save(any(ThreadMessage.class));
+        verify(outboxEventService, times(2)).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void importEmailDoesNotFanOutToLocalRecipients() {
+        EmailImportRequest request = new EmailImportRequest(
+                "finance",
+                "billing@example.com",
+                List.of("finance@mailvault.local"),
+                List.of(),
+                List.of(),
+                "Invoice for May",
+                "Body",
+                null,
+                List.of()
+        );
+
+        var response = emailIngestionService.importEmail(request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(emailMessageRepository).save(any(EmailMessage.class));
+        verify(threadMessageRepository).save(any(ThreadMessage.class));
         verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
 
