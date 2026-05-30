@@ -363,6 +363,32 @@ Content-Type: application/json
 
 Forwarding validates that the source email belongs to the user, creates a new outbound message, and places it in a new sent conversation. If `subject` is omitted, MailVault prefixes the original subject with `Fwd:`. The new body includes the user's message plus a forwarded-message block containing the original sender, subject, and body content. If `includeOriginalAttachments` is true, the forwarded email reuses the original logical attachment references. `attachmentIds` can add newly uploaded attachments to the forwarded email.
 
+## Forward Thread
+
+```http
+POST /threads/{threadId}/forward
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123",
+  "from": "abhinav@example.com",
+  "to": ["finance@example.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": "Fwd: Invoice conversation",
+  "textBody": "FYI, forwarding the complete conversation.",
+  "htmlBody": null,
+  "includeOriginalAttachments": false,
+  "attachmentIds": []
+}
+```
+
+Thread forwarding validates that the source thread belongs to the user, reads the ordered conversation messages, and creates a new outbound message in a new sent conversation. The forwarded body contains the user's message plus a forwarded-conversation block containing each message's sender, subject, and body. `includeOriginalAttachments` reuses attachments from all messages in the source thread; `attachmentIds` adds newly uploaded attachments.
+
+The MVP rejects full-thread forwards with more than 25 messages or with a generated text/HTML body larger than 1 MB. This keeps forwarding bounded until selected-message forwarding or export/share workflows are added.
+
 ## Search
 
 ```http

@@ -356,6 +356,155 @@ class EmailIngestionServiceTest {
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 
+    @Test
+    void forwardThreadCreatesNewOutboundThreadWithConversationHistory() {
+        UUID threadId = UUID.randomUUID();
+        MailboxThread sourceThread = new MailboxThread(
+                threadId,
+                "user-123",
+                "invoice",
+                ThreadFolder.INBOX,
+                Instant.now(),
+                "billing@example.com",
+                2,
+                1,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailMessage firstEmail = new EmailMessage(
+                UUID.randomUUID(),
+                "user-123",
+                "billing@example.com",
+                "Invoice",
+                "raw-1",
+                "text-1",
+                null,
+                128L,
+                EmailStatus.INDEX_PENDING,
+                Instant.now()
+        );
+        EmailMessage secondEmail = new EmailMessage(
+                UUID.randomUUID(),
+                "user-123",
+                "abhinav@example.com",
+                "Re: Invoice",
+                "raw-2",
+                "text-2",
+                null,
+                64L,
+                EmailStatus.INDEX_PENDING,
+                Instant.now()
+        );
+        EmailForwardRequest request = new EmailForwardRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("finance@example.com"),
+                List.of(),
+                List.of(),
+                null,
+                "Forwarding the full thread.",
+                null,
+                false,
+                List.of()
+        );
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123"))
+                .thenReturn(java.util.Optional.of(sourceThread));
+        when(threadMessageRepository.findByThreadIdAndThreadUserIdOrderByCreatedAt(threadId, "user-123"))
+                .thenReturn(List.of(
+                        new ThreadMessage(UUID.randomUUID(), sourceThread, firstEmail, MessageDirection.INBOUND, null, Instant.now()),
+                        new ThreadMessage(UUID.randomUUID(), sourceThread, secondEmail, MessageDirection.OUTBOUND, Instant.now(), Instant.now())
+                ));
+        when(objectStorageService.readText("text-1")).thenReturn("Original invoice body.");
+        when(objectStorageService.readText("text-2")).thenReturn("Reply body.");
+
+        var response = emailIngestionService.forwardThread(threadId, request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        verify(objectStorageService).putText(any(), org.mockito.ArgumentMatchers.contains("Forwarded conversation"), eq("text/plain"));
+        verify(objectStorageService).putText(any(), org.mockito.ArgumentMatchers.contains("Original invoice body."), eq("text/plain"));
+        verify(objectStorageService).putText(any(), org.mockito.ArgumentMatchers.contains("Reply body."), eq("text/plain"));
+        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        verify(threadMessageRepository).save(any(ThreadMessage.class));
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void forwardThreadRejectsMissingThread() {
+        UUID threadId = UUID.randomUUID();
+        EmailForwardRequest request = new EmailForwardRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("finance@example.com"),
+                List.of(),
+                List.of(),
+                null,
+                "Forwarding the full thread.",
+                null,
+                false,
+                List.of()
+        );
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123"))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> emailIngestionService.forwardThread(threadId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Thread not found");
+        verify(emailMessageRepository, never()).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
+    @Test
+    void forwardThreadRejectsOversizedConversation() {
+        UUID threadId = UUID.randomUUID();
+        MailboxThread sourceThread = new MailboxThread(
+                threadId,
+                "user-123",
+                "invoice",
+                ThreadFolder.INBOX,
+                Instant.now(),
+                "billing@example.com",
+                1,
+                1,
+                Instant.now(),
+                Instant.now()
+        );
+        EmailMessage email = new EmailMessage(
+                UUID.randomUUID(),
+                "user-123",
+                "billing@example.com",
+                "Invoice",
+                "raw-1",
+                "text-1",
+                null,
+                128L,
+                EmailStatus.INDEX_PENDING,
+                Instant.now()
+        );
+        EmailForwardRequest request = new EmailForwardRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("finance@example.com"),
+                List.of(),
+                List.of(),
+                null,
+                "Forwarding the full thread.",
+                null,
+                false,
+                List.of()
+        );
+        when(mailboxThreadRepository.findByIdAndUserId(threadId, "user-123"))
+                .thenReturn(java.util.Optional.of(sourceThread));
+        when(threadMessageRepository.findByThreadIdAndThreadUserIdOrderByCreatedAt(threadId, "user-123"))
+                .thenReturn(List.of(new ThreadMessage(UUID.randomUUID(), sourceThread, email, MessageDirection.INBOUND, null, Instant.now())));
+        when(objectStorageService.readText("text-1")).thenReturn("x".repeat(1_048_577));
+
+        assertThatThrownBy(() -> emailIngestionService.forwardThread(threadId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Thread forward body is too large");
+        verify(emailMessageRepository, never()).save(any());
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
     private Attachment uploadedAttachment(UUID attachmentId, long sizeBytes) {
         return new Attachment(
                 attachmentId,

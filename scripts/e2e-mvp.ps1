@@ -421,6 +421,36 @@ try {
     Assert-True ($forwardDetail.textBody.Contains("Forwarded message")) "forwarded text body did not include forwarded message marker"
     Assert-True ($forwardDetail.textBody.Contains($textBody)) "forwarded text body did not include original email body"
 
+    Write-Step "forwarding full thread conversation"
+    $threadForwardSubject = "Thread forward $subject"
+    $threadForward = Invoke-Json "POST" "http://localhost:8081/threads/$($thread.id)/forward" @{
+        userId = $userId
+        from = $recipient
+        to = @("audit@mailvault.local")
+        cc = @()
+        bcc = @()
+        subject = $threadForwardSubject
+        textBody = "Forwarding the full MailVault E2E thread for $runId"
+        htmlBody = $null
+        includeOriginalAttachments = $false
+        attachmentIds = @()
+    }
+    Assert-True $threadForward.emailId "thread forward emailId was not returned"
+    Assert-True ($threadForward.status -eq "ACCEPTED") "thread forward did not return ACCEPTED"
+
+    Write-Step "checking sent mailbox contains forwarded thread"
+    $threadForwardThread = Wait-Until "sent mailbox contains forwarded thread" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=SENT&limit=10"
+        @($threads) | Where-Object { $_.subject -eq $threadForwardSubject -and $_.folder -eq "SENT" } | Select-Object -First 1
+    }
+    Assert-True ($threadForwardThread.messageCount -eq 1) "thread forward message count was not 1"
+
+    Write-Step "checking forwarded thread detail"
+    $threadForwardDetail = Invoke-Json "GET" "http://localhost:8082/emails/$($threadForward.emailId)?userId=$userId"
+    Assert-True ($threadForwardDetail.textBody.Contains("Forwarded conversation")) "thread forward did not include conversation marker"
+    Assert-True ($threadForwardDetail.textBody.Contains($textBody)) "thread forward did not include original inbound body"
+    Assert-True ($threadForwardDetail.textBody.Contains($replyBody)) "thread forward did not include reply body"
+
     Write-Step "moving thread to trash and restoring"
     $trashResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/trash?userId=$userId"
     Assert-True ($trashResponse.folder -eq "TRASH") "trash did not move thread to TRASH"
@@ -444,7 +474,7 @@ try {
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {
         $current = Invoke-Json "GET" "http://localhost:8083/users/$userId/storage"
-        if ($current.usedBytes -ge ($email.logicalSizeBytes + $reply.logicalSizeBytes + $forward.logicalSizeBytes)) {
+        if ($current.usedBytes -ge ($email.logicalSizeBytes + $reply.logicalSizeBytes + $forward.logicalSizeBytes + $threadForward.logicalSizeBytes)) {
             return $current
         }
         return $null
