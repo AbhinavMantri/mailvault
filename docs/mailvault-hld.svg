@@ -1,25 +1,26 @@
-<svg width="1600" height="1200" viewBox="0 0 1600 1200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="1800" height="1240" viewBox="0 0 1800 1240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">MailVault high-level architecture</title>
-  <desc id="desc">High-level architecture diagram for MailVault showing ingestion, hybrid storage, Kafka asynchronous processing, search, quota, archival, and observability.</desc>
+  <desc id="desc">High-level architecture diagram for MailVault showing client entry points, core mailbox services, Kafka events, async workers, hybrid storage, search, quota, local delivery, and SMTP delivery through GreenMail in local development.</desc>
   <defs>
     <style>
-      .title { font: 700 58px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
-      .subtitle { font: 400 25px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
-      .group-title { font: 700 24px Arial, Helvetica, sans-serif; fill: #E2E8F0; }
-      .group-note { font: 400 18px Arial, Helvetica, sans-serif; fill: #94A3B8; }
-      .box-title { font: 700 26px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
-      .box-title-small { font: 700 23px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
-      .box-title-xs { font: 700 21px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
-      .box-body { font: 400 19px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
-      .callout-body { font: 400 17px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
-      .small { font: 400 17px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
-      .label { font: 700 17px Arial, Helvetica, sans-serif; fill: #E2E8F0; }
-      .white-title { font: 700 28px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
-      .white-small { font: 400 19px Arial, Helvetica, sans-serif; fill: #CFFAFE; }
+      .title { font: 700 56px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
+      .subtitle { font: 400 24px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
+      .lane-title { font: 700 23px Arial, Helvetica, sans-serif; fill: #E2E8F0; }
+      .lane-note { font: 400 17px Arial, Helvetica, sans-serif; fill: #94A3B8; }
+      .box-title { font: 700 24px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
+      .box-title-sm { font: 700 21px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
+      .box-body { font: 400 18px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
+      .box-body-sm { font: 400 16px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
+      .label { font: 700 16px Arial, Helvetica, sans-serif; fill: #E2E8F0; }
+      .small { font: 400 16px Arial, Helvetica, sans-serif; fill: #CBD5E1; }
+      .event-text { font: 400 18px Arial, Helvetica, sans-serif; fill: #CFFAFE; }
+      .event-title { font: 700 27px Arial, Helvetica, sans-serif; fill: #F8FAFC; }
+      .lane { fill: #0B1220; stroke: #263449; stroke-width: 2; rx: 26; }
+      .box { stroke-width: 3; rx: 18; }
       .arrow { stroke: #E2E8F0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
       .soft-arrow { stroke: #94A3B8; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 10; }
       .event-arrow { stroke: #FBBF24; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-      .box { stroke-width: 3; rx: 20; }
+      .delivery-arrow { stroke: #38BDF8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
     </style>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#E2E8F0"/>
@@ -30,124 +31,156 @@
     <marker id="eventArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#FBBF24"/>
     </marker>
-    <linearGradient id="pageBg" x1="0" y1="0" x2="1600" y2="1200" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#07111F"/>
-      <stop offset="0.54" stop-color="#0B1726"/>
-      <stop offset="1" stop-color="#0F1F2A"/>
+    <marker id="deliveryArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#38BDF8"/>
+    </marker>
+    <linearGradient id="pageBg" x1="0" y1="0" x2="1800" y2="1240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#06111F"/>
+      <stop offset="0.52" stop-color="#0B1726"/>
+      <stop offset="1" stop-color="#101827"/>
     </linearGradient>
-    <linearGradient id="kafkaBg" x1="455" y1="905" x2="1305" y2="1028" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#0E7490"/>
+    <linearGradient id="kafkaBg" x1="465" y1="925" x2="1348" y2="1038" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#155E75"/>
     </linearGradient>
     <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
-      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#020617" flood-opacity="0.38"/>
     </filter>
   </defs>
 
-  <rect width="1600" height="1200" fill="url(#pageBg)"/>
-  <rect x="64" y="56" width="1472" height="1088" rx="36" fill="#111827" fill-opacity="0.72"/>
+  <rect width="1800" height="1240" fill="url(#pageBg)"/>
 
-  <text x="116" y="128" class="title">MailVault Email Storage HLD</text>
-  <text x="116" y="174" class="subtitle">Hybrid storage design for mailbox scale, search, quota pressure, and archival cost control</text>
+  <text x="92" y="105" class="title">MailVault Email Storage HLD</text>
+  <text x="92" y="151" class="subtitle">Hybrid mailbox platform with async indexing, quota accounting, attachment dedupe, local delivery, and SMTP testability</text>
 
-  <rect x="112" y="248" width="260" height="150" class="box" fill="#123B3A" stroke="#2DD4BF" filter="url(#shadow)"/>
-  <text x="242" y="310" text-anchor="middle" class="box-title">Client Apps</text>
-  <text x="242" y="352" text-anchor="middle" class="box-body">Import email</text>
-  <text x="242" y="381" text-anchor="middle" class="box-body">Read mailbox</text>
+  <rect x="70" y="205" width="320" height="640" class="lane"/>
+  <text x="105" y="250" class="lane-title">Entry Points</text>
+  <text x="105" y="280" class="lane-note">User-facing APIs and request boundaries</text>
 
-  <path class="arrow" d="M242 398 L242 498" marker-end="url(#arrow)"/>
-  <text x="274" y="462" class="label">HTTP APIs</text>
+  <rect x="100" y="330" width="260" height="132" class="box" fill="#123B3A" stroke="#2DD4BF" filter="url(#shadow)"/>
+  <text x="230" y="382" text-anchor="middle" class="box-title">Client Apps</text>
+  <text x="230" y="420" text-anchor="middle" class="box-body">Import, compose,</text>
+  <text x="230" y="448" text-anchor="middle" class="box-body">read mailbox</text>
 
-  <rect x="112" y="508" width="260" height="150" class="box" fill="#0E3A4A" stroke="#22D3EE" filter="url(#shadow)"/>
-  <text x="242" y="570" text-anchor="middle" class="box-title">API Layer</text>
-  <text x="242" y="612" text-anchor="middle" class="box-body">Routing, auth,</text>
-  <text x="242" y="641" text-anchor="middle" class="box-body">request boundaries</text>
+  <path class="arrow" d="M230 462 L230 540" marker-end="url(#arrow)"/>
+  <text x="262" y="510" class="label">HTTP APIs</text>
 
-  <rect x="430" y="225" width="880" height="635" rx="30" fill="#07111F" stroke="#E2E8F0" stroke-width="3"/>
-  <text x="470" y="275" class="group-title">Core MailVault Services</text>
-  <text x="470" y="307" class="group-note">Import persists durable truth first. Indexing, quota accounting, and archival move behind Kafka.</text>
+  <rect x="100" y="550" width="260" height="132" class="box" fill="#0E3A4A" stroke="#22D3EE" filter="url(#shadow)"/>
+  <text x="230" y="602" text-anchor="middle" class="box-title">API Layer</text>
+  <text x="230" y="640" text-anchor="middle" class="box-body">Auth, validation,</text>
+  <text x="230" y="668" text-anchor="middle" class="box-body">request routing</text>
 
-  <path class="arrow" d="M372 583 L420 583" marker-end="url(#arrow)"/>
-  <text x="382" y="556" class="label">service calls</text>
+  <rect x="445" y="205" width="900" height="470" class="lane"/>
+  <text x="485" y="250" class="lane-title">Core MailVault Services</text>
+  <text x="485" y="280" class="lane-note">Critical path persists durable truth first; expensive work moves behind events.</text>
 
-  <rect x="455" y="360" width="250" height="145" class="box" fill="#252A55" stroke="#818CF8" filter="url(#shadow)"/>
-  <text x="580" y="412" text-anchor="middle" class="box-title">Ingestion</text>
-  <text x="580" y="452" text-anchor="middle" class="box-body">Validate, store,</text>
-  <text x="580" y="481" text-anchor="middle" class="box-body">write outbox</text>
+  <path class="arrow" d="M360 616 L435 616" marker-end="url(#arrow)"/>
+  <text x="377" y="590" class="label">service calls</text>
 
-  <rect x="745" y="360" width="250" height="145" class="box" fill="#173B2D" stroke="#34D399" filter="url(#shadow)"/>
-  <text x="870" y="412" text-anchor="middle" class="box-title">Mailbox</text>
-  <text x="870" y="452" text-anchor="middle" class="box-body">Inbox and</text>
-  <text x="870" y="481" text-anchor="middle" class="box-body">message detail</text>
+  <rect x="485" y="335" width="230" height="132" class="box" fill="#252A55" stroke="#818CF8" filter="url(#shadow)"/>
+  <text x="600" y="383" text-anchor="middle" class="box-title">Ingestion</text>
+  <text x="600" y="421" text-anchor="middle" class="box-body">Validate, store,</text>
+  <text x="600" y="449" text-anchor="middle" class="box-body">write outbox</text>
 
-  <rect x="1035" y="360" width="250" height="145" class="box" fill="#34224F" stroke="#A78BFA" filter="url(#shadow)"/>
-  <text x="1160" y="412" text-anchor="middle" class="box-title">Search Service</text>
-  <text x="1160" y="452" text-anchor="middle" class="box-body">Query index,</text>
-  <text x="1160" y="481" text-anchor="middle" class="box-body">resolve canonical state</text>
+  <rect x="785" y="335" width="230" height="132" class="box" fill="#173B2D" stroke="#34D399" filter="url(#shadow)"/>
+  <text x="900" y="383" text-anchor="middle" class="box-title">Mailbox</text>
+  <text x="900" y="421" text-anchor="middle" class="box-body">Threads, folders,</text>
+  <text x="900" y="449" text-anchor="middle" class="box-body">message detail</text>
 
-  <rect x="455" y="620" width="250" height="145" class="box" fill="#4A3415" stroke="#FBBF24" filter="url(#shadow)"/>
-  <text x="580" y="672" text-anchor="middle" class="box-title">Quota Service</text>
-  <text x="580" y="712" text-anchor="middle" class="box-body">Consume events,</text>
-  <text x="580" y="741" text-anchor="middle" class="box-body">storage API</text>
+  <rect x="1085" y="335" width="230" height="132" class="box" fill="#34224F" stroke="#A78BFA" filter="url(#shadow)"/>
+  <text x="1200" y="383" text-anchor="middle" class="box-title">Search API</text>
+  <text x="1200" y="421" text-anchor="middle" class="box-body">Query OpenSearch</text>
+  <text x="1200" y="449" text-anchor="middle" class="box-body">by user scope</text>
 
-  <rect x="745" y="620" width="250" height="145" class="box" fill="#4A1F2A" stroke="#F87171" filter="url(#shadow)"/>
-  <text x="870" y="672" text-anchor="middle" class="box-title">Search Indexer</text>
-  <text x="870" y="712" text-anchor="middle" class="box-body">Async full-text</text>
-  <text x="870" y="741" text-anchor="middle" class="box-body">read model</text>
+  <rect x="635" y="535" width="230" height="110" class="box" fill="#183549" stroke="#38BDF8" filter="url(#shadow)"/>
+  <text x="750" y="579" text-anchor="middle" class="box-title-sm">Local Delivery</text>
+  <text x="750" y="614" text-anchor="middle" class="box-body-sm">@mailvault.local</text>
+  <text x="750" y="638" text-anchor="middle" class="box-body-sm">recipient inbox copy</text>
 
-  <rect x="1035" y="620" width="250" height="145" class="box" fill="#0F1F2A" stroke="#34D399" filter="url(#shadow)"/>
-  <text x="1160" y="660" text-anchor="middle" class="box-title-small">Attachment +</text>
-  <text x="1160" y="690" text-anchor="middle" class="box-title-small">Archival</text>
-  <text x="1160" y="725" text-anchor="middle" class="box-body">Hash attachments,</text>
-  <text x="1160" y="752" text-anchor="middle" class="box-body">archive cold content</text>
+  <rect x="935" y="535" width="230" height="110" class="box" fill="#4A3415" stroke="#FBBF24" filter="url(#shadow)"/>
+  <text x="1050" y="579" text-anchor="middle" class="box-title-sm">Outbox</text>
+  <text x="1050" y="614" text-anchor="middle" class="box-body-sm">Transactional event</text>
+  <text x="1050" y="638" text-anchor="middle" class="box-body-sm">handoff to Kafka</text>
 
-  <rect x="1340" y="260" width="170" height="118" rx="22" fill="#173B2D" stroke="#34D399" stroke-width="3" filter="url(#shadow)"/>
-  <text x="1425" y="306" text-anchor="middle" class="box-title">Postgres</text>
-  <text x="1425" y="344" text-anchor="middle" class="small">metadata,</text>
-  <text x="1425" y="368" text-anchor="middle" class="small">quota, outbox</text>
+  <path class="soft-arrow" d="M715 401 L775 401" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1015 401 L1075 401" marker-end="url(#softArrow)"/>
+  <path class="delivery-arrow" d="M600 467 C610 525 660 550 710 550" marker-end="url(#deliveryArrow)"/>
+  <path class="event-arrow" d="M600 467 C660 525 905 548 925 585" marker-end="url(#eventArrow)"/>
 
-  <rect x="1340" y="420" width="170" height="118" rx="22" fill="#4A3415" stroke="#FBBF24" stroke-width="3" filter="url(#shadow)"/>
-  <text x="1425" y="466" text-anchor="middle" class="box-title">MinIO</text>
-  <text x="1425" y="504" text-anchor="middle" class="small">raw MIME,</text>
-  <text x="1425" y="528" text-anchor="middle" class="small">attachments</text>
+  <rect x="70" y="905" width="320" height="135" rx="22" fill="#07111F" stroke="#2DD4BF" stroke-width="2" filter="url(#shadow)"/>
+  <text x="230" y="956" text-anchor="middle" class="box-title">Core Rule</text>
+  <text x="230" y="997" text-anchor="middle" class="box-body-sm">Keep metadata hot.</text>
+  <text x="230" y="1024" text-anchor="middle" class="box-body-sm">Move heavy work async.</text>
 
-  <rect x="1340" y="580" width="170" height="118" rx="22" fill="#252A55" stroke="#818CF8" stroke-width="3" filter="url(#shadow)"/>
-  <text x="1425" y="621" text-anchor="middle" class="box-title-xs">Open</text>
-  <text x="1425" y="649" text-anchor="middle" class="box-title-xs">Search</text>
-  <text x="1425" y="679" text-anchor="middle" class="small">derived index</text>
+  <rect x="445" y="730" width="900" height="140" class="lane"/>
+  <text x="485" y="775" class="lane-title">Async Workers</text>
+  <text x="485" y="805" class="lane-note">Consumers scale independently from the import and mailbox read paths.</text>
 
-  <rect x="1340" y="740" width="170" height="118" rx="22" fill="#4A3415" stroke="#FBBF24" stroke-width="3" filter="url(#shadow)"/>
-  <text x="1425" y="786" text-anchor="middle" class="box-title">Archive</text>
-  <text x="1425" y="824" text-anchor="middle" class="small">older email</text>
-  <text x="1425" y="848" text-anchor="middle" class="small">content tier</text>
+  <rect x="485" y="830" width="220" height="112" class="box" fill="#4A3415" stroke="#FBBF24" filter="url(#shadow)"/>
+  <text x="595" y="875" text-anchor="middle" class="box-title-sm">Quota Service</text>
+  <text x="595" y="910" text-anchor="middle" class="box-body-sm">Storage usage</text>
+  <text x="595" y="934" text-anchor="middle" class="box-body-sm">and limits</text>
 
-  <path class="soft-arrow" d="M705 432 L735 432" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M995 432 L1025 432" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M870 505 L870 610" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M1160 505 L1160 610" marker-end="url(#softArrow)"/>
+  <rect x="765" y="830" width="220" height="112" class="box" fill="#4A1F2A" stroke="#F87171" filter="url(#shadow)"/>
+  <text x="875" y="875" text-anchor="middle" class="box-title-sm">Search Indexer</text>
+  <text x="875" y="910" text-anchor="middle" class="box-body-sm">Full-text read</text>
+  <text x="875" y="934" text-anchor="middle" class="box-body-sm">model writer</text>
 
-  <path class="soft-arrow" d="M1285 404 L1330 320" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M1285 455 L1330 480" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M705 715 L725 715 L725 840 L1320 840 L1320 360 L1330 360" marker-end="url(#softArrow)"/>
-  <text x="1035" y="825" class="label">usage ledger</text>
-  <path class="soft-arrow" d="M1285 660 L1330 640" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M1285 715 L1330 800" marker-end="url(#softArrow)"/>
+  <rect x="1045" y="830" width="260" height="112" class="box" fill="#0F1F2A" stroke="#34D399" filter="url(#shadow)"/>
+  <text x="1175" y="875" text-anchor="middle" class="box-title-sm">Attachment Worker</text>
+  <text x="1175" y="910" text-anchor="middle" class="box-body-sm">SHA-256 dedupe,</text>
+  <text x="1175" y="934" text-anchor="middle" class="box-body-sm">canonical blobs</text>
 
-  <rect x="455" y="905" width="850" height="122" rx="30" fill="url(#kafkaBg)" filter="url(#shadow)"/>
-  <text x="880" y="958" text-anchor="middle" class="white-title">Kafka Event Bus</text>
-  <text x="880" y="997" text-anchor="middle" class="white-small">email.received • attachment.uploaded • quota.updated • archival.requested</text>
+  <rect x="465" y="990" width="880" height="118" rx="30" fill="url(#kafkaBg)" filter="url(#shadow)"/>
+  <text x="905" y="1040" text-anchor="middle" class="event-title">Kafka Event Bus</text>
+  <text x="905" y="1078" text-anchor="middle" class="event-text">email.received • attachment.uploaded • quota.updated • delivery.requested • archival.requested</text>
 
-  <path class="event-arrow" d="M580 765 L580 895" marker-end="url(#eventArrow)"/>
-  <path class="event-arrow" d="M870 765 L870 895" marker-end="url(#eventArrow)"/>
-  <path class="event-arrow" d="M1160 765 L1160 895" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M1050 645 L1050 980" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M595 990 L595 952" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M875 990 L875 952" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M1175 990 L1175 952" marker-end="url(#eventArrow)"/>
 
-  <rect x="92" y="840" width="300" height="170" rx="24" fill="#07111F" stroke="#E2E8F0" stroke-width="3" filter="url(#shadow)"/>
-  <text x="242" y="902" text-anchor="middle" class="box-title">Core Rule</text>
-  <text x="242" y="947" text-anchor="middle" class="callout-body">Keep metadata hot.</text>
-  <text x="242" y="979" text-anchor="middle" class="callout-body">Process heavy content async.</text>
+  <rect x="1395" y="205" width="320" height="470" class="lane"/>
+  <text x="1435" y="250" class="lane-title">Durable Stores</text>
+  <text x="1435" y="280" class="lane-note">Hybrid storage and derived search state</text>
 
-  <rect x="455" y="1060" width="850" height="52" rx="18" fill="#111827" stroke="#E2E8F0" stroke-width="2"/>
-  <text x="880" y="1094" text-anchor="middle" class="small">Observability: correlation IDs, queue lag, indexing failures, quota rejections, storage growth, worker retries</text>
+  <rect x="1430" y="330" width="230" height="104" rx="18" fill="#173B2D" stroke="#34D399" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1545" y="372" text-anchor="middle" class="box-title-sm">Postgres</text>
+  <text x="1545" y="405" text-anchor="middle" class="box-body-sm">metadata, quota, outbox</text>
 
-  <text x="116" y="1116" class="small">github.com/AbhinavMantri/mailvault</text>
+  <rect x="1430" y="470" width="230" height="104" rx="18" fill="#4A3415" stroke="#FBBF24" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1545" y="512" text-anchor="middle" class="box-title-sm">MinIO</text>
+  <text x="1545" y="545" text-anchor="middle" class="box-body-sm">raw MIME and files</text>
+
+  <rect x="1430" y="610" width="230" height="104" rx="18" fill="#252A55" stroke="#818CF8" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1545" y="652" text-anchor="middle" class="box-title-sm">OpenSearch</text>
+  <text x="1545" y="685" text-anchor="middle" class="box-body-sm">derived search index</text>
+
+  <rect x="1395" y="730" width="320" height="378" class="lane"/>
+  <text x="1435" y="775" class="lane-title">Delivery Boundary</text>
+  <text x="1435" y="805" class="lane-note">SMTP is isolated from the request path</text>
+
+  <rect x="1430" y="842" width="230" height="112" rx="18" fill="#183549" stroke="#38BDF8" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1545" y="887" text-anchor="middle" class="box-title-sm">Delivery Service</text>
+  <text x="1545" y="922" text-anchor="middle" class="box-body-sm">SMTP send, retry,</text>
+  <text x="1545" y="946" text-anchor="middle" class="box-body-sm">bounce roadmap</text>
+
+  <rect x="1430" y="995" width="230" height="82" rx="18" fill="#0F1F2A" stroke="#38BDF8" stroke-width="3" filter="url(#shadow)"/>
+  <text x="1545" y="1029" text-anchor="middle" class="box-title-sm">SMTP / GreenMail</text>
+  <text x="1545" y="1058" text-anchor="middle" class="box-body-sm">local external-mail test</text>
+
+  <path class="soft-arrow" d="M1165 585 C1290 520 1345 420 1420 382" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M715 385 C1110 300 1290 338 1420 372" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M715 430 C1110 470 1280 500 1420 522" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1200 467 C1280 520 1355 615 1420 650" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M875 830 C1050 735 1280 690 1420 660" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1175 830 C1285 755 1360 620 1420 535" marker-end="url(#softArrow)"/>
+
+  <path class="event-arrow" d="M1345 1049 C1390 1049 1398 908 1420 900" marker-end="url(#eventArrow)"/>
+  <path class="delivery-arrow" d="M1545 954 L1545 985" marker-end="url(#deliveryArrow)"/>
+
+  <rect x="465" y="1140" width="880" height="48" rx="16" fill="#0B1220" stroke="#263449" stroke-width="2"/>
+  <text x="905" y="1171" text-anchor="middle" class="small">Observability: correlation IDs, queue lag, indexing failures, quota rejections, delivery failures, storage growth, worker retries</text>
+
+  <text x="92" y="1171" class="small">github.com/AbhinavMantri/mailvault</text>
 </svg>
