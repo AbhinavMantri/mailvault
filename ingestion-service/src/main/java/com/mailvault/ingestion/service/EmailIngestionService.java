@@ -1,6 +1,7 @@
 package com.mailvault.ingestion.service;
 
 import com.mailvault.ingestion.api.dto.EmailDraftRequest;
+import com.mailvault.ingestion.api.dto.EmailForwardRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
@@ -165,8 +166,65 @@ public class EmailIngestionService {
         return new EmailImportResponse(emailId, "ACCEPTED", email.getLogicalSizeBytes());
     }
 
+    @Transactional
+    public EmailImportResponse forwardEmail(UUID originalEmailId, EmailForwardRequest request) {
+        EmailMessage originalEmail = emailMessageRepository.findByIdAndUserId(originalEmailId, request.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Email not found"));
+        MessageDraft draft = MessageDraft.from(
+                request,
+                forwardSubject(request.subject(), originalEmail.getSubject()),
+                forwardTextBody(request.textBody(), originalEmail),
+                forwardHtmlBody(request.htmlBody(), originalEmail)
+        );
+        List<Attachment> originalAttachments = request.includeOriginalAttachments()
+                ? originalEmail.getAttachmentRefs().stream()
+                        .map(EmailAttachmentRef::getAttachment)
+                        .toList()
+                : List.of();
+
+        UUID emailId = UUID.randomUUID();
+        Instant sentAt = Instant.now();
+        PersistedEmail persistedEmail = persistMessage(
+                draft,
+                emailId,
+                sentAt,
+                EmailStatus.INDEX_PENDING,
+                combinedForwardAttachments(draft, originalAttachments)
+        );
+        MailboxThread thread = new MailboxThread(
+                UUID.randomUUID(),
+                draft.userId(),
+                normalizeSubject(draft.subject()),
+                ThreadFolder.ACTIVE,
+                sentAt,
+                draft.from(),
+                1,
+                0,
+                sentAt,
+                sentAt
+        );
+        mailboxThreadRepository.save(thread);
+        threadMessageRepository.save(new ThreadMessage(
+                UUID.randomUUID(),
+                thread,
+                persistedEmail.email(),
+                MessageDirection.OUTBOUND,
+                sentAt,
+                sentAt
+        ));
+
+        saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+
+        return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
+    }
+
     private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt, EmailStatus status) {
         List<Attachment> attachments = findUploadedAttachments(draft);
+        return persistMessage(draft, emailId, receivedAt, status, attachments);
+    }
+
+    private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt, EmailStatus status,
+                                          List<Attachment> attachments) {
         long logicalSizeBytes = calculateLogicalSize(draft, attachments);
 
         String rawObjectKey = "users/%s/emails/%s/raw.eml".formatted(draft.userId(), emailId);
@@ -254,6 +312,71 @@ public class EmailIngestionService {
 
     private String subjectOrDefault(String subject) {
         return subject == null || subject.isBlank() ? "(no subject)" : subject;
+    }
+
+    private String forwardSubject(String requestedSubject, String originalSubject) {
+        if (requestedSubject != null && !requestedSubject.isBlank()) {
+            return requestedSubject;
+        }
+        String subject = subjectOrDefault(originalSubject);
+        String normalized = subject.trim().toLowerCase();
+        if (normalized.startsWith("fw:") || normalized.startsWith("fwd:")) {
+            return subject;
+        }
+        return "Fwd: " + subject;
+    }
+
+    private String forwardTextBody(String requestedBody, EmailMessage originalEmail) {
+        String originalBody = objectStorageService.readText(originalEmail.getTextObjectKey());
+        return """
+                %s
+
+                ---------- Forwarded message ---------
+                From: %s
+                Subject: %s
+
+                %s
+                """.formatted(
+                safeText(requestedBody).trim(),
+                originalEmail.getSender(),
+                originalEmail.getSubject(),
+                safeText(originalBody).trim()
+        ).strip();
+    }
+
+    private String forwardHtmlBody(String requestedHtml, EmailMessage originalEmail) {
+        String originalHtml = safeText(objectStorageService.readText(originalEmail.getHtmlObjectKey()));
+        if (requestedHtml == null && originalHtml.isBlank()) {
+            return null;
+        }
+        return """
+                %s
+                <hr>
+                <p><strong>Forwarded message</strong></p>
+                <p><strong>From:</strong> %s<br><strong>Subject:</strong> %s</p>
+                %s
+                """.formatted(
+                safeText(requestedHtml),
+                escapeHtml(originalEmail.getSender()),
+                escapeHtml(originalEmail.getSubject()),
+                originalHtml.isBlank() ? "<pre>%s</pre>".formatted(escapeHtml(objectStorageService.readText(originalEmail.getTextObjectKey()))) : originalHtml
+        ).strip();
+    }
+
+    private List<Attachment> combinedForwardAttachments(MessageDraft draft, List<Attachment> originalAttachments) {
+        List<Attachment> uploadedAttachments = findUploadedAttachments(draft);
+        return java.util.stream.Stream.concat(originalAttachments.stream(), uploadedAttachments.stream())
+                .distinct()
+                .toList();
+    }
+
+    private String escapeHtml(String value) {
+        return safeText(value)
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private List<String> visibleRecipients(MessageDraft draft) {
@@ -354,6 +477,20 @@ public class EmailIngestionService {
                     request.subject(),
                     request.textBody(),
                     request.htmlBody(),
+                    request.attachmentIds()
+            );
+        }
+
+        static MessageDraft from(EmailForwardRequest request, String subject, String textBody, String htmlBody) {
+            return new MessageDraft(
+                    request.userId(),
+                    request.from(),
+                    request.to(),
+                    request.cc(),
+                    request.bcc(),
+                    subject,
+                    textBody,
+                    htmlBody,
                     request.attachmentIds()
             );
         }

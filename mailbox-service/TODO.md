@@ -17,10 +17,9 @@ Hardening and product items before treating `mailbox-service` as production-read
 
 ## Forwarding
 
-- Add email forwarding support after thread labels and mailbox actions are merged.
-- Decide whether forwarded messages always start a new thread or can optionally append to an existing thread.
-- Decide attachment policy for forwards: reference existing canonical attachments, copy logical attachment refs, or require explicit attachment selection.
-- Ensure forwarding updates `SENT`, quota accounting, and search indexing consistently.
+- Add optional mailbox UX support for forwarding into an existing thread if product requirements need it.
+- Add full-thread forwarding support as a separate conversation-level workflow, not as an overload of single-email forwarding.
+- Add explicit attachment selection visibility for forwarded messages.
 
 ## Testing
 

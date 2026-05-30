@@ -384,6 +384,43 @@ try {
     }
     Assert-True ($sentThread.messageCount -eq 2) "sent thread message count did not include conversation"
 
+    Write-Step "forwarding imported email with attachment"
+    $forward = Invoke-Json "POST" "http://localhost:8081/emails/$($email.emailId)/forward" @{
+        userId = $userId
+        from = $recipient
+        to = @("finance@mailvault.local")
+        cc = @()
+        bcc = @()
+        subject = $null
+        textBody = "Forwarding this MailVault E2E email for $runId"
+        htmlBody = $null
+        includeOriginalAttachments = $true
+        attachmentIds = @()
+    }
+    Assert-True $forward.emailId "forward emailId was not returned"
+    Assert-True ($forward.status -eq "ACCEPTED") "forward email did not return ACCEPTED"
+
+    Write-Step "checking sent mailbox contains forwarded email"
+    $forwardThread = Wait-Until "sent mailbox contains forwarded email" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=SENT&limit=10"
+        @($threads) | Where-Object { $_.subject -eq "Fwd: $subject" -and $_.folder -eq "SENT" } | Select-Object -First 1
+    }
+    Assert-True ($forwardThread.messageCount -eq 1) "forward thread message count was not 1"
+
+    Write-Step "checking forwarded email detail"
+    $forwardDetail = Wait-Until "forwarded email detail includes attachment reference" 60 {
+        $current = Invoke-Json "GET" "http://localhost:8082/emails/$($forward.emailId)?userId=$userId"
+        $attachment = @($current.attachments) | Where-Object { $_.id -eq $initiate.attachmentId }
+        if ($attachment -and $attachment.status -eq "READY") {
+            return $current
+        }
+        return $null
+    }
+    Assert-True ($forwardDetail.subject -eq "Fwd: $subject") "forwarded email subject did not use Fwd prefix"
+    Assert-True ($forwardDetail.textBody.Contains("Forwarding this MailVault E2E email for $runId")) "forwarded text body did not include user content"
+    Assert-True ($forwardDetail.textBody.Contains("Forwarded message")) "forwarded text body did not include forwarded message marker"
+    Assert-True ($forwardDetail.textBody.Contains($textBody)) "forwarded text body did not include original email body"
+
     Write-Step "moving thread to trash and restoring"
     $trashResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/trash?userId=$userId"
     Assert-True ($trashResponse.folder -eq "TRASH") "trash did not move thread to TRASH"
@@ -407,7 +444,7 @@ try {
     Write-Step "checking async quota usage"
     $quota = Wait-Until "quota usage updated from email.received" 60 {
         $current = Invoke-Json "GET" "http://localhost:8083/users/$userId/storage"
-        if ($current.usedBytes -ge ($email.logicalSizeBytes + $reply.logicalSizeBytes)) {
+        if ($current.usedBytes -ge ($email.logicalSizeBytes + $reply.logicalSizeBytes + $forward.logicalSizeBytes)) {
             return $current
         }
         return $null
