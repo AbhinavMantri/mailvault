@@ -1,6 +1,7 @@
 package com.mailvault.mailbox.api;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record ThreadSummaryResponse(
@@ -11,6 +12,7 @@ public record ThreadSummaryResponse(
         Instant lastMessageAt,
         int messageCount,
         int unreadCount,
-        int attachmentCount
+        int attachmentCount,
+        List<ThreadLabelResponse> labels
 ) {
 }

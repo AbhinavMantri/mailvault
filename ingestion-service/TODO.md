@@ -17,6 +17,13 @@ Hardening items to complete before treating ingestion-service as production-read
 - Validate allowed/blocked content types.
 - Verify object existence and expected size before marking an attachment `UPLOADED`.
 
+## Message Composition
+
+- Add forwarding support after mailbox labels and mailbox actions are merged.
+- Define whether forwarding starts a new thread by default or can append to an existing thread.
+- Define how forwarded attachments are represented: reuse canonical blobs through new logical refs, copy selected attachment refs, or require explicit attachment selection.
+- Publish the correct outbound event so quota and search update consistently.
+
 ## Quota
 
 - Add optional quota pre-check before accepting very large imports.

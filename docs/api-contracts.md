@@ -180,7 +180,14 @@ DRAFT - unsent draft threads
     "lastMessageAt": "2026-05-23T12:00:00Z",
     "messageCount": 1,
     "unreadCount": 1,
-    "attachmentCount": 1
+    "attachmentCount": 1,
+    "labels": [
+      {
+        "label": "IMPORTANT",
+        "source": "USER",
+        "confidenceScore": null
+      }
+    ]
   }
 ]
 ```
@@ -190,6 +197,54 @@ GET /threads/{threadId}?userId=user-123
 ```
 
 Thread detail returns the ordered messages in the conversation. Attachments and recipients remain message-level data.
+
+## Thread Labels
+
+Labels are per-user metadata on a thread. They do not replace folders: a thread can remain in `INBOX` while also being labeled `IMPORTANT`, `FAVORITE`, `PROMOTION`, or a custom label.
+
+The current API supports user-applied labels. The schema also stores `source` and optional `confidenceScore` so later classifier-driven labels can be recorded as `SYSTEM` or `AI` without changing the core table shape.
+
+```http
+POST /threads/{threadId}/labels/{label}?userId=user-123
+```
+
+```json
+{
+  "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+  "status": "LABEL_ADDED",
+  "label": "IMPORTANT",
+  "source": "USER",
+  "labels": [
+    {
+      "label": "IMPORTANT",
+      "source": "USER",
+      "confidenceScore": null
+    }
+  ]
+}
+```
+
+Labels are normalized to uppercase. Valid labels are 1-40 characters using letters, numbers, underscore, or hyphen.
+
+```http
+DELETE /threads/{threadId}/labels/{label}?userId=user-123
+```
+
+```json
+{
+  "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
+  "status": "LABEL_REMOVED",
+  "label": "IMPORTANT",
+  "source": "USER",
+  "labels": []
+}
+```
+
+Threads can be listed by label:
+
+```http
+GET /mailboxes/{userId}/labels/{label}/threads?limit=20
+```
 
 ## Mark Thread Read
 

@@ -6,6 +6,7 @@ Hardening items before treating `search-indexer` as production-ready.
 
 - Read normalized body content and include body text in the OpenSearch document.
 - Add labels, attachment metadata, and archive state when those services are implemented.
+- Index system/AI label sources and confidence scores once asynchronous mailbox classification is implemented.
 - Create index mappings explicitly instead of relying on dynamic mapping.
 
 ## Reliability

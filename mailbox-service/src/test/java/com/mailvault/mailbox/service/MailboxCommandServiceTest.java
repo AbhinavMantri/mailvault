@@ -1,6 +1,7 @@
 package com.mailvault.mailbox.service;
 
 import com.mailvault.mailbox.repository.EmailMessageRepository;
+import com.mailvault.mailbox.repository.ThreadLabelRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -136,5 +138,53 @@ class MailboxCommandServiceTest {
         assertThat(response.folder()).isEqualTo("INBOX");
         assertThat(response.unreadCount()).isEqualTo(1);
         verify(emailMessageRepository).updateThreadUnreadCount(threadId, "user-123", 1);
+    }
+
+    @Test
+    void addThreadLabelNormalizesAndReturnsCurrentLabels() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
+                .thenReturn(List.of(
+                        new ThreadLabelRow("FAVORITE", "USER", null),
+                        new ThreadLabelRow("IMPORTANT", "USER", null)
+                ));
+
+        var response = mailboxCommandService.addThreadLabel("user-123", threadId, "important");
+
+        assertThat(response.status()).isEqualTo("LABEL_ADDED");
+        assertThat(response.label()).isEqualTo("IMPORTANT");
+        assertThat(response.source()).isEqualTo("USER");
+        assertThat(response.labels()).extracting("label").containsExactly("FAVORITE", "IMPORTANT");
+        assertThat(response.labels()).extracting("source").containsExactly("USER", "USER");
+        verify(emailMessageRepository).addThreadLabel(threadId, "user-123", "IMPORTANT");
+    }
+
+    @Test
+    void removeThreadLabelNormalizesAndReturnsCurrentLabels() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+        when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
+                .thenReturn(List.of(new ThreadLabelRow("IMPORTANT", "SYSTEM", null)));
+
+        var response = mailboxCommandService.removeThreadLabel("user-123", threadId, "favorite");
+
+        assertThat(response.status()).isEqualTo("LABEL_REMOVED");
+        assertThat(response.label()).isEqualTo("FAVORITE");
+        assertThat(response.source()).isEqualTo("USER");
+        assertThat(response.labels()).extracting("label").containsExactly("IMPORTANT");
+        assertThat(response.labels()).extracting("source").containsExactly("SYSTEM");
+        verify(emailMessageRepository).removeThreadLabel(threadId, "user-123", "FAVORITE");
+    }
+
+    @Test
+    void addThreadLabelRejectsInvalidLabel() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
+
+        assertThatThrownBy(() -> mailboxCommandService.addThreadLabel("user-123", threadId, "needs review"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("400 BAD_REQUEST");
+        verify(emailMessageRepository, never()).addThreadLabel(threadId, "user-123", "NEEDS REVIEW");
     }
 }
