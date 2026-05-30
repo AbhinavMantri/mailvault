@@ -389,6 +389,34 @@ Thread forwarding validates that the source thread belongs to the user, reads th
 
 The MVP rejects full-thread forwards with more than 25 messages or with a generated text/HTML body larger than 1 MB. This keeps forwarding bounded until selected-message forwarding or export/share workflows are added.
 
+## SMTP Delivery
+
+```http
+POST /deliveries/smtp
+Content-Type: application/json
+```
+
+```json
+{
+  "from": "sender@mailvault.local",
+  "to": ["finance@example.com"],
+  "cc": ["manager@example.com"],
+  "bcc": ["audit@example.com"],
+  "subject": "Invoice follow-up",
+  "textBody": "Plain text body",
+  "htmlBody": "<p>HTML body</p>"
+}
+```
+
+```json
+{
+  "status": "ACCEPTED",
+  "recipientCount": 3
+}
+```
+
+`delivery-service` owns the SMTP boundary. Local development points it at GreenMail on port `3025`, so SMTP behavior can be tested without sending public internet email. The current endpoint is a foundation for external delivery; ingestion is not yet wired to call it automatically.
+
 ## Search
 
 ```http
