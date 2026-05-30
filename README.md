@@ -175,6 +175,9 @@ Local endpoints:
 - Quarantine infected attachments and exclude them from download paths.
 - Add user-triggered abuse reporting for spam, phishing, harassment, impersonation, and abusive language.
 - Feed repeated abuse reports into sender/domain risk scoring and moderation queues.
+- Add asynchronous mailbox classification for system/AI labels such as `PROMOTION`, `SOCIAL`, `SECURITY_ALERT`, and `SPAM_SUSPECTED`.
+- Keep user-applied labels authoritative so classifier updates do not overwrite `source = USER` labels.
+- Add email forwarding with clear thread and attachment-reference behavior.
 - Add retry, timeout, and alerting behavior for scan failures.
 
 ## Planned Services
