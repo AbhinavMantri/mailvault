@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,6 +43,15 @@ public class MailboxController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit
     ) {
         return mailboxQueryService.getThreads(userId, folder, limit);
+    }
+
+    @GetMapping("/mailboxes/{userId}/labels/{label}/threads")
+    List<ThreadSummaryResponse> threadsByLabel(
+            @PathVariable @NotBlank String userId,
+            @PathVariable @NotBlank String label,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit
+    ) {
+        return mailboxQueryService.getThreadsByLabel(userId, label, limit);
     }
 
     @GetMapping("/threads/{threadId}")
@@ -98,6 +108,24 @@ public class MailboxController {
             @RequestParam @NotBlank String userId
     ) {
         return mailboxCommandService.restoreThread(userId, threadId);
+    }
+
+    @PostMapping("/threads/{threadId}/labels/{label}")
+    ThreadLabelActionResponse addThreadLabel(
+            @PathVariable UUID threadId,
+            @PathVariable @NotBlank String label,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.addThreadLabel(userId, threadId, label);
+    }
+
+    @DeleteMapping("/threads/{threadId}/labels/{label}")
+    ThreadLabelActionResponse removeThreadLabel(
+            @PathVariable UUID threadId,
+            @PathVariable @NotBlank String label,
+            @RequestParam @NotBlank String userId
+    ) {
+        return mailboxCommandService.removeThreadLabel(userId, threadId, label);
     }
 
     @GetMapping("/emails/{emailId}")

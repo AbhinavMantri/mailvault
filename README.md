@@ -40,13 +40,14 @@ Architecture notes:
 - Import email through an API. _Implemented in `ingestion-service`._
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
 - Read mailbox threads and thread detail through APIs. _INBOX, SENT, and DRAFT views are supported._
+- Label mailbox threads with important, favorite, category, or custom labels. _Implemented in `mailbox-service` as per-user thread metadata._
 - Append replies to existing threads through a dedicated reply API. _Implemented in `ingestion-service`; import intentionally starts a new thread._
 - Create and send draft messages. _Implemented in `ingestion-service`._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
 - Index searchable fields in OpenSearch. _Initial async `search-indexer` added for event fields._
-- Search by sender, recipient, subject, and received date. _Initial `search-service` added; body and labels are planned._
+- Search by sender, recipient, subject, and received date. _Initial `search-service` added; body search is planned._
 - Track per-user storage quota. _Async usage accounting and storage usage API added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Initial canonical blob dedupe is implemented in `attachment-worker`._
 - Attachment compression is intentionally deferred. _The MVP prioritizes deduplication and archival; selective compression can be added later for text-like content._
@@ -222,6 +223,7 @@ Implemented so far:
 - `POST /drafts/{emailId}/send`
 - `GET /mailboxes/{userId}/inbox`
 - `GET /mailboxes/{userId}/threads?folder=INBOX|SENT|DRAFT`
+- `GET /mailboxes/{userId}/labels/{label}/threads`
 - `GET /threads/{threadId}?userId={userId}`
 - `POST /threads/{threadId}/read?userId={userId}`
 - `POST /threads/{threadId}/unread?userId={userId}`
@@ -229,6 +231,8 @@ Implemented so far:
 - `POST /threads/{threadId}/trash?userId={userId}`
 - `POST /threads/{threadId}/spam?userId={userId}`
 - `POST /threads/{threadId}/restore?userId={userId}`
+- `POST /threads/{threadId}/labels/{label}?userId={userId}`
+- `DELETE /threads/{threadId}/labels/{label}?userId={userId}`
 - `POST /threads/{threadId}/messages`
 - `GET /emails/{emailId}?userId={userId}` with text and HTML body content
 - `GET /users/{userId}/storage` from `quota-service`

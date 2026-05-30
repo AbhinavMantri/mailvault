@@ -11,6 +11,7 @@ Stores durable structured state:
 - storage_usage
 - storage_usage_events
 - outbox_events
+- mailbox_thread_labels
 
 `storage_usage` and `storage_usage_events` are owned by `quota-service`. The tables are still created by the shared local-development schema, but application writes should come from quota-service's event consumer rather than ingestion or mailbox code.
 
@@ -18,7 +19,8 @@ Planned later:
 
 - users
 - mailboxes
-- labels
+
+`mailbox_thread_labels` stores per-user labels on mailbox threads. Labels are metadata, not placement. A thread can stay in `INBOX` while also carrying labels such as `IMPORTANT`, `FAVORITE`, `PROMOTION`, or a custom user label.
 
 ## Object Storage
 

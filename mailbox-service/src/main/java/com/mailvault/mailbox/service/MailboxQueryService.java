@@ -21,11 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional(readOnly = true)
 public class MailboxQueryService {
+
+    private static final Pattern LABEL_PATTERN = Pattern.compile("[A-Z0-9_-]{1,40}");
 
     private final EmailMessageRepository emailMessageRepository;
     private final EmailBodyStorage emailBodyStorage;
@@ -43,10 +48,13 @@ public class MailboxQueryService {
     }
 
     public List<ThreadSummaryResponse> getThreads(String userId, String folder, int limit) {
-        return emailMessageRepository.findThreads(userId, folder, limit)
-                .stream()
-                .map(this::toThreadSummary)
-                .toList();
+        List<ThreadSummaryRow> threads = emailMessageRepository.findThreads(userId, folder, limit);
+        return toThreadSummaries(userId, threads);
+    }
+
+    public List<ThreadSummaryResponse> getThreadsByLabel(String userId, String label, int limit) {
+        List<ThreadSummaryRow> threads = emailMessageRepository.findThreadsByLabel(userId, normalizeLabel(label), limit);
+        return toThreadSummaries(userId, threads);
     }
 
     public ThreadDetailResponse getThreadDetail(String userId, UUID threadId) {
@@ -55,6 +63,10 @@ public class MailboxQueryService {
         List<ThreadMessageResponse> messages = emailMessageRepository.findThreadMessages(threadId).stream()
                 .map(this::toThreadMessage)
                 .toList();
+        List<String> labels = emailMessageRepository.findThreadLabels(threadId, userId);
+        if (labels == null) {
+            labels = List.of();
+        }
 
         return new ThreadDetailResponse(
                 thread.id(),
@@ -64,6 +76,7 @@ public class MailboxQueryService {
                 thread.lastMessageAt(),
                 thread.messageCount(),
                 thread.unreadCount(),
+                labels,
                 messages
         );
     }
@@ -109,7 +122,18 @@ public class MailboxQueryService {
         );
     }
 
-    private ThreadSummaryResponse toThreadSummary(ThreadSummaryRow thread) {
+    private List<ThreadSummaryResponse> toThreadSummaries(String userId, List<ThreadSummaryRow> threads) {
+        Map<UUID, List<String>> fetchedLabelsByThread = emailMessageRepository.findLabelsForThreads(
+                threads.stream().map(ThreadSummaryRow::id).toList(),
+                userId
+        );
+        Map<UUID, List<String>> labelsByThread = fetchedLabelsByThread == null ? Map.of() : fetchedLabelsByThread;
+        return threads.stream()
+                .map(thread -> toThreadSummary(thread, labelsByThread.getOrDefault(thread.id(), List.of())))
+                .toList();
+    }
+
+    private ThreadSummaryResponse toThreadSummary(ThreadSummaryRow thread, List<String> labels) {
         return new ThreadSummaryResponse(
                 thread.id(),
                 thread.subject(),
@@ -118,7 +142,8 @@ public class MailboxQueryService {
                 thread.lastMessageAt(),
                 thread.messageCount(),
                 thread.unreadCount(),
-                thread.attachmentCount()
+                thread.attachmentCount(),
+                labels
         );
     }
 
@@ -156,5 +181,16 @@ public class MailboxQueryService {
                 attachment.sizeBytes(),
                 attachment.status()
         );
+    }
+
+    private String normalizeLabel(String label) {
+        String normalized = label.trim().toUpperCase(Locale.ROOT);
+        if (!LABEL_PATTERN.matcher(normalized).matches()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "label must be 1-40 characters using letters, numbers, underscore, or hyphen"
+            );
+        }
+        return normalized;
     }
 }

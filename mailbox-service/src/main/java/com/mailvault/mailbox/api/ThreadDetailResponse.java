@@ -12,6 +12,7 @@ public record ThreadDetailResponse(
         Instant lastMessageAt,
         int messageCount,
         int unreadCount,
+        List<String> labels,
         List<ThreadMessageResponse> messages
 ) {
 }

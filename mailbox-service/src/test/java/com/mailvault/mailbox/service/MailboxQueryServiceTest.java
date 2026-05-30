@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -114,6 +115,8 @@ class MailboxQueryServiceTest {
                         1,
                         1
                 )));
+        when(emailMessageRepository.findLabelsForThreads(List.of(threadId), "user-123"))
+                .thenReturn(Map.of(threadId, List.of("IMPORTANT")));
 
         var threads = mailboxQueryService.getThreads("user-123", "INBOX", 10);
 
@@ -121,6 +124,31 @@ class MailboxQueryServiceTest {
         assertThat(threads.getFirst().id()).isEqualTo(threadId);
         assertThat(threads.getFirst().folder()).isEqualTo("INBOX");
         assertThat(threads.getFirst().messageCount()).isEqualTo(2);
+        assertThat(threads.getFirst().labels()).containsExactly("IMPORTANT");
+    }
+
+    @Test
+    void getThreadsByLabelNormalizesLabelAndReturnsThreadSummaries() {
+        UUID threadId = UUID.randomUUID();
+        when(emailMessageRepository.findThreadsByLabel("user-123", "FAVORITE", 10))
+                .thenReturn(List.of(new ThreadSummaryRow(
+                        threadId,
+                        "Invoice",
+                        "INBOX",
+                        "billing@example.com",
+                        Instant.parse("2026-05-23T08:00:00Z"),
+                        2,
+                        1,
+                        1
+                )));
+        when(emailMessageRepository.findLabelsForThreads(List.of(threadId), "user-123"))
+                .thenReturn(Map.of(threadId, List.of("FAVORITE")));
+
+        var threads = mailboxQueryService.getThreadsByLabel("user-123", "favorite", 10);
+
+        assertThat(threads).hasSize(1);
+        assertThat(threads.getFirst().id()).isEqualTo(threadId);
+        assertThat(threads.getFirst().labels()).containsExactly("FAVORITE");
     }
 
     @Test
@@ -151,6 +179,8 @@ class MailboxQueryServiceTest {
                         Instant.parse("2026-05-23T08:00:00Z"),
                         2048L
                 )));
+        when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
+                .thenReturn(List.of("IMPORTANT"));
         when(emailMessageRepository.findRecipients(emailId))
                 .thenReturn(List.of(
                         new RecipientRow("abhinav@example.com", "TO"),
@@ -170,6 +200,7 @@ class MailboxQueryServiceTest {
         var detail = mailboxQueryService.getThreadDetail("user-123", threadId);
 
         assertThat(detail.id()).isEqualTo(threadId);
+        assertThat(detail.labels()).containsExactly("IMPORTANT");
         assertThat(detail.messages()).hasSize(1);
         assertThat(detail.messages().getFirst().direction()).isEqualTo("INBOUND");
         assertThat(detail.messages().getFirst().textBody()).isEqualTo("Invoice attached");

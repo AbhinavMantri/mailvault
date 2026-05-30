@@ -59,6 +59,8 @@ Read state is stored on `thread_messages.read_at`. `INBOUND` messages with `read
 
 Mailbox actions such as archive, trash, spam, and restore operate at thread level by updating `mailbox_threads.folder`. Restore returns threads with inbound messages to `INBOX`; sent-only conversations restore to `ACTIVE`.
 
+Labels are stored separately from folders in `mailbox_thread_labels`. This allows user intent and categories such as `IMPORTANT`, `FAVORITE`, `PROMOTION`, or custom labels to coexist with normal mailbox placement. Label filtering reads from Postgres and returns the same thread summary shape with the current label set attached.
+
 ## Mailbox Safety
 
 Spam filtering and abuse reporting are separate workflows. Spam filtering is system-driven classification. Abuse reporting is a user-triggered complaint that should be recorded durably for audit, repeated-sender analysis, and possible moderation action.

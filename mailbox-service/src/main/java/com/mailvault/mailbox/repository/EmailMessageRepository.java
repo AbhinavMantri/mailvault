@@ -8,7 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -97,6 +100,56 @@ public class EmailMessageRepository {
                 new MapSqlParameterSource()
                         .addValue("userId", userId)
                         .addValue("folder", folder)
+                        .addValue("limit", limit),
+                (rs, rowNum) -> new ThreadSummaryRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("subject"),
+                        rs.getString("folder"),
+                        rs.getString("last_sender"),
+                        toInstant(rs, "last_message_at"),
+                        rs.getInt("message_count"),
+                        rs.getInt("unread_count"),
+                        rs.getInt("attachment_count")
+                )
+        );
+    }
+
+    public List<ThreadSummaryRow> findThreadsByLabel(String userId, String label, int limit) {
+        String sql = """
+                SELECT ut.id,
+                       latest.subject,
+                       ut.folder,
+                       ut.last_sender,
+                       ut.last_message_at,
+                       ut.message_count,
+                       ut.unread_count,
+                       COUNT(DISTINCT ear.id) AS attachment_count
+                  FROM mailbox_thread_labels mtl
+                  JOIN mailbox_threads ut ON ut.id = mtl.thread_id
+                                         AND ut.user_id = mtl.user_id
+                  JOIN LATERAL (
+                      SELECT e.subject
+                        FROM thread_messages tm
+                        JOIN emails e ON e.id = tm.email_id
+                       WHERE tm.thread_id = ut.id
+                       ORDER BY tm.created_at DESC
+                       LIMIT 1
+                  ) latest ON TRUE
+                  LEFT JOIN thread_messages tm_all ON tm_all.thread_id = ut.id
+                  LEFT JOIN email_attachment_refs ear ON ear.email_id = tm_all.email_id
+                 WHERE mtl.user_id = :userId
+                   AND mtl.label = :label
+                 GROUP BY ut.id, latest.subject, ut.folder, ut.last_sender, ut.last_message_at,
+                          ut.message_count, ut.unread_count
+                 ORDER BY ut.last_message_at DESC
+                 LIMIT :limit
+                """;
+
+        return jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("userId", userId)
+                        .addValue("label", label)
                         .addValue("limit", limit),
                 (rs, rowNum) -> new ThreadSummaryRow(
                         rs.getObject("id", UUID.class),
@@ -301,6 +354,57 @@ public class EmailMessageRepository {
         );
     }
 
+    public int addThreadLabel(UUID threadId, String userId, String label) {
+        String sql = """
+                INSERT INTO mailbox_thread_labels (user_id, thread_id, label, created_at)
+                VALUES (:userId, :threadId, :label, now())
+                ON CONFLICT (user_id, thread_id, label) DO NOTHING
+                """;
+
+        return jdbcTemplate.update(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId)
+                        .addValue("label", label)
+        );
+    }
+
+    public int removeThreadLabel(UUID threadId, String userId, String label) {
+        String sql = """
+                DELETE FROM mailbox_thread_labels
+                 WHERE thread_id = :threadId
+                   AND user_id = :userId
+                   AND label = :label
+                """;
+
+        return jdbcTemplate.update(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId)
+                        .addValue("label", label)
+        );
+    }
+
+    public List<String> findThreadLabels(UUID threadId, String userId) {
+        String sql = """
+                SELECT label
+                  FROM mailbox_thread_labels
+                 WHERE thread_id = :threadId
+                   AND user_id = :userId
+                 ORDER BY label
+                """;
+
+        return jdbcTemplate.queryForList(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
+                String.class
+        );
+    }
+
     public String restoreThread(UUID threadId, String userId) {
         String sql = """
                 UPDATE mailbox_threads
@@ -342,6 +446,34 @@ public class EmailMessageRepository {
                 Integer.class
         );
         return count == null ? 0 : count;
+    }
+
+    public Map<UUID, List<String>> findLabelsForThreads(List<UUID> threadIds, String userId) {
+        if (threadIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        String sql = """
+                SELECT thread_id, label
+                  FROM mailbox_thread_labels
+                 WHERE user_id = :userId
+                   AND thread_id IN (:threadIds)
+                 ORDER BY thread_id, label
+                """;
+
+        Map<UUID, List<String>> labelsByThread = new HashMap<>();
+        jdbcTemplate.query(
+                sql,
+                new MapSqlParameterSource()
+                        .addValue("userId", userId)
+                        .addValue("threadIds", threadIds),
+                rs -> {
+                    UUID threadId = rs.getObject("thread_id", UUID.class);
+                    labelsByThread.computeIfAbsent(threadId, ignored -> new java.util.ArrayList<>())
+                            .add(rs.getString("label"));
+                }
+        );
+        return labelsByThread;
     }
 
     public List<ThreadMessageRow> findThreadMessages(UUID threadId) {
