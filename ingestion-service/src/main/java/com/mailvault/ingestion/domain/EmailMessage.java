@@ -93,12 +93,28 @@ public class EmailMessage {
         return subject;
     }
 
+    public String getRawObjectKey() {
+        return rawObjectKey;
+    }
+
+    public String getTextObjectKey() {
+        return textObjectKey;
+    }
+
+    public String getHtmlObjectKey() {
+        return htmlObjectKey;
+    }
+
     public EmailStatus getStatus() {
         return status;
     }
 
     public List<EmailRecipient> getRecipients() {
         return List.copyOf(recipients);
+    }
+
+    public List<EmailAttachmentRef> getAttachmentRefs() {
+        return List.copyOf(attachmentRefs);
     }
 
     public void submitDraft() {

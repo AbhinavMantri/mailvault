@@ -19,10 +19,10 @@ Hardening items to complete before treating ingestion-service as production-read
 
 ## Message Composition
 
-- Add forwarding support after mailbox labels and mailbox actions are merged.
-- Define whether forwarding starts a new thread by default or can append to an existing thread.
-- Define how forwarded attachments are represented: reuse canonical blobs through new logical refs, copy selected attachment refs, or require explicit attachment selection.
-- Publish the correct outbound event so quota and search update consistently.
+- Add optional forwarding into an existing thread if product requirements need it; the MVP starts forwards as new sent threads.
+- Add explicit original-attachment selection for forwards instead of the current all-or-none `includeOriginalAttachments` flag.
+- Add full-thread forwarding as a separate `POST /threads/{threadId}/forward` style feature that includes ordered conversation history.
+- Add controller-level tests for forwarding request validation.
 
 ## Quota
 

@@ -42,6 +42,7 @@ Architecture notes:
 - Read mailbox threads and thread detail through APIs. _INBOX, SENT, and DRAFT views are supported._
 - Label mailbox threads with important, favorite, category, or custom labels. _User-applied labels are implemented in `mailbox-service`; the schema is ready for future system/AI labels._
 - Append replies to existing threads through a dedicated reply API. _Implemented in `ingestion-service`; import intentionally starts a new thread._
+- Forward existing emails to new recipients. _Implemented in `ingestion-service` as a new outbound sent thread._
 - Create and send draft messages. _Implemented in `ingestion-service`._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
@@ -178,6 +179,7 @@ Local endpoints:
 - Add asynchronous mailbox classification for system/AI labels such as `PROMOTION`, `SOCIAL`, `SECURITY_ALERT`, and `SPAM_SUSPECTED`.
 - Keep user-applied labels authoritative so classifier updates do not overwrite `source = USER` labels.
 - Add email forwarding with clear thread and attachment-reference behavior.
+- Add full-thread forwarding through a separate conversation-level API after single-message forwarding is stable.
 - Add retry, timeout, and alerting behavior for scan failures.
 
 ## Planned Services
@@ -222,6 +224,7 @@ Implemented so far:
 - `POST /attachments/initiate` for presigned upload URLs
 - `POST /attachments/{attachmentId}/complete`
 - `POST /emails/import`
+- `POST /emails/{emailId}/forward`
 - `POST /drafts`
 - `POST /drafts/{emailId}/send`
 - `GET /mailboxes/{userId}/inbox`

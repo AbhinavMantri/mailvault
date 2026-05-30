@@ -2,6 +2,7 @@ package com.mailvault.ingestion.storage;
 
 import com.mailvault.ingestion.config.StorageProperties;
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -39,6 +40,20 @@ public class ObjectStorageService {
                     .build());
         } catch (Exception exception) {
             throw new ObjectStorageException("Failed to write object " + objectKey, exception);
+        }
+    }
+
+    public String readText(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            return "";
+        }
+        try (var stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(properties.bucket())
+                .object(objectKey)
+                .build())) {
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception exception) {
+            throw new ObjectStorageException("Failed to read object " + objectKey, exception);
         }
     }
 

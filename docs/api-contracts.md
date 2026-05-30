@@ -331,6 +331,38 @@ Content-Type: application/json
 
 This API appends a new message to an existing thread after validating that the thread belongs to the user. External mailbox migration, if added later, should be a separate adapter that converts provider conversations into MailVault threads and messages before persistence.
 
+## Forward Email
+
+```http
+POST /emails/{emailId}/forward
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "user-123",
+  "from": "abhinav@example.com",
+  "to": ["finance@example.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": null,
+  "textBody": "FYI, forwarding this invoice.",
+  "htmlBody": null,
+  "includeOriginalAttachments": true,
+  "attachmentIds": ["8e8f5f5c-5d4a-42b0-a3a4-7f1f8c0d9c99"]
+}
+```
+
+```json
+{
+  "emailId": "a820e91a-c6c3-4d4a-9911-67614de2c532",
+  "status": "ACCEPTED",
+  "logicalSizeBytes": 5242912
+}
+```
+
+Forwarding validates that the source email belongs to the user, creates a new outbound message, and places it in a new sent conversation. If `subject` is omitted, MailVault prefixes the original subject with `Fwd:`. The new body includes the user's message plus a forwarded-message block containing the original sender, subject, and body content. If `includeOriginalAttachments` is true, the forwarded email reuses the original logical attachment references. `attachmentIds` can add newly uploaded attachments to the forwarded email.
+
 ## Search
 
 ```http

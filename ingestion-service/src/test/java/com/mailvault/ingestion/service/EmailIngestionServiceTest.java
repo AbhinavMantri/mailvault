@@ -1,12 +1,14 @@
 package com.mailvault.ingestion.service;
 
 import com.mailvault.ingestion.api.dto.EmailDraftRequest;
+import com.mailvault.ingestion.api.dto.EmailForwardRequest;
 import com.mailvault.ingestion.api.dto.EmailImportRequest;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.api.dto.SendDraftRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
 import com.mailvault.ingestion.domain.EmailMessage;
+import com.mailvault.ingestion.domain.EmailAttachmentRef;
 import com.mailvault.ingestion.domain.EmailRecipient;
 import com.mailvault.ingestion.domain.EmailStatus;
 import com.mailvault.ingestion.domain.MessageDirection;
@@ -282,6 +284,75 @@ class EmailIngestionServiceTest {
         assertThatThrownBy(() -> emailIngestionService.sendDraft(emailId, new SendDraftRequest("user-123")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Draft not found");
+        verify(outboxEventService, never()).saveEmailReceived(any(), any());
+    }
+
+    @Test
+    void forwardEmailCreatesNewOutboundThreadAndReusesAttachmentsWhenRequested() {
+        UUID originalEmailId = UUID.randomUUID();
+        Attachment attachment = uploadedAttachment(UUID.randomUUID(), 512);
+        EmailMessage originalEmail = new EmailMessage(
+                originalEmailId,
+                "user-123",
+                "billing@example.com",
+                "Invoice for May",
+                "raw-key",
+                "text-key",
+                null,
+                128L,
+                EmailStatus.INDEX_PENDING,
+                Instant.now()
+        );
+        originalEmail.addAttachmentRef(new EmailAttachmentRef(attachment));
+        EmailForwardRequest request = new EmailForwardRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("finance@example.com"),
+                List.of(),
+                List.of(),
+                null,
+                "Forwarding this invoice.",
+                null,
+                true,
+                List.of()
+        );
+        when(emailMessageRepository.findByIdAndUserId(originalEmailId, "user-123"))
+                .thenReturn(java.util.Optional.of(originalEmail));
+        when(objectStorageService.readText("text-key")).thenReturn("Original invoice body.");
+
+        var response = emailIngestionService.forwardEmail(originalEmailId, request);
+
+        assertThat(response.status()).isEqualTo("ACCEPTED");
+        assertThat(response.logicalSizeBytes()).isGreaterThan("Forwarding this invoice.".length() + 512);
+        verify(objectStorageService).putText(any(), org.mockito.ArgumentMatchers.contains("Forwarded message"), eq("text/plain"));
+        verify(emailMessageRepository).save(any(EmailMessage.class));
+        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        verify(threadMessageRepository).save(any(ThreadMessage.class));
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+    }
+
+    @Test
+    void forwardEmailRejectsMissingOriginalEmail() {
+        UUID originalEmailId = UUID.randomUUID();
+        EmailForwardRequest request = new EmailForwardRequest(
+                "user-123",
+                "abhinav@example.com",
+                List.of("finance@example.com"),
+                List.of(),
+                List.of(),
+                null,
+                "Forwarding this invoice.",
+                null,
+                false,
+                List.of()
+        );
+        when(emailMessageRepository.findByIdAndUserId(originalEmailId, "user-123"))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> emailIngestionService.forwardEmail(originalEmailId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Email not found");
+        verify(emailMessageRepository, never()).save(any());
         verify(outboxEventService, never()).saveEmailReceived(any(), any());
     }
 

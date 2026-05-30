@@ -35,6 +35,10 @@ public class EmailAttachmentRef {
         this.attachment = attachment;
     }
 
+    public Attachment getAttachment() {
+        return attachment;
+    }
+
     void attachTo(EmailMessage email) {
         this.email = email;
     }
