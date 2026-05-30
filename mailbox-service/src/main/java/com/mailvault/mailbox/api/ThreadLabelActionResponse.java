@@ -7,6 +7,7 @@ public record ThreadLabelActionResponse(
         UUID threadId,
         String status,
         String label,
-        List<String> labels
+        String source,
+        List<ThreadLabelResponse> labels
 ) {
 }

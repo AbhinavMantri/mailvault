@@ -5,6 +5,7 @@ import com.mailvault.mailbox.api.EmailDetailResponse;
 import com.mailvault.mailbox.api.InboxItemResponse;
 import com.mailvault.mailbox.api.RecipientResponse;
 import com.mailvault.mailbox.api.ThreadDetailResponse;
+import com.mailvault.mailbox.api.ThreadLabelResponse;
 import com.mailvault.mailbox.api.ThreadMessageResponse;
 import com.mailvault.mailbox.api.ThreadSummaryResponse;
 import com.mailvault.mailbox.repository.AttachmentRow;
@@ -13,6 +14,7 @@ import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
 import com.mailvault.mailbox.repository.ThreadMessageRow;
+import com.mailvault.mailbox.repository.ThreadLabelRow;
 import com.mailvault.mailbox.repository.ThreadSummaryRow;
 import com.mailvault.mailbox.storage.EmailBodyStorage;
 import org.springframework.http.HttpStatus;
@@ -63,7 +65,7 @@ public class MailboxQueryService {
         List<ThreadMessageResponse> messages = emailMessageRepository.findThreadMessages(threadId).stream()
                 .map(this::toThreadMessage)
                 .toList();
-        List<String> labels = emailMessageRepository.findThreadLabels(threadId, userId);
+        List<ThreadLabelRow> labels = emailMessageRepository.findThreadLabels(threadId, userId);
         if (labels == null) {
             labels = List.of();
         }
@@ -76,7 +78,7 @@ public class MailboxQueryService {
                 thread.lastMessageAt(),
                 thread.messageCount(),
                 thread.unreadCount(),
-                labels,
+                labels.stream().map(this::toThreadLabel).toList(),
                 messages
         );
     }
@@ -123,17 +125,17 @@ public class MailboxQueryService {
     }
 
     private List<ThreadSummaryResponse> toThreadSummaries(String userId, List<ThreadSummaryRow> threads) {
-        Map<UUID, List<String>> fetchedLabelsByThread = emailMessageRepository.findLabelsForThreads(
+        Map<UUID, List<ThreadLabelRow>> fetchedLabelsByThread = emailMessageRepository.findLabelsForThreads(
                 threads.stream().map(ThreadSummaryRow::id).toList(),
                 userId
         );
-        Map<UUID, List<String>> labelsByThread = fetchedLabelsByThread == null ? Map.of() : fetchedLabelsByThread;
+        Map<UUID, List<ThreadLabelRow>> labelsByThread = fetchedLabelsByThread == null ? Map.of() : fetchedLabelsByThread;
         return threads.stream()
                 .map(thread -> toThreadSummary(thread, labelsByThread.getOrDefault(thread.id(), List.of())))
                 .toList();
     }
 
-    private ThreadSummaryResponse toThreadSummary(ThreadSummaryRow thread, List<String> labels) {
+    private ThreadSummaryResponse toThreadSummary(ThreadSummaryRow thread, List<ThreadLabelRow> labels) {
         return new ThreadSummaryResponse(
                 thread.id(),
                 thread.subject(),
@@ -143,7 +145,7 @@ public class MailboxQueryService {
                 thread.messageCount(),
                 thread.unreadCount(),
                 thread.attachmentCount(),
-                labels
+                labels.stream().map(this::toThreadLabel).toList()
         );
     }
 
@@ -180,6 +182,14 @@ public class MailboxQueryService {
                 attachment.contentType(),
                 attachment.sizeBytes(),
                 attachment.status()
+        );
+    }
+
+    private ThreadLabelResponse toThreadLabel(ThreadLabelRow label) {
+        return new ThreadLabelResponse(
+                label.label(),
+                label.source(),
+                label.confidenceScore()
         );
     }
 

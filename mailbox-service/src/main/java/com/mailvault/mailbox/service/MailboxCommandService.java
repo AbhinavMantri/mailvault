@@ -2,7 +2,9 @@ package com.mailvault.mailbox.service;
 
 import com.mailvault.mailbox.api.ThreadActionResponse;
 import com.mailvault.mailbox.api.ThreadLabelActionResponse;
+import com.mailvault.mailbox.api.ThreadLabelResponse;
 import com.mailvault.mailbox.repository.EmailMessageRepository;
+import com.mailvault.mailbox.repository.ThreadLabelRow;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,8 +74,10 @@ public class MailboxCommandService {
         ensureThreadExists(userId, threadId);
         String normalizedLabel = normalizeLabel(label);
         emailMessageRepository.addThreadLabel(threadId, userId, normalizedLabel);
-        List<String> labels = emailMessageRepository.findThreadLabels(threadId, userId);
-        return new ThreadLabelActionResponse(threadId, "LABEL_ADDED", normalizedLabel, labels);
+        List<ThreadLabelResponse> labels = emailMessageRepository.findThreadLabels(threadId, userId).stream()
+                .map(this::toThreadLabel)
+                .toList();
+        return new ThreadLabelActionResponse(threadId, "LABEL_ADDED", normalizedLabel, "USER", labels);
     }
 
     @Transactional
@@ -81,8 +85,10 @@ public class MailboxCommandService {
         ensureThreadExists(userId, threadId);
         String normalizedLabel = normalizeLabel(label);
         emailMessageRepository.removeThreadLabel(threadId, userId, normalizedLabel);
-        List<String> labels = emailMessageRepository.findThreadLabels(threadId, userId);
-        return new ThreadLabelActionResponse(threadId, "LABEL_REMOVED", normalizedLabel, labels);
+        List<ThreadLabelResponse> labels = emailMessageRepository.findThreadLabels(threadId, userId).stream()
+                .map(this::toThreadLabel)
+                .toList();
+        return new ThreadLabelActionResponse(threadId, "LABEL_REMOVED", normalizedLabel, "USER", labels);
     }
 
     private void ensureThreadExists(String userId, UUID threadId) {
@@ -107,5 +113,13 @@ public class MailboxCommandService {
             );
         }
         return normalized;
+    }
+
+    private ThreadLabelResponse toThreadLabel(ThreadLabelRow label) {
+        return new ThreadLabelResponse(
+                label.label(),
+                label.source(),
+                label.confidenceScore()
+        );
     }
 }

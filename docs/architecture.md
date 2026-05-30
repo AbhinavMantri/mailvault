@@ -61,6 +61,8 @@ Mailbox actions such as archive, trash, spam, and restore operate at thread leve
 
 Labels are stored separately from folders in `mailbox_thread_labels`. This allows user intent and categories such as `IMPORTANT`, `FAVORITE`, `PROMOTION`, or custom labels to coexist with normal mailbox placement. Label filtering reads from Postgres and returns the same thread summary shape with the current label set attached.
 
+Manual labels are written with `source = USER`. The schema also supports `SYSTEM` and `AI` sources plus optional confidence scores, but automatic classification is intentionally not implemented in the current mailbox-service feature. A later classifier can add `PROMOTION`, `SOCIAL`, `SECURITY_ALERT`, or similar labels asynchronously without overwriting user labels.
+
 ## Mailbox Safety
 
 Spam filtering and abuse reporting are separate workflows. Spam filtering is system-driven classification. Abuse reporting is a user-triggered complaint that should be recorded durably for audit, repeated-sender analysis, and possible moderation action.

@@ -281,16 +281,19 @@ try {
     $labelResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/labels/important?userId=$userId"
     Assert-True ($labelResponse.status -eq "LABEL_ADDED") "label add did not return LABEL_ADDED"
     Assert-True ($labelResponse.label -eq "IMPORTANT") "label was not normalized to IMPORTANT"
+    Assert-True ($labelResponse.source -eq "USER") "manual label source was not USER"
 
     $labeledThread = Wait-Until "important label is visible in thread list" 60 {
         $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/threads?folder=INBOX&limit=10"
         $candidate = @($threads) | Where-Object { $_.id -eq $thread.id } | Select-Object -First 1
-        if ($candidate -and @($candidate.labels) -contains "IMPORTANT") {
+        $importantLabel = @($candidate.labels) | Where-Object { $_.label -eq "IMPORTANT" -and $_.source -eq "USER" } | Select-Object -First 1
+        if ($candidate -and $importantLabel) {
             return $candidate
         }
         return $null
     }
-    Assert-True (@($labeledThread.labels) -contains "IMPORTANT") "thread list did not include IMPORTANT label"
+    $labeledThreadImportant = @($labeledThread.labels) | Where-Object { $_.label -eq "IMPORTANT" -and $_.source -eq "USER" } | Select-Object -First 1
+    Assert-True $labeledThreadImportant "thread list did not include USER IMPORTANT label"
 
     Write-Step "checking label mailbox view"
     $importantThread = Invoke-Json "GET" "http://localhost:8082/mailboxes/$userId/labels/IMPORTANT/threads?limit=10"
@@ -300,7 +303,8 @@ try {
     Write-Step "removing important label from thread"
     $removeLabelResponse = Invoke-Json "DELETE" "http://localhost:8082/threads/$($thread.id)/labels/IMPORTANT?userId=$userId"
     Assert-True ($removeLabelResponse.status -eq "LABEL_REMOVED") "label remove did not return LABEL_REMOVED"
-    Assert-True (-not (@($removeLabelResponse.labels) -contains "IMPORTANT")) "removed label was still returned"
+    $remainingImportantLabel = @($removeLabelResponse.labels) | Where-Object { $_.label -eq "IMPORTANT" -and $_.source -eq "USER" } | Select-Object -First 1
+    Assert-True (-not $remainingImportantLabel) "removed USER label was still returned"
 
     Write-Step "marking thread read"
     $readResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/read?userId=$userId"

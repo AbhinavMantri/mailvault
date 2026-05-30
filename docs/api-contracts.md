@@ -181,7 +181,13 @@ DRAFT - unsent draft threads
     "messageCount": 1,
     "unreadCount": 1,
     "attachmentCount": 1,
-    "labels": ["IMPORTANT"]
+    "labels": [
+      {
+        "label": "IMPORTANT",
+        "source": "USER",
+        "confidenceScore": null
+      }
+    ]
   }
 ]
 ```
@@ -196,6 +202,8 @@ Thread detail returns the ordered messages in the conversation. Attachments and 
 
 Labels are per-user metadata on a thread. They do not replace folders: a thread can remain in `INBOX` while also being labeled `IMPORTANT`, `FAVORITE`, `PROMOTION`, or a custom label.
 
+The current API supports user-applied labels. The schema also stores `source` and optional `confidenceScore` so later classifier-driven labels can be recorded as `SYSTEM` or `AI` without changing the core table shape.
+
 ```http
 POST /threads/{threadId}/labels/{label}?userId=user-123
 ```
@@ -205,7 +213,14 @@ POST /threads/{threadId}/labels/{label}?userId=user-123
   "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
   "status": "LABEL_ADDED",
   "label": "IMPORTANT",
-  "labels": ["IMPORTANT"]
+  "source": "USER",
+  "labels": [
+    {
+      "label": "IMPORTANT",
+      "source": "USER",
+      "confidenceScore": null
+    }
+  ]
 }
 ```
 
@@ -220,6 +235,7 @@ DELETE /threads/{threadId}/labels/{label}?userId=user-123
   "threadId": "1f72f814-6e41-44c1-bb48-6ad24ab68a5b",
   "status": "LABEL_REMOVED",
   "label": "IMPORTANT",
+  "source": "USER",
   "labels": []
 }
 ```

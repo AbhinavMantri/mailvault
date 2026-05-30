@@ -40,7 +40,7 @@ Architecture notes:
 - Import email through an API. _Implemented in `ingestion-service`._
 - Read inbox and email detail through APIs. _Implemented in `mailbox-service`._
 - Read mailbox threads and thread detail through APIs. _INBOX, SENT, and DRAFT views are supported._
-- Label mailbox threads with important, favorite, category, or custom labels. _Implemented in `mailbox-service` as per-user thread metadata._
+- Label mailbox threads with important, favorite, category, or custom labels. _User-applied labels are implemented in `mailbox-service`; the schema is ready for future system/AI labels._
 - Append replies to existing threads through a dedicated reply API. _Implemented in `ingestion-service`; import intentionally starts a new thread._
 - Create and send draft messages. _Implemented in `ingestion-service`._
 - Store email metadata in Postgres. _Initial schema added._

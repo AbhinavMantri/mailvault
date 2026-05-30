@@ -13,6 +13,6 @@ public record ThreadSummaryResponse(
         int messageCount,
         int unreadCount,
         int attachmentCount,
-        List<String> labels
+        List<ThreadLabelResponse> labels
 ) {
 }

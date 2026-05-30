@@ -6,6 +6,7 @@ import com.mailvault.mailbox.repository.EmailMessageRepository;
 import com.mailvault.mailbox.repository.InboxRow;
 import com.mailvault.mailbox.repository.RecipientRow;
 import com.mailvault.mailbox.repository.ThreadMessageRow;
+import com.mailvault.mailbox.repository.ThreadLabelRow;
 import com.mailvault.mailbox.repository.ThreadSummaryRow;
 import com.mailvault.mailbox.storage.EmailBodyStorage;
 import org.junit.jupiter.api.Test;
@@ -114,9 +115,9 @@ class MailboxQueryServiceTest {
                         2,
                         1,
                         1
-                )));
+        )));
         when(emailMessageRepository.findLabelsForThreads(List.of(threadId), "user-123"))
-                .thenReturn(Map.of(threadId, List.of("IMPORTANT")));
+                .thenReturn(Map.of(threadId, List.of(new ThreadLabelRow("IMPORTANT", "USER", null))));
 
         var threads = mailboxQueryService.getThreads("user-123", "INBOX", 10);
 
@@ -124,7 +125,8 @@ class MailboxQueryServiceTest {
         assertThat(threads.getFirst().id()).isEqualTo(threadId);
         assertThat(threads.getFirst().folder()).isEqualTo("INBOX");
         assertThat(threads.getFirst().messageCount()).isEqualTo(2);
-        assertThat(threads.getFirst().labels()).containsExactly("IMPORTANT");
+        assertThat(threads.getFirst().labels()).extracting("label").containsExactly("IMPORTANT");
+        assertThat(threads.getFirst().labels()).extracting("source").containsExactly("USER");
     }
 
     @Test
@@ -140,15 +142,16 @@ class MailboxQueryServiceTest {
                         2,
                         1,
                         1
-                )));
+        )));
         when(emailMessageRepository.findLabelsForThreads(List.of(threadId), "user-123"))
-                .thenReturn(Map.of(threadId, List.of("FAVORITE")));
+                .thenReturn(Map.of(threadId, List.of(new ThreadLabelRow("FAVORITE", "USER", null))));
 
         var threads = mailboxQueryService.getThreadsByLabel("user-123", "favorite", 10);
 
         assertThat(threads).hasSize(1);
         assertThat(threads.getFirst().id()).isEqualTo(threadId);
-        assertThat(threads.getFirst().labels()).containsExactly("FAVORITE");
+        assertThat(threads.getFirst().labels()).extracting("label").containsExactly("FAVORITE");
+        assertThat(threads.getFirst().labels()).extracting("source").containsExactly("USER");
     }
 
     @Test
@@ -178,9 +181,9 @@ class MailboxQueryServiceTest {
                         null,
                         Instant.parse("2026-05-23T08:00:00Z"),
                         2048L
-                )));
+        )));
         when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
-                .thenReturn(List.of("IMPORTANT"));
+                .thenReturn(List.of(new ThreadLabelRow("IMPORTANT", "USER", null)));
         when(emailMessageRepository.findRecipients(emailId))
                 .thenReturn(List.of(
                         new RecipientRow("abhinav@example.com", "TO"),
@@ -200,7 +203,8 @@ class MailboxQueryServiceTest {
         var detail = mailboxQueryService.getThreadDetail("user-123", threadId);
 
         assertThat(detail.id()).isEqualTo(threadId);
-        assertThat(detail.labels()).containsExactly("IMPORTANT");
+        assertThat(detail.labels()).extracting("label").containsExactly("IMPORTANT");
+        assertThat(detail.labels()).extracting("source").containsExactly("USER");
         assertThat(detail.messages()).hasSize(1);
         assertThat(detail.messages().getFirst().direction()).isEqualTo("INBOUND");
         assertThat(detail.messages().getFirst().textBody()).isEqualTo("Invoice attached");

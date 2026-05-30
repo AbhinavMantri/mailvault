@@ -22,6 +22,16 @@ Planned later:
 
 `mailbox_thread_labels` stores per-user labels on mailbox threads. Labels are metadata, not placement. A thread can stay in `INBOX` while also carrying labels such as `IMPORTANT`, `FAVORITE`, `PROMOTION`, or a custom user label.
 
+Labels include a `source` so manual and system-driven classification can coexist:
+
+```text
+USER   - explicitly applied by the mailbox user
+SYSTEM - deterministic platform rules
+AI     - classifier-generated label with optional confidence_score
+```
+
+The current API writes `USER` labels only. `SYSTEM` and `AI` labels are schema-ready for a later classification pipeline.
+
 ## Object Storage
 
 Stores large immutable content:

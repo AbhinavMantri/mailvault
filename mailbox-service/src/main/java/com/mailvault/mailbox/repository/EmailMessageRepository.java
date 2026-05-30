@@ -356,9 +356,9 @@ public class EmailMessageRepository {
 
     public int addThreadLabel(UUID threadId, String userId, String label) {
         String sql = """
-                INSERT INTO mailbox_thread_labels (user_id, thread_id, label, created_at)
-                VALUES (:userId, :threadId, :label, now())
-                ON CONFLICT (user_id, thread_id, label) DO NOTHING
+                INSERT INTO mailbox_thread_labels (user_id, thread_id, label, source, confidence_score, created_at)
+                VALUES (:userId, :threadId, :label, 'USER', NULL, now())
+                ON CONFLICT (user_id, thread_id, label, source) DO NOTHING
                 """;
 
         return jdbcTemplate.update(
@@ -376,6 +376,7 @@ public class EmailMessageRepository {
                  WHERE thread_id = :threadId
                    AND user_id = :userId
                    AND label = :label
+                   AND source = 'USER'
                 """;
 
         return jdbcTemplate.update(
@@ -387,21 +388,27 @@ public class EmailMessageRepository {
         );
     }
 
-    public List<String> findThreadLabels(UUID threadId, String userId) {
+    public List<ThreadLabelRow> findThreadLabels(UUID threadId, String userId) {
         String sql = """
-                SELECT label
+                SELECT label,
+                       source,
+                       confidence_score
                   FROM mailbox_thread_labels
                  WHERE thread_id = :threadId
                    AND user_id = :userId
-                 ORDER BY label
+                 ORDER BY label, source
                 """;
 
-        return jdbcTemplate.queryForList(
+        return jdbcTemplate.query(
                 sql,
                 new MapSqlParameterSource()
                         .addValue("threadId", threadId)
                         .addValue("userId", userId),
-                String.class
+                (rs, rowNum) -> new ThreadLabelRow(
+                        rs.getString("label"),
+                        rs.getString("source"),
+                        rs.getBigDecimal("confidence_score")
+                )
         );
     }
 
@@ -448,20 +455,23 @@ public class EmailMessageRepository {
         return count == null ? 0 : count;
     }
 
-    public Map<UUID, List<String>> findLabelsForThreads(List<UUID> threadIds, String userId) {
+    public Map<UUID, List<ThreadLabelRow>> findLabelsForThreads(List<UUID> threadIds, String userId) {
         if (threadIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
         String sql = """
-                SELECT thread_id, label
+                SELECT thread_id,
+                       label,
+                       source,
+                       confidence_score
                   FROM mailbox_thread_labels
                  WHERE user_id = :userId
                    AND thread_id IN (:threadIds)
-                 ORDER BY thread_id, label
+                 ORDER BY thread_id, label, source
                 """;
 
-        Map<UUID, List<String>> labelsByThread = new HashMap<>();
+        Map<UUID, List<ThreadLabelRow>> labelsByThread = new HashMap<>();
         jdbcTemplate.query(
                 sql,
                 new MapSqlParameterSource()
@@ -470,7 +480,11 @@ public class EmailMessageRepository {
                 rs -> {
                     UUID threadId = rs.getObject("thread_id", UUID.class);
                     labelsByThread.computeIfAbsent(threadId, ignored -> new java.util.ArrayList<>())
-                            .add(rs.getString("label"));
+                            .add(new ThreadLabelRow(
+                                    rs.getString("label"),
+                                    rs.getString("source"),
+                                    rs.getBigDecimal("confidence_score")
+                            ));
                 }
         );
         return labelsByThread;

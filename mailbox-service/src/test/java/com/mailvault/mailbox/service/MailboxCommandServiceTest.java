@@ -1,6 +1,7 @@
 package com.mailvault.mailbox.service;
 
 import com.mailvault.mailbox.repository.EmailMessageRepository;
+import com.mailvault.mailbox.repository.ThreadLabelRow;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -144,13 +145,18 @@ class MailboxCommandServiceTest {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
         when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
-                .thenReturn(List.of("FAVORITE", "IMPORTANT"));
+                .thenReturn(List.of(
+                        new ThreadLabelRow("FAVORITE", "USER", null),
+                        new ThreadLabelRow("IMPORTANT", "USER", null)
+                ));
 
         var response = mailboxCommandService.addThreadLabel("user-123", threadId, "important");
 
         assertThat(response.status()).isEqualTo("LABEL_ADDED");
         assertThat(response.label()).isEqualTo("IMPORTANT");
-        assertThat(response.labels()).containsExactly("FAVORITE", "IMPORTANT");
+        assertThat(response.source()).isEqualTo("USER");
+        assertThat(response.labels()).extracting("label").containsExactly("FAVORITE", "IMPORTANT");
+        assertThat(response.labels()).extracting("source").containsExactly("USER", "USER");
         verify(emailMessageRepository).addThreadLabel(threadId, "user-123", "IMPORTANT");
     }
 
@@ -159,13 +165,15 @@ class MailboxCommandServiceTest {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.threadExists(threadId, "user-123")).thenReturn(true);
         when(emailMessageRepository.findThreadLabels(threadId, "user-123"))
-                .thenReturn(List.of("IMPORTANT"));
+                .thenReturn(List.of(new ThreadLabelRow("IMPORTANT", "SYSTEM", null)));
 
         var response = mailboxCommandService.removeThreadLabel("user-123", threadId, "favorite");
 
         assertThat(response.status()).isEqualTo("LABEL_REMOVED");
         assertThat(response.label()).isEqualTo("FAVORITE");
-        assertThat(response.labels()).containsExactly("IMPORTANT");
+        assertThat(response.source()).isEqualTo("USER");
+        assertThat(response.labels()).extracting("label").containsExactly("IMPORTANT");
+        assertThat(response.labels()).extracting("source").containsExactly("SYSTEM");
         verify(emailMessageRepository).removeThreadLabel(threadId, "user-123", "FAVORITE");
     }
 
