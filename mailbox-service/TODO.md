@@ -18,7 +18,7 @@ Hardening and product items before treating `mailbox-service` as production-read
 ## Forwarding
 
 - Add optional mailbox UX support for forwarding into an existing thread if product requirements need it.
-- Add full-thread forwarding support as a separate conversation-level workflow, not as an overload of single-email forwarding.
+- Add UI-facing metadata for forwarded thread messages if clients need to show that a sent message was generated from a full conversation.
 - Add explicit attachment selection visibility for forwarded messages.
 
 ## Testing

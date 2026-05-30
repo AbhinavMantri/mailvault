@@ -58,6 +58,14 @@ public class ThreadMessage {
         return email;
     }
 
+    public MessageDirection getDirection() {
+        return direction;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
     public void sendDraft(Instant sentAt) {
         if (direction != MessageDirection.DRAFT) {
             throw new IllegalArgumentException("Thread message is not a draft");

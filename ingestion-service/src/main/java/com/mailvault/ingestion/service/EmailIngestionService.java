@@ -35,6 +35,9 @@ import java.util.UUID;
 @Service
 public class EmailIngestionService {
 
+    private static final int MAX_THREAD_FORWARD_MESSAGES = 25;
+    private static final int MAX_THREAD_FORWARD_BODY_BYTES = 1_048_576;
+
     private static final List<AttachmentStatus> IMPORTABLE_ATTACHMENT_STATUSES = List.of(
             AttachmentStatus.UPLOADED,
             AttachmentStatus.PROCESSING,
@@ -218,6 +221,70 @@ public class EmailIngestionService {
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
 
+    @Transactional
+    public EmailImportResponse forwardThread(UUID threadId, EmailForwardRequest request) {
+        MailboxThread sourceThread = mailboxThreadRepository.findByIdAndUserId(threadId, request.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
+        List<ThreadMessage> sourceMessages = threadMessageRepository.findByThreadIdAndThreadUserIdOrderByCreatedAt(
+                threadId,
+                request.userId()
+        );
+        if (sourceMessages.isEmpty()) {
+            throw new IllegalArgumentException("Thread has no messages");
+        }
+        if (sourceMessages.size() > MAX_THREAD_FORWARD_MESSAGES) {
+            throw new IllegalArgumentException("Thread has too many messages to forward");
+        }
+
+        String subject = forwardSubject(request.subject(), sourceMessages.getFirst().getEmail().getSubject());
+        String forwardedTextBody = forwardThreadTextBody(request.textBody(), sourceMessages);
+        String forwardedHtmlBody = forwardThreadHtmlBody(request.htmlBody(), sourceMessages);
+        validateThreadForwardBodySize(forwardedTextBody, forwardedHtmlBody);
+        MessageDraft draft = MessageDraft.from(request, subject, forwardedTextBody, forwardedHtmlBody);
+        List<Attachment> originalAttachments = request.includeOriginalAttachments()
+                ? sourceMessages.stream()
+                        .flatMap(message -> message.getEmail().getAttachmentRefs().stream())
+                        .map(EmailAttachmentRef::getAttachment)
+                        .distinct()
+                        .toList()
+                : List.of();
+
+        UUID emailId = UUID.randomUUID();
+        Instant sentAt = Instant.now();
+        PersistedEmail persistedEmail = persistMessage(
+                draft,
+                emailId,
+                sentAt,
+                EmailStatus.INDEX_PENDING,
+                combinedForwardAttachments(draft, originalAttachments)
+        );
+        MailboxThread forwardedThread = new MailboxThread(
+                UUID.randomUUID(),
+                draft.userId(),
+                normalizeSubject(draft.subject()),
+                ThreadFolder.ACTIVE,
+                sentAt,
+                draft.from(),
+                1,
+                0,
+                sentAt,
+                sentAt
+        );
+        mailboxThreadRepository.save(forwardedThread);
+        threadMessageRepository.save(new ThreadMessage(
+                UUID.randomUUID(),
+                forwardedThread,
+                persistedEmail.email(),
+                MessageDirection.OUTBOUND,
+                sentAt,
+                sentAt
+        ));
+
+        saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
+
+        return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
+    }
+
     private PersistedEmail persistMessage(MessageDraft draft, UUID emailId, Instant receivedAt, EmailStatus status) {
         List<Attachment> attachments = findUploadedAttachments(draft);
         return persistMessage(draft, emailId, receivedAt, status, attachments);
@@ -361,6 +428,54 @@ public class EmailIngestionService {
                 escapeHtml(originalEmail.getSubject()),
                 originalHtml.isBlank() ? "<pre>%s</pre>".formatted(escapeHtml(objectStorageService.readText(originalEmail.getTextObjectKey()))) : originalHtml
         ).strip();
+    }
+
+    private String forwardThreadTextBody(String requestedBody, List<ThreadMessage> sourceMessages) {
+        StringBuilder forwardedBody = new StringBuilder();
+        forwardedBody.append(safeText(requestedBody).trim());
+        forwardedBody.append("\n\n---------- Forwarded conversation ---------");
+        for (ThreadMessage message : sourceMessages) {
+            EmailMessage email = message.getEmail();
+            forwardedBody.append("\n\n")
+                    .append("From: ").append(email.getSender()).append("\n")
+                    .append("Subject: ").append(email.getSubject()).append("\n\n")
+                    .append(safeText(objectStorageService.readText(email.getTextObjectKey())).trim());
+        }
+        return forwardedBody.toString().strip();
+    }
+
+    private String forwardThreadHtmlBody(String requestedHtml, List<ThreadMessage> sourceMessages) {
+        boolean hasHtml = requestedHtml != null;
+        StringBuilder forwardedHtml = new StringBuilder();
+        forwardedHtml.append(safeText(requestedHtml));
+        forwardedHtml.append("""
+                <hr>
+                <p><strong>Forwarded conversation</strong></p>
+                """);
+        for (ThreadMessage message : sourceMessages) {
+            EmailMessage email = message.getEmail();
+            String originalHtml = safeText(objectStorageService.readText(email.getHtmlObjectKey()));
+            if (!originalHtml.isBlank()) {
+                hasHtml = true;
+            }
+            String originalText = safeText(objectStorageService.readText(email.getTextObjectKey()));
+            forwardedHtml.append("<hr>")
+                    .append("<p><strong>From:</strong> ").append(escapeHtml(email.getSender()))
+                    .append("<br><strong>Subject:</strong> ").append(escapeHtml(email.getSubject()))
+                    .append("</p>");
+            forwardedHtml.append(originalHtml.isBlank()
+                    ? "<pre>%s</pre>".formatted(escapeHtml(originalText))
+                    : originalHtml);
+        }
+        return hasHtml ? forwardedHtml.toString().strip() : null;
+    }
+
+    private void validateThreadForwardBodySize(String textBody, String htmlBody) {
+        int textBytes = safeText(textBody).getBytes(StandardCharsets.UTF_8).length;
+        int htmlBytes = safeText(htmlBody).getBytes(StandardCharsets.UTF_8).length;
+        if (textBytes + htmlBytes > MAX_THREAD_FORWARD_BODY_BYTES) {
+            throw new IllegalArgumentException("Thread forward body is too large");
+        }
     }
 
     private List<Attachment> combinedForwardAttachments(MessageDraft draft, List<Attachment> originalAttachments) {

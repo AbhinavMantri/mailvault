@@ -1,5 +1,6 @@
 package com.mailvault.ingestion.api;
 
+import com.mailvault.ingestion.api.dto.EmailForwardRequest;
 import com.mailvault.ingestion.api.dto.EmailImportResponse;
 import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.service.EmailIngestionService;
@@ -29,5 +30,12 @@ public class ThreadMessageController {
     public EmailImportResponse replyToThread(@PathVariable UUID threadId,
                                              @Valid @RequestBody EmailReplyRequest request) {
         return emailIngestionService.replyToThread(threadId, request);
+    }
+
+    @PostMapping("/{threadId}/forward")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public EmailImportResponse forwardThread(@PathVariable UUID threadId,
+                                             @Valid @RequestBody EmailForwardRequest request) {
+        return emailIngestionService.forwardThread(threadId, request);
     }
 }
