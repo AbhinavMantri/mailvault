@@ -125,7 +125,7 @@
   <text x="1175" y="1052" text-anchor="middle" class="box-title-sm">Attachment Worker</text>
   <text x="1175" y="1087" text-anchor="middle" class="box-body-sm">Hash and dedupe</text>
 
-  <path class="event-arrow" d="M520 820 L520 1062 L490 1062" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M500 820 L450 820 L450 1062 L500 1062" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M888 820 L888 1000" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M1175 820 L1175 1000" marker-end="url(#eventArrow)"/>
 
