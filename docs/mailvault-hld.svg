@@ -72,7 +72,7 @@
   <text x="468" y="252" class="lane-title">Core Services</text>
   <text x="468" y="280" class="lane-note">The critical path stores durable truth first.</text>
 
-  <path class="arrow" d="M345 605 L460 605 L460 405" marker-end="url(#arrow)"/>
+  <path class="arrow" d="M345 605 L420 605 L420 405 L490 405" marker-end="url(#arrow)"/>
   <text x="372" y="584" class="label">service calls</text>
 
   <rect x="500" y="340" width="245" height="130" class="box" fill="#252A55" stroke="#818CF8" filter="url(#shadow)"/>
@@ -125,9 +125,9 @@
   <text x="1175" y="1052" text-anchor="middle" class="box-title-sm">Attachment Worker</text>
   <text x="1175" y="1087" text-anchor="middle" class="box-body-sm">Hash and dedupe</text>
 
-  <path class="event-arrow" d="M612 900 L612 1000" marker-end="url(#eventArrow)"/>
-  <path class="event-arrow" d="M888 900 L888 1000" marker-end="url(#eventArrow)"/>
-  <path class="event-arrow" d="M1175 900 L1175 1000" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M612 820 L612 875 L740 875 L740 1062 L725 1062" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M888 820 L888 1000" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M1175 820 L1175 1000" marker-end="url(#eventArrow)"/>
 
   <rect x="1390" y="210" width="320" height="520" class="lane"/>
   <text x="1428" y="252" class="lane-title">Storage Systems</text>
@@ -157,10 +157,9 @@
   <text x="1545" y="1110" text-anchor="middle" class="box-title-sm">SMTP / GreenMail</text>
   <text x="1545" y="1138" text-anchor="middle" class="box-body-sm">local test server</text>
 
-  <path class="soft-arrow" d="M1295 385 L1420 385" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M1295 440 L1360 440 L1360 516 L1420 516" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M1210 470 L1210 646 L1420 646" marker-end="url(#softArrow)"/>
-  <path class="soft-arrow" d="M888 1115 L888 1180 L1725 1180 L1725 646 L1670 646" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M622 340 L622 310 L1360 310 L1360 386 L1420 386" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M622 470 L622 500 L1360 500 L1360 516 L1420 516" marker-end="url(#softArrow)"/>
+  <path class="soft-arrow" d="M1295 405 L1360 405 L1360 646 L1420 646" marker-end="url(#softArrow)"/>
 
   <path class="delivery-arrow" d="M1300 770 L1365 770 L1365 992 L1420 992" marker-end="url(#deliveryArrow)"/>
   <path class="delivery-arrow" d="M1545 1045 L1545 1070" marker-end="url(#deliveryArrow)"/>
