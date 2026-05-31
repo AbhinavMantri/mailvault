@@ -17,21 +17,21 @@
       .event-text { font: 400 18px Arial, Helvetica, sans-serif; fill: #CFFAFE; }
       .lane { fill: #0B1220; stroke: #263449; stroke-width: 2; rx: 26; }
       .box { stroke-width: 3; rx: 18; }
-      .arrow { stroke: #E2E8F0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-      .soft-arrow { stroke: #94A3B8; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 10; fill: none; }
-      .event-arrow { stroke: #FBBF24; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-      .delivery-arrow { stroke: #38BDF8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .arrow { stroke: #E2E8F0; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .soft-arrow { stroke: #94A3B8; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 9; fill: none; }
+      .event-arrow { stroke: #FBBF24; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .delivery-arrow { stroke: #38BDF8; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; fill: none; }
     </style>
-    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#E2E8F0"/>
     </marker>
-    <marker id="softArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+    <marker id="softArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#94A3B8"/>
     </marker>
-    <marker id="eventArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+    <marker id="eventArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#FBBF24"/>
     </marker>
-    <marker id="deliveryArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+    <marker id="deliveryArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 z" fill="#38BDF8"/>
     </marker>
     <linearGradient id="pageBg" x1="0" y1="0" x2="1800" y2="1320" gradientUnits="userSpaceOnUse">
@@ -100,7 +100,7 @@
   <path class="arrow" d="M745 405 L805 405" marker-end="url(#arrow)"/>
   <path class="arrow" d="M1060 405 L1115 405" marker-end="url(#arrow)"/>
   <path class="delivery-arrow" d="M622 470 L622 500 L708 500 L708 525" marker-end="url(#deliveryArrow)"/>
-  <path class="event-arrow" d="M745 450 L1042 450 L1042 525" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M622 470 L622 505 L1042 505 L1042 525" marker-end="url(#eventArrow)"/>
 
   <rect x="430" y="695" width="910" height="155" class="lane"/>
   <rect x="470" y="720" width="830" height="100" rx="26" fill="url(#kafkaBg)" filter="url(#shadow)"/>
@@ -125,7 +125,7 @@
   <text x="1175" y="1052" text-anchor="middle" class="box-title-sm">Attachment Worker</text>
   <text x="1175" y="1087" text-anchor="middle" class="box-body-sm">Hash and dedupe</text>
 
-  <path class="event-arrow" d="M612 820 L612 875 L740 875 L740 1062 L725 1062" marker-end="url(#eventArrow)"/>
+  <path class="event-arrow" d="M520 820 L520 1062 L490 1062" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M888 820 L888 1000" marker-end="url(#eventArrow)"/>
   <path class="event-arrow" d="M1175 820 L1175 1000" marker-end="url(#eventArrow)"/>
 
