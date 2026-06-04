@@ -19,6 +19,8 @@ Hardening items to complete before treating ingestion-service as production-read
 
 ## Message Composition
 
+- Replace `@mailvault.local` local-recipient detection with a user/address directory lookup.
+- Add a separate external delivery boundary for non-local domains instead of treating accepted outbound mail as externally delivered.
 - Add optional forwarding into an existing thread if product requirements need it; the MVP starts forwards as new sent threads.
 - Add explicit original-attachment selection for forwards instead of the current all-or-none `includeOriginalAttachments` flag.
 - Add selected-message forwarding or export/share workflows for conversations that exceed full-thread forwarding limits.

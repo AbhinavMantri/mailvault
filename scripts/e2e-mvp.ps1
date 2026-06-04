@@ -384,6 +384,14 @@ try {
     }
     Assert-True ($sentThread.messageCount -eq 2) "sent thread message count did not include conversation"
 
+    Write-Step "checking local reply recipient inbox"
+    $billingInboxThread = Wait-Until "local reply recipient inbox contains delivered message" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/billing/threads?folder=INBOX&limit=10"
+        @($threads) | Where-Object { $_.lastSender -eq $recipient -and $_.subject -like "*$runId*" -and $_.folder -eq "INBOX" } | Select-Object -First 1
+    }
+    Assert-True ($billingInboxThread.messageCount -eq 1) "local reply recipient thread message count was not 1"
+    Assert-True ($billingInboxThread.unreadCount -eq 1) "local reply recipient unread count was not 1"
+
     Write-Step "forwarding imported email with attachment"
     $forward = Invoke-Json "POST" "http://localhost:8081/emails/$($email.emailId)/forward" @{
         userId = $userId
@@ -421,6 +429,14 @@ try {
     Assert-True ($forwardDetail.textBody.Contains("Forwarded message")) "forwarded text body did not include forwarded message marker"
     Assert-True ($forwardDetail.textBody.Contains($textBody)) "forwarded text body did not include original email body"
 
+    Write-Step "checking local forward recipient inbox"
+    $financeInboxThread = Wait-Until "local forward recipient inbox contains delivered message" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/finance/threads?folder=INBOX&limit=10"
+        @($threads) | Where-Object { $_.lastSender -eq $recipient -and $_.subject -like "*$runId*" -and $_.folder -eq "INBOX" } | Select-Object -First 1
+    }
+    Assert-True ($financeInboxThread.messageCount -eq 1) "local forward recipient thread message count was not 1"
+    Assert-True ($financeInboxThread.unreadCount -eq 1) "local forward recipient unread count was not 1"
+
     Write-Step "forwarding full thread conversation"
     $threadForwardSubject = "Thread forward $subject"
     $threadForward = Invoke-Json "POST" "http://localhost:8081/threads/$($thread.id)/forward" @{
@@ -450,6 +466,14 @@ try {
     Assert-True ($threadForwardDetail.textBody.Contains("Forwarded conversation")) "thread forward did not include conversation marker"
     Assert-True ($threadForwardDetail.textBody.Contains($textBody)) "thread forward did not include original inbound body"
     Assert-True ($threadForwardDetail.textBody.Contains($replyBody)) "thread forward did not include reply body"
+
+    Write-Step "checking local thread-forward recipient inbox"
+    $auditInboxThread = Wait-Until "local thread-forward recipient inbox contains delivered message" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/audit/threads?folder=INBOX&limit=10"
+        @($threads) | Where-Object { $_.lastSender -eq $recipient -and $_.subject -like "*$runId*" -and $_.folder -eq "INBOX" } | Select-Object -First 1
+    }
+    Assert-True ($auditInboxThread.messageCount -eq 1) "local thread-forward recipient thread message count was not 1"
+    Assert-True ($auditInboxThread.unreadCount -eq 1) "local thread-forward recipient unread count was not 1"
 
     Write-Step "moving thread to trash and restoring"
     $trashResponse = Invoke-Json "POST" "http://localhost:8082/threads/$($thread.id)/trash?userId=$userId"
@@ -524,6 +548,14 @@ try {
         @($threads) | Where-Object { $_.id -eq $draftThread.id -and $_.folder -eq "SENT" } | Select-Object -First 1
     }
     Assert-True ($sentDraftThread.messageCount -eq 1) "sent draft thread message count was not 1"
+
+    Write-Step "checking local draft-send recipient inbox"
+    $billingDraftInboxThread = Wait-Until "local draft-send recipient inbox contains delivered message" 60 {
+        $threads = Invoke-Json "GET" "http://localhost:8082/mailboxes/billing/threads?folder=INBOX&limit=10"
+        @($threads) | Where-Object { $_.lastSender -eq $recipient -and $_.subject -like "*Draft*$runId*" -and $_.folder -eq "INBOX" } | Select-Object -First 1
+    }
+    Assert-True ($billingDraftInboxThread.messageCount -eq 1) "local draft-send recipient thread message count was not 1"
+    Assert-True ($billingDraftInboxThread.unreadCount -eq 1) "local draft-send recipient unread count was not 1"
 
     Write-Step "checking OpenSearch read model"
     $searchResult = Wait-Until "search returns imported email" 90 {
