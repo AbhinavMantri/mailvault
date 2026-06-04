@@ -53,6 +53,7 @@ Architecture notes:
 - Search by sender, recipient, subject, and received date. _Initial `search-service` added; body search is planned._
 - Track per-user storage quota. _Async usage accounting and storage usage API added in `quota-service`._
 - Deduplicate attachments using SHA-256 hashes. _Initial canonical blob dedupe is implemented in `attachment-worker`._
+- Send outbound email through an SMTP boundary. _Initial `delivery-service` added with GreenMail-backed tests and local SMTP config._
 - Attachment compression is intentionally deferred. _The MVP prioritizes deduplication and archival; selective compression can be added later for text-like content._
 - Run the full stack locally with Docker Compose. _Infrastructure Compose file added._
 
@@ -103,6 +104,13 @@ Run the attachment worker in another terminal:
 
 ```bash
 cd attachment-worker
+mvn spring-boot:run
+```
+
+Run the delivery service in another terminal:
+
+```bash
+cd delivery-service
 mvn spring-boot:run
 ```
 
@@ -165,6 +173,9 @@ Local endpoints:
 | Search indexer | `http://localhost:8084` |
 | Search service | `http://localhost:8085` |
 | Attachment worker | `http://localhost:8086` |
+| Delivery service | `http://localhost:8087` |
+| GreenMail SMTP | `localhost:3025` |
+| GreenMail API | `http://localhost:8088` |
 | MinIO console | `http://localhost:9001` |
 | OpenSearch | `http://localhost:9200` |
 | Postgres | `localhost:5432` |
@@ -193,6 +204,7 @@ Local endpoints:
 | `search-indexer` | Consume email events and update OpenSearch |
 | `search-service` | Serve user search queries from OpenSearch |
 | `attachment-worker` | Compute attachment hashes and prepare dedupe metadata |
+| `delivery-service` | Own outbound SMTP delivery and retry policy boundaries |
 | `attachment-scanner` | Scan attachments asynchronously and record clean, infected, or failed verdicts |
 | `moderation-service` | Review abuse reports, sender risk signals, and user safety actions |
 | `archival-worker` | Move old email content to archival object-storage prefixes |

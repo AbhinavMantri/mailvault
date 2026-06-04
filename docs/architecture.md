@@ -55,6 +55,8 @@ Outbound APIs also perform MVP local delivery. If a reply, draft send, single-em
 
 Full-thread forwarding is bounded in the MVP: requests are rejected if the source thread has more than 25 messages or the generated forwarded body exceeds 1 MB. Original attachments are reused through logical attachment references; the object bytes are not copied or re-uploaded.
 
+`delivery-service` is the outbound SMTP boundary. It sends MIME messages through a configured SMTP server and is tested with GreenMail so local development can validate SMTP behavior without touching real external mail infrastructure. Ingestion is still the system of record for accepted messages; wiring ingestion to delivery should happen through an event boundary later, with retries, bounce handling, suppression lists, and provider/reputation safeguards owned by delivery-service rather than the request path.
+
 If MailVault later supports Gmail, Outlook, or `.eml` migration, that should be handled by a separate migration adapter. The adapter can parse external conversation signals such as provider thread IDs, `Message-ID`, `In-Reply-To`, and `References`, then convert the imported history into MailVault's native `mailbox_threads`, `emails`, `thread_messages`, recipients, and attachment refs. That keeps the normal import path simple and keeps external-provider rules outside core ingestion.
 
 `TO`, `CC`, and `BCC` are stored in `email_recipients.recipient_type`. Response shaping for BCC visibility is a later authorization concern: the sender can see all BCC recipients, normal TO/CC recipients should not see BCC recipients, and a BCC recipient should only see their own BCC participation.
