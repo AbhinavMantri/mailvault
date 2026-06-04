@@ -45,6 +45,7 @@ Architecture notes:
 - Forward existing emails to new recipients. _Implemented in `ingestion-service` as a new outbound sent thread._
 - Forward full thread conversations to new recipients. _Implemented in `ingestion-service` as a separate conversation-level API._
 - Create and send draft messages. _Implemented in `ingestion-service`._
+- Deliver outbound messages to local MailVault recipients. _Implemented for `@mailvault.local` addresses by creating recipient-owned `INBOX` threads._
 - Store email metadata in Postgres. _Initial schema added._
 - Store raw content and attachments in MinIO. _Implemented with direct attachment upload URLs._
 - Publish email events through a transactional outbox. _Implemented for `email.received`._
@@ -111,7 +112,7 @@ Run the MVP end-to-end smoke test:
 .\scripts\e2e-mvp.ps1
 ```
 
-The script starts local infrastructure, runs the six Spring Boot services, imports an email with an uploaded attachment, then verifies mailbox reads, attachment processing, quota accounting, and OpenSearch search.
+The script starts local infrastructure, runs the six Spring Boot services, imports an email with an uploaded attachment, then verifies mailbox reads, local recipient delivery, attachment processing, quota accounting, and OpenSearch search.
 
 To reuse an existing local Postgres instance:
 
@@ -179,9 +180,8 @@ Local endpoints:
 - Feed repeated abuse reports into sender/domain risk scoring and moderation queues.
 - Add asynchronous mailbox classification for system/AI labels such as `PROMOTION`, `SOCIAL`, `SECURITY_ALERT`, and `SPAM_SUSPECTED`.
 - Keep user-applied labels authoritative so classifier updates do not overwrite `source = USER` labels.
-- Add email forwarding with clear thread and attachment-reference behavior.
-- Add full-thread forwarding through a separate conversation-level API after single-message forwarding is stable.
 - Add retry, timeout, and alerting behavior for scan failures.
+- Replace the MVP `@mailvault.local` delivery heuristic with a user/address directory and an explicit external SMTP delivery boundary.
 
 ## Planned Services
 
