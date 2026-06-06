@@ -4,7 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -16,6 +19,10 @@ public class MailboxThread {
 
     @Id
     private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id", nullable = false)
+    private Conversation conversation;
 
     @Column(nullable = false)
     private String userId;
@@ -51,7 +58,26 @@ public class MailboxThread {
     public MailboxThread(UUID id, String userId, String subjectNormalized, ThreadFolder folder,
                          Instant lastMessageAt, String lastSender, int messageCount, int unreadCount,
                          Instant createdAt, Instant updatedAt) {
+        this(
+                id,
+                new Conversation(id, subjectNormalized, createdAt, updatedAt),
+                userId,
+                subjectNormalized,
+                folder,
+                lastMessageAt,
+                lastSender,
+                messageCount,
+                unreadCount,
+                createdAt,
+                updatedAt
+        );
+    }
+
+    public MailboxThread(UUID id, Conversation conversation, String userId, String subjectNormalized, ThreadFolder folder,
+                         Instant lastMessageAt, String lastSender, int messageCount, int unreadCount,
+                         Instant createdAt, Instant updatedAt) {
         this.id = id;
+        this.conversation = conversation;
         this.userId = userId;
         this.subjectNormalized = subjectNormalized;
         this.folder = folder;
@@ -67,12 +93,21 @@ public class MailboxThread {
         return id;
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public UUID getConversationId() {
+        return conversation.getId();
+    }
+
     public void activateFromDraft(String sender, Instant messageAt) {
         this.folder = ThreadFolder.ACTIVE;
         this.lastSender = sender;
         this.lastMessageAt = messageAt;
         this.unreadCount = 0;
         this.updatedAt = messageAt;
+        this.conversation.touch(messageAt);
     }
 
     public void appendMessage(String sender, Instant messageAt, MessageDirection direction) {
@@ -83,5 +118,6 @@ public class MailboxThread {
             this.unreadCount++;
         }
         this.updatedAt = messageAt;
+        this.conversation.touch(messageAt);
     }
 }

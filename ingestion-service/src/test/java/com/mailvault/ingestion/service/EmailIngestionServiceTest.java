@@ -19,12 +19,14 @@ import com.mailvault.ingestion.domain.MailboxThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
+import com.mailvault.ingestion.repository.ConversationRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.repository.ThreadMessageRepository;
 import com.mailvault.ingestion.repository.MailboxThreadRepository;
 import com.mailvault.ingestion.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +58,9 @@ class EmailIngestionServiceTest {
 
     @Mock
     private OutboxEventService outboxEventService;
+
+    @Mock
+    private ConversationRepository conversationRepository;
 
     @Mock
     private MailboxThreadRepository mailboxThreadRepository;
@@ -213,10 +218,16 @@ class EmailIngestionServiceTest {
         var response = emailIngestionService.replyToThread(threadId, request);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        verify(emailMessageRepository, times(2)).save(any(EmailMessage.class));
-        verify(mailboxThreadRepository).save(any(MailboxThread.class));
+        ArgumentCaptor<MailboxThread> threadCaptor = ArgumentCaptor.forClass(MailboxThread.class);
+        ArgumentCaptor<ThreadMessage> threadMessageCaptor = ArgumentCaptor.forClass(ThreadMessage.class);
+        verify(emailMessageRepository).save(any(EmailMessage.class));
+        verify(mailboxThreadRepository).save(threadCaptor.capture());
         verify(threadMessageRepository, times(2)).save(any(ThreadMessage.class));
-        verify(outboxEventService, times(2)).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+        verify(threadMessageRepository, times(2)).save(threadMessageCaptor.capture());
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+        assertThat(threadCaptor.getValue().getConversationId()).isEqualTo(thread.getConversationId());
+        assertThat(threadMessageCaptor.getAllValues().getLast().getEmail())
+                .isSameAs(threadMessageCaptor.getAllValues().getFirst().getEmail());
     }
 
     @Test
@@ -250,10 +261,10 @@ class EmailIngestionServiceTest {
         var response = emailIngestionService.replyToThread(threadId, request);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
-        verify(emailMessageRepository, times(2)).save(any(EmailMessage.class));
+        verify(emailMessageRepository).save(any(EmailMessage.class));
         verify(mailboxThreadRepository).save(any(MailboxThread.class));
         verify(threadMessageRepository, times(2)).save(any(ThreadMessage.class));
-        verify(outboxEventService, times(2)).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
+        verify(outboxEventService).saveEmailReceived(any(EmailReceivedEvent.class), any(Instant.class));
     }
 
     @Test
