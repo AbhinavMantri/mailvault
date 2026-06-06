@@ -8,6 +8,7 @@ import com.mailvault.ingestion.api.dto.EmailReplyRequest;
 import com.mailvault.ingestion.api.dto.SendDraftRequest;
 import com.mailvault.ingestion.domain.Attachment;
 import com.mailvault.ingestion.domain.AttachmentStatus;
+import com.mailvault.ingestion.domain.Conversation;
 import com.mailvault.ingestion.domain.EmailAttachmentRef;
 import com.mailvault.ingestion.domain.EmailMessage;
 import com.mailvault.ingestion.domain.EmailRecipient;
@@ -20,6 +21,7 @@ import com.mailvault.ingestion.domain.MailboxThread;
 import com.mailvault.ingestion.events.EmailReceivedEvent;
 import com.mailvault.ingestion.outbox.OutboxEventService;
 import com.mailvault.ingestion.repository.AttachmentRepository;
+import com.mailvault.ingestion.repository.ConversationRepository;
 import com.mailvault.ingestion.repository.EmailMessageRepository;
 import com.mailvault.ingestion.repository.ThreadMessageRepository;
 import com.mailvault.ingestion.repository.MailboxThreadRepository;
@@ -52,6 +54,7 @@ public class EmailIngestionService {
     private final EmailMessageRepository emailMessageRepository;
     private final AttachmentRepository attachmentRepository;
     private final OutboxEventService outboxEventService;
+    private final ConversationRepository conversationRepository;
     private final MailboxThreadRepository mailboxThreadRepository;
     private final ThreadMessageRepository threadMessageRepository;
 
@@ -59,12 +62,14 @@ public class EmailIngestionService {
                                  EmailMessageRepository emailMessageRepository,
                                  AttachmentRepository attachmentRepository,
                                  OutboxEventService outboxEventService,
+                                 ConversationRepository conversationRepository,
                                  MailboxThreadRepository mailboxThreadRepository,
                                  ThreadMessageRepository threadMessageRepository) {
         this.objectStorageService = objectStorageService;
         this.emailMessageRepository = emailMessageRepository;
         this.attachmentRepository = attachmentRepository;
         this.outboxEventService = outboxEventService;
+        this.conversationRepository = conversationRepository;
         this.mailboxThreadRepository = mailboxThreadRepository;
         this.threadMessageRepository = threadMessageRepository;
     }
@@ -75,8 +80,9 @@ public class EmailIngestionService {
         UUID emailId = UUID.randomUUID();
         Instant receivedAt = Instant.now();
         PersistedEmail persistedEmail = persistMessage(draft, emailId, receivedAt, EmailStatus.INDEX_PENDING);
-        MailboxThread thread = new MailboxThread(
-                UUID.randomUUID(),
+        Conversation conversation = createConversation(draft.subject(), receivedAt);
+        MailboxThread thread = createMailboxThread(
+                conversation,
                 draft.userId(),
                 normalizeSubject(draft.subject()),
                 ThreadFolder.INBOX,
@@ -122,7 +128,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
-        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), thread.getConversation(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -133,8 +139,9 @@ public class EmailIngestionService {
         UUID emailId = UUID.randomUUID();
         Instant createdAt = Instant.now();
         PersistedEmail persistedEmail = persistMessage(draft, emailId, createdAt, EmailStatus.DRAFT);
-        MailboxThread thread = new MailboxThread(
-                UUID.randomUUID(),
+        Conversation conversation = createConversation(draft.subject(), createdAt);
+        MailboxThread thread = createMailboxThread(
+                conversation,
                 draft.userId(),
                 normalizeSubject(draft.subject()),
                 ThreadFolder.DRAFT,
@@ -170,7 +177,7 @@ public class EmailIngestionService {
         threadMessage.getThread().activateFromDraft(email.getSender(), sentAt);
 
         saveEmailReceivedEvent(email, sentAt);
-        deliverToLocalRecipients(MessageDraft.from(email), email, sentAt);
+        deliverToLocalRecipients(MessageDraft.from(email), email, threadMessage.getThread().getConversation(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", email.getLogicalSizeBytes());
     }
@@ -200,8 +207,9 @@ public class EmailIngestionService {
                 EmailStatus.INDEX_PENDING,
                 combinedForwardAttachments(draft, originalAttachments)
         );
-        MailboxThread thread = new MailboxThread(
-                UUID.randomUUID(),
+        Conversation conversation = createConversation(draft.subject(), sentAt);
+        MailboxThread thread = createMailboxThread(
+                conversation,
                 draft.userId(),
                 normalizeSubject(draft.subject()),
                 ThreadFolder.ACTIVE,
@@ -223,7 +231,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
-        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), thread.getConversation(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -265,8 +273,9 @@ public class EmailIngestionService {
                 EmailStatus.INDEX_PENDING,
                 combinedForwardAttachments(draft, originalAttachments)
         );
-        MailboxThread forwardedThread = new MailboxThread(
-                UUID.randomUUID(),
+        Conversation conversation = createConversation(draft.subject(), sentAt);
+        MailboxThread forwardedThread = createMailboxThread(
+                conversation,
                 draft.userId(),
                 normalizeSubject(draft.subject()),
                 ThreadFolder.ACTIVE,
@@ -288,7 +297,7 @@ public class EmailIngestionService {
         ));
 
         saveEmailReceivedEvent(draft, emailId, persistedEmail.logicalSizeBytes(), sentAt);
-        deliverToLocalRecipients(draft, persistedEmail.email(), sentAt);
+        deliverToLocalRecipients(draft, persistedEmail.email(), forwardedThread.getConversation(), sentAt);
 
         return new EmailImportResponse(emailId, "ACCEPTED", persistedEmail.logicalSizeBytes());
     }
@@ -335,32 +344,11 @@ public class EmailIngestionService {
         return new PersistedEmail(email, logicalSizeBytes);
     }
 
-    private void deliverToLocalRecipients(MessageDraft draft, EmailMessage sourceEmail, Instant deliveredAt) {
+    private void deliverToLocalRecipients(MessageDraft draft, EmailMessage sourceEmail, Conversation conversation,
+                                          Instant deliveredAt) {
         localRecipientDeliveries(draft).forEach(delivery -> {
-            UUID deliveredEmailId = UUID.randomUUID();
-            EmailMessage deliveredEmail = new EmailMessage(
-                    deliveredEmailId,
-                    delivery.userId(),
-                    sourceEmail.getSender(),
-                    sourceEmail.getSubject(),
-                    sourceEmail.getRawObjectKey(),
-                    sourceEmail.getTextObjectKey(),
-                    sourceEmail.getHtmlObjectKey(),
-                    sourceEmail.getLogicalSizeBytes(),
-                    EmailStatus.INDEX_PENDING,
-                    deliveredAt
-            );
-            safeList(draft.to()).forEach(recipient -> deliveredEmail.addRecipient(new EmailRecipient(recipient, RecipientType.TO)));
-            safeList(draft.cc()).forEach(recipient -> deliveredEmail.addRecipient(new EmailRecipient(recipient, RecipientType.CC)));
-            if (delivery.type() == RecipientType.BCC) {
-                deliveredEmail.addRecipient(new EmailRecipient(delivery.address(), RecipientType.BCC));
-            }
-            sourceEmail.getAttachmentRefs().stream()
-                    .map(EmailAttachmentRef::getAttachment)
-                    .forEach(attachment -> deliveredEmail.addAttachmentRef(new EmailAttachmentRef(attachment)));
-
-            MailboxThread thread = new MailboxThread(
-                    UUID.randomUUID(),
+            MailboxThread thread = createMailboxThread(
+                    conversation,
                     delivery.userId(),
                     normalizeSubject(sourceEmail.getSubject()),
                     ThreadFolder.INBOX,
@@ -371,18 +359,45 @@ public class EmailIngestionService {
                     deliveredAt,
                     deliveredAt
             );
-            emailMessageRepository.save(deliveredEmail);
             mailboxThreadRepository.save(thread);
             threadMessageRepository.save(new ThreadMessage(
                     UUID.randomUUID(),
                     thread,
-                    deliveredEmail,
+                    sourceEmail,
                     MessageDirection.INBOUND,
                     null,
                     deliveredAt
             ));
-            saveEmailReceivedEvent(deliveredEmail, deliveredAt);
         });
+    }
+
+    private Conversation createConversation(String subject, Instant createdAt) {
+        Conversation conversation = new Conversation(
+                UUID.randomUUID(),
+                normalizeSubject(subject),
+                createdAt,
+                createdAt
+        );
+        conversationRepository.save(conversation);
+        return conversation;
+    }
+
+    private MailboxThread createMailboxThread(Conversation conversation, String userId, String subjectNormalized,
+                                              ThreadFolder folder, Instant lastMessageAt, String lastSender,
+                                              int messageCount, int unreadCount, Instant createdAt, Instant updatedAt) {
+        return new MailboxThread(
+                UUID.randomUUID(),
+                conversation,
+                userId,
+                subjectNormalized,
+                folder,
+                lastMessageAt,
+                lastSender,
+                messageCount,
+                unreadCount,
+                createdAt,
+                updatedAt
+        );
     }
 
     private List<LocalRecipientDelivery> localRecipientDeliveries(MessageDraft draft) {
