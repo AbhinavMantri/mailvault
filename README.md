@@ -193,6 +193,7 @@ Local endpoints:
 - Keep user-applied labels authoritative so classifier updates do not overwrite `source = USER` labels.
 - Add retry, timeout, and alerting behavior for scan failures.
 - Replace the MVP `@mailvault.local` delivery heuristic with a user/address directory and an explicit external SMTP delivery boundary.
+- Add schema/class diagrams for the canonical conversation model, including `conversations`, `mailbox_threads`, `thread_messages`, `emails`, recipients, and attachment references.
 
 ## Planned Services
 
