@@ -40,7 +40,6 @@ public class EmailMessageRepository {
                                          AND mt.user_id = :userId
                                          AND mt.folder = 'INBOX'
                   LEFT JOIN email_attachment_refs ear ON ear.email_id = e.id
-                 WHERE e.user_id = :userId
                  GROUP BY e.id, e.sender, e.subject, e.status, e.received_at, e.logical_size_bytes
                  ORDER BY e.received_at DESC
                  LIMIT :limit
@@ -490,7 +489,7 @@ public class EmailMessageRepository {
         return labelsByThread;
     }
 
-    public List<ThreadMessageRow> findThreadMessages(UUID threadId) {
+    public List<ThreadMessageRow> findThreadMessages(UUID threadId, String userId) {
         String sql = """
                 SELECT tm.thread_id,
                        e.id AS email_id,
@@ -502,6 +501,8 @@ public class EmailMessageRepository {
                        e.received_at,
                        e.logical_size_bytes
                   FROM thread_messages tm
+                  JOIN mailbox_threads mt ON mt.id = tm.thread_id
+                                         AND mt.user_id = :userId
                   JOIN emails e ON e.id = tm.email_id
                  WHERE tm.thread_id = :threadId
                  ORDER BY tm.created_at
@@ -509,7 +510,9 @@ public class EmailMessageRepository {
 
         return jdbcTemplate.query(
                 sql,
-                new MapSqlParameterSource("threadId", threadId),
+                new MapSqlParameterSource()
+                        .addValue("threadId", threadId)
+                        .addValue("userId", userId),
                 (rs, rowNum) -> new ThreadMessageRow(
                         rs.getObject("thread_id", UUID.class),
                         rs.getObject("email_id", UUID.class),
@@ -526,18 +529,20 @@ public class EmailMessageRepository {
 
     public Optional<EmailHeaderRow> findHeader(UUID emailId, String userId) {
         String sql = """
-                SELECT id,
-                       user_id,
-                       sender,
-                       subject,
-                       text_object_key,
-                       html_object_key,
-                       status,
-                       received_at,
-                       logical_size_bytes
-                  FROM emails
-                 WHERE id = :emailId
-                   AND user_id = :userId
+                SELECT DISTINCT e.id,
+                       e.user_id,
+                       e.sender,
+                       e.subject,
+                       e.text_object_key,
+                       e.html_object_key,
+                       e.status,
+                       e.received_at,
+                       e.logical_size_bytes
+                  FROM emails e
+                  JOIN thread_messages tm ON tm.email_id = e.id
+                  JOIN mailbox_threads mt ON mt.id = tm.thread_id
+                                         AND mt.user_id = :userId
+                 WHERE e.id = :emailId
                 """;
 
         List<EmailHeaderRow> rows = jdbcTemplate.query(

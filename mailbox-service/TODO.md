@@ -24,4 +24,9 @@ Hardening and product items before treating `mailbox-service` as production-read
 ## Testing
 
 - Add controller tests for mailbox action and label validation errors.
-- Add repository integration tests for thread folders, read state, and label filtering.
+- Add repository integration tests for thread folders, read state, label filtering, and canonical recipient visibility.
+
+## Repository Style
+
+- Keep handwritten SQL focused on projection-heavy reads and explicit authorization joins.
+- Avoid adding raw SQL for simple CRUD-style access by default; use a repository abstraction or consider jOOQ if typed query coverage becomes useful.

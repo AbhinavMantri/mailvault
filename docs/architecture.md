@@ -35,6 +35,12 @@ The write path blocks only on work required to safely accept the email: validati
 
 Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `quota-service` also consumes `email.received` and updates logical storage usage asynchronously. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
 
+## Persistence Style
+
+Use handwritten SQL only where the service is building a deliberate read projection, aggregate, authorization join, or write that needs explicit database behavior. Examples include mailbox thread lists, label-filtered thread lists, sent/inbox projections, and canonical mailbox visibility checks across `mailbox_threads`, `thread_messages`, and `emails`.
+
+Simple entity lifecycle operations should prefer the service's normal repository abstraction instead of defaulting to handwritten SQL. In write-heavy domain services such as `ingestion-service`, that usually means Spring Data/JPA repositories around the aggregate model. If a read service starts accumulating many simple CRUD-style queries, split those from projection repositories or introduce a typed SQL layer such as jOOQ rather than letting raw SQL spread everywhere.
+
 Attachment metadata extraction and SHA-256 hash calculation run asynchronously in `attachment-worker` after `attachment.uploaded` is published. Postgres keeps logical attachment rows and canonical `attachment_blobs` rows, while MinIO stores both temporary pending uploads and canonical SHA-256 blob objects. Duplicate attachment content reuses the same canonical blob after hashing.
 
 Attachments are not considered downloadable until the security scan records a clean verdict. Unsafe attachments are marked quarantined and excluded from download paths.
@@ -42,6 +48,8 @@ Attachments are not considered downloadable until the security scan records a cl
 ## Thread And Recipient Model
 
 An email is the immutable message/content unit. A canonical `conversation` is the shared conversation container. A `mailbox_thread` is the per-user mailbox view of that conversation, carrying user-specific placement such as folder, unread count, labels, spam/trash/archive state, and last-message summary. Attachments and recipients belong to individual emails, not directly to the thread.
+
+`emails.user_id` records the user that created or accepted the canonical message row. It is not the mailbox authorization boundary. Mailbox read APIs authorize through `mailbox_threads.user_id` and `thread_messages`, so a recipient can read a locally delivered message without duplicating the sender-owned `emails` row or body objects.
 
 For the first imported message, ingestion creates the message, a canonical `conversations` row, and a first `mailbox_threads` row for that user. The `thread_messages` row links the message to the mailbox thread with a direction such as `INBOUND`. Later reply/send APIs can append more `thread_messages` rows to the same mailbox thread while preserving the shared conversation boundary.
 

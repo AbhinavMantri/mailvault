@@ -103,6 +103,35 @@ class MailboxQueryServiceTest {
     }
 
     @Test
+    void getEmailDetailAllowsCanonicalEmailVisibleThroughMailboxThread() {
+        UUID emailId = UUID.randomUUID();
+        when(emailMessageRepository.findHeader(emailId, "recipient-456"))
+                .thenReturn(Optional.of(new EmailHeaderRow(
+                        emailId,
+                        "sender-123",
+                        "sender@mailvault.local",
+                        "Shared canonical message",
+                        "users/sender-123/emails/%s/body.txt".formatted(emailId),
+                        null,
+                        "INDEX_PENDING",
+                        Instant.parse("2026-05-23T08:00:00Z"),
+                        128L
+                )));
+        when(emailMessageRepository.findRecipients(emailId))
+                .thenReturn(List.of(new RecipientRow("recipient@mailvault.local", "TO")));
+        when(emailMessageRepository.findAttachments(emailId)).thenReturn(List.of());
+        when(emailBodyStorage.readText("users/sender-123/emails/%s/body.txt".formatted(emailId)))
+                .thenReturn("Message body stored once");
+
+        var detail = mailboxQueryService.getEmailDetail("recipient-456", emailId);
+
+        assertThat(detail.id()).isEqualTo(emailId);
+        assertThat(detail.userId()).isEqualTo("sender-123");
+        assertThat(detail.textBody()).isEqualTo("Message body stored once");
+        assertThat(detail.recipients()).extracting("address").containsExactly("recipient@mailvault.local");
+    }
+
+    @Test
     void getThreadsReturnsThreadSummaries() {
         UUID threadId = UUID.randomUUID();
         when(emailMessageRepository.findThreads("user-123", "INBOX", 10))
@@ -170,7 +199,7 @@ class MailboxQueryServiceTest {
                         1,
                         1
                 )));
-        when(emailMessageRepository.findThreadMessages(threadId))
+        when(emailMessageRepository.findThreadMessages(threadId, "user-123"))
                 .thenReturn(List.of(new ThreadMessageRow(
                         threadId,
                         emailId,

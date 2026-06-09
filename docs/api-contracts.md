@@ -132,6 +132,8 @@ If any recipient address ends in `@mailvault.local`, the MVP also creates a reci
 GET /emails/{emailId}
 ```
 
+Email detail is visible when the requested `userId` owns a mailbox thread linked to that email. The response keeps the canonical email owner's `userId`, so locally delivered recipient views may see a different `userId` than the requester.
+
 ```json
 {
   "id": "28c13478-95df-4c11-a7f5-3695f63202f7",
