@@ -43,6 +43,8 @@ Attachments are not considered downloadable until the security scan records a cl
 
 An email is the immutable message/content unit. A canonical `conversation` is the shared conversation container. A `mailbox_thread` is the per-user mailbox view of that conversation, carrying user-specific placement such as folder, unread count, labels, spam/trash/archive state, and last-message summary. Attachments and recipients belong to individual emails, not directly to the thread.
 
+`emails.user_id` records the user that created or accepted the canonical message row. It is not the mailbox authorization boundary. Mailbox read APIs authorize through `mailbox_threads.user_id` and `thread_messages`, so a recipient can read a locally delivered message without duplicating the sender-owned `emails` row or body objects.
+
 For the first imported message, ingestion creates the message, a canonical `conversations` row, and a first `mailbox_threads` row for that user. The `thread_messages` row links the message to the mailbox thread with a direction such as `INBOUND`. Later reply/send APIs can append more `thread_messages` rows to the same mailbox thread while preserving the shared conversation boundary.
 
 `POST /emails/import` is intentionally treated as a new conversation boundary in the core API. It should not carry complex thread-resolution heuristics. `POST /threads/{threadId}/messages` receives an explicit `threadId`, validates ownership, creates a new `emails` row, and appends a `thread_messages` row to the existing thread.

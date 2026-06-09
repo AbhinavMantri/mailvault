@@ -24,4 +24,4 @@ Hardening and product items before treating `mailbox-service` as production-read
 ## Testing
 
 - Add controller tests for mailbox action and label validation errors.
-- Add repository integration tests for thread folders, read state, and label filtering.
+- Add repository integration tests for thread folders, read state, label filtering, and canonical recipient visibility.

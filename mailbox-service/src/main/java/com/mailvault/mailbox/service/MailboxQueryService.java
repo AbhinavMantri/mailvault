@@ -62,7 +62,7 @@ public class MailboxQueryService {
     public ThreadDetailResponse getThreadDetail(String userId, UUID threadId) {
         ThreadSummaryRow thread = emailMessageRepository.findThread(threadId, userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "thread not found"));
-        List<ThreadMessageResponse> messages = emailMessageRepository.findThreadMessages(threadId).stream()
+        List<ThreadMessageResponse> messages = emailMessageRepository.findThreadMessages(threadId, userId).stream()
                 .map(this::toThreadMessage)
                 .toList();
         List<ThreadLabelRow> labels = emailMessageRepository.findThreadLabels(threadId, userId);
