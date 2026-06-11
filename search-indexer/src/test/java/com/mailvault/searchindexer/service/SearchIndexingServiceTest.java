@@ -54,6 +54,7 @@ class SearchIndexingServiceTest {
 
         ArgumentCaptor<EmailSearchDocument> captor = ArgumentCaptor.forClass(EmailSearchDocument.class);
         verify(emailIndexer).upsert(captor.capture());
+        assertThat(captor.getValue().documentId()).isEqualTo("user-123:%s".formatted(emailId));
         assertThat(captor.getValue().emailId()).isEqualTo(emailId);
         assertThat(captor.getValue().userId()).isEqualTo("user-123");
         assertThat(captor.getValue().subject()).isEqualTo("Invoice for May");

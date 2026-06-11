@@ -23,9 +23,9 @@ If Redis is unavailable or a key expires, the consumer still relies on its durab
 
 - Redis key: `mailvault:idempotency:search-indexer:email.received:{eventId}`
 - TTL: 7 days by default
-- durable fallback: OpenSearch upsert using `emailId` as the document ID
+- durable fallback: OpenSearch upsert using `userId:emailId` as the document ID
 
-This means duplicate `email.received` events are skipped quickly when the Redis key exists. If Redis misses, the OpenSearch write remains safe because the same `emailId` overwrites the same document.
+This means duplicate `email.received` events are skipped quickly when the Redis key exists. If Redis misses, the OpenSearch write remains safe because the same mailbox-visible document overwrites the same `userId:emailId` target.
 
 ## Service-Specific Idempotency
 
@@ -33,7 +33,7 @@ Avoid one global `processed_events` table for every event. Each consumer should 
 
 ```text
 search-indexer
-  -> OpenSearch upsert by emailId
+  -> OpenSearch upsert by userId:emailId
   -> Redis TTL key reduces recent duplicate noise
 
 attachment-worker
