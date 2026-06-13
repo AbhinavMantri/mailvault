@@ -17,7 +17,7 @@ public class OpenSearchEmailIndexer {
 
     public void upsert(EmailSearchDocument document) {
         restClient.put()
-                .uri("/{index}/_doc/{emailId}", properties.emailIndex(), document.emailId())
+                .uri("/{index}/_doc/{documentId}", properties.emailIndex(), document.documentId())
                 .body(document)
                 .retrieve()
                 .toBodilessEntity();

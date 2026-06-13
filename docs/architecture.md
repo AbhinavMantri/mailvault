@@ -35,6 +35,8 @@ The write path blocks only on work required to safely accept the email: validati
 
 Mailbox list and email detail APIs read from Postgres. Quota APIs read storage usage from `quota-service`. `search-indexer` consumes `email.received` events and writes searchable email fields into OpenSearch. `quota-service` also consumes `email.received` and updates logical storage usage asynchronously. `search-service` serves user search queries from OpenSearch and can later resolve canonical message state from Postgres when needed.
 
+Search documents are mailbox-view scoped, not globally keyed by canonical email ID. OpenSearch document IDs use `userId:emailId` so the same canonical email can appear in multiple user search views after local delivery. The current `email.received` event indexes the owner/sender view; recipient search fan-out should be completed with a mailbox visibility event or projection that emits one indexable view per recipient-owned `mailbox_thread`.
+
 ## Persistence Style
 
 Use handwritten SQL only where the service is building a deliberate read projection, aggregate, authorization join, or write that needs explicit database behavior. Examples include mailbox thread lists, label-filtered thread lists, sent/inbox projections, and canonical mailbox visibility checks across `mailbox_threads`, `thread_messages`, and `emails`.

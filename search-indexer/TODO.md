@@ -4,6 +4,7 @@ Hardening items before treating `search-indexer` as production-ready.
 
 ## Index Coverage
 
+- Add mailbox visibility event/projection support so local recipient delivery creates one search document per recipient mailbox view.
 - Read normalized body content and include body text in the OpenSearch document.
 - Add labels, attachment metadata, and archive state when those services are implemented.
 - Index system/AI label sources and confidence scores once asynchronous mailbox classification is implemented.

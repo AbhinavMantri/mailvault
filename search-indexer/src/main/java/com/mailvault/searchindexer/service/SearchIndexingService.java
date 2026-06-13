@@ -25,7 +25,7 @@ public class SearchIndexingService {
             return;
         }
 
-        emailIndexer.upsert(new EmailSearchDocument(
+        emailIndexer.upsert(EmailSearchDocument.forUserEmail(
                 event.emailId(),
                 event.userId(),
                 event.sender(),
